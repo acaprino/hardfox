@@ -22,7 +22,10 @@ import shutil
 # Setup logging
 logger = logging.getLogger(__name__)
 
-from hardzilla_metadata import SETTINGS_METADATA, PRESET_PROFILES, CATEGORIES
+from hardzilla_metadata import (
+    SETTINGS_METADATA, PRESET_PROFILES, CATEGORIES,
+    get_base_settings, get_advanced_settings
+)
 from hardzilla_widgets import CategorySlider, SettingRow
 from hardzilla_profiles import ProfileManager, FirefoxImporter
 
@@ -623,17 +626,50 @@ class GranularPrivacyGUI:
                      fg_color="#3a3a5a",
                      hover_color="#4a4a6a").pack(side="left", padx=4)
 
-        # Primary action - most prominent
+        # Restore buttons
+        ctk.CTkButton(right, text="Restore Base",
+                     command=self.restore_base_defaults, width=100, height=36,
+                     fg_color="#5a3a5a",
+                     hover_color="#6a4a6a").pack(side="left", padx=4)
+
+        ctk.CTkButton(right, text="Restore Adv",
+                     command=self.restore_advanced_defaults, width=100, height=36,
+                     fg_color="#5a3a5a",
+                     hover_color="#6a4a6a").pack(side="left", padx=4)
+
+        # Primary actions - Apply buttons separated
+        self.apply_base_btn = ctk.CTkButton(
+            right,
+            text="Apply Base",
+            command=self.apply_base_configuration,
+            width=110, height=36,
+            font=ctk.CTkFont(size=12, weight="bold"),
+            fg_color="#2d7d46",  # Green for base (prefs.js)
+            hover_color="#3d8d56"
+        )
+        self.apply_base_btn.pack(side="left", padx=(12, 4))
+
+        self.apply_adv_btn = ctk.CTkButton(
+            right,
+            text="Apply Advanced",
+            command=self.apply_advanced_configuration,
+            width=130, height=36,
+            font=ctk.CTkFont(size=12, weight="bold"),
+            fg_color="#6d4aaa",  # Purple for advanced (user.js)
+            hover_color="#7d5aba"
+        )
+        self.apply_adv_btn.pack(side="left", padx=0)
+
+        # Legacy apply all button (hidden but kept for compatibility)
         self.apply_btn = ctk.CTkButton(
             right,
-            text="Apply to Firefox",
+            text="Apply All",
             command=self.apply_configuration,
-            width=160, height=36,
-            font=ctk.CTkFont(size=13, weight="bold"),
+            width=0, height=0,
             fg_color=COLORS['success'],
             hover_color=COLORS['success_hover']
         )
-        self.apply_btn.pack(side="left", padx=(12, 0))
+        # Hidden - use Apply Base / Apply Advanced instead
 
     def show_section(self, section_id):
         """Switch to the specified section"""
@@ -2504,47 +2540,233 @@ class GranularPrivacyGUI:
 
             prefs[pref_key] = self._format_pref_value(current_value)
 
-    def generate_preferences(self) -> Dict[str, str]:
+    def _generate_metadata_prefs_by_level(self, prefs: Dict[str, str], level: str) -> None:
         """
-        Generate Firefox preferences from all settings.
+        Generate preferences from SETTINGS_METADATA filtered by level.
 
-        Combines legacy privacy settings with new metadata-based settings.
+        Args:
+            prefs: Dict to add preferences to (modified in place)
+            level: 'base' or 'advanced'
+        """
+        for key, meta in SETTINGS_METADATA.items():
+            # Skip if not the requested level
+            if meta.get('level') != level:
+                continue
+
+            pref_name = meta.get('pref')
+            if not pref_name:
+                continue
+
+            # Skip if this pref was already set
+            pref_key = f'"{pref_name}"'
+            if pref_key in prefs:
+                continue
+
+            # Get the current value from the appropriate variable
+            current_value = None
+            if key in self.settings_vars:
+                current_value = self.settings_vars[key].get()
+            elif key in self.privacy_vars:
+                current_value = self.privacy_vars[key].get()
+
+            if current_value is None:
+                continue
+
+            # Convert label back to value for choice types
+            if meta['type'] == 'choice':
+                if current_value in meta['labels']:
+                    idx = meta['labels'].index(current_value)
+                    if idx < len(meta['values']):
+                        current_value = meta['values'][idx]
+                elif str(current_value) in [str(v) for v in meta['values']]:
+                    for v in meta['values']:
+                        if str(v) == str(current_value):
+                            current_value = v
+                            break
+
+            prefs[pref_key] = self._format_pref_value(current_value)
+
+    def _get_base_pref_keys(self) -> set:
+        """
+        Get the static set of pref keys managed by BASE configuration.
+        Used for restore operations - independent of current UI state.
+
+        Returns:
+            Set of pref keys (with quotes) that BASE manages
+        """
+        keys = {
+            # Session restore
+            '"browser.startup.page"',
+            '"browser.sessionstore.resume_from_crash"',
+            '"browser.sessionstore.restore_on_demand"',
+            '"browser.sessionstore.restore_pinned_tabs_on_demand"',
+            '"browser.sessionstore.restore_tabs_lazily"',
+            # Privacy - clear on shutdown
+            '"privacy.sanitize.sanitizeOnShutdown"',
+            '"privacy.clearOnShutdown.cache"',
+            '"privacy.clearOnShutdown.offlineApps"',
+            '"privacy.clearOnShutdown.siteSettings"',
+            '"privacy.clearOnShutdown.cookies"',
+            '"privacy.clearOnShutdown.sessions"',
+            '"privacy.clearOnShutdown.history"',
+            '"privacy.clearOnShutdown.downloads"',
+            '"privacy.clearOnShutdown.formdata"',
+            '"signon.rememberSignons"',
+            # Cookie settings
+            '"network.cookie.lifetimePolicy"',
+            '"network.cookie.lifetime.days"',
+            '"network.cookie.cookieBehavior"',
+            # Tracking protection
+            '"browser.contentblocking.category"',
+            # Telemetry
+            '"datareporting.healthreport.uploadEnabled"',
+            '"toolkit.telemetry.enabled"',
+            '"app.shield.optoutstudies.enabled"',
+            '"browser.tabs.crashReporting.sendReport"',
+            # HTTPS
+            '"dom.security.https_only_mode"',
+            '"dom.security.https_only_mode_pbm"',
+            # Search and autofill
+            '"browser.search.suggest.enabled"',
+            '"browser.urlbar.suggest.history"',
+            '"browser.formfill.enable"',
+            '"signon.autofillForms"',
+            # Permissions
+            '"geo.enabled"',
+            '"permissions.default.camera"',
+            '"permissions.default.microphone"',
+            '"permissions.default.desktop-notification"',
+            # Autoplay
+            '"media.autoplay.default"',
+        }
+
+        # Add any metadata-based BASE prefs
+        for key, meta in SETTINGS_METADATA.items():
+            if meta.get('level') == 'base' and meta.get('pref'):
+                keys.add(f'"{meta["pref"]}"')
+
+        return keys
+
+    def _get_advanced_pref_keys(self) -> set:
+        """
+        Get the static set of pref keys managed by ADVANCED configuration.
+        Used for restore operations - independent of current UI state.
+
+        Returns:
+            Set of pref keys (with quotes) that ADVANCED manages
+        """
+        keys = {
+            # Fingerprinting and cryptomining
+            '"privacy.trackingprotection.fingerprinting.enabled"',
+            '"privacy.trackingprotection.cryptomining.enabled"',
+            # Site issue fixes
+            '"privacy.annotate_channels.strict_list.enabled"',
+            '"privacy.purge_trackers.date_in_cookie_database"',
+            '"privacy.restrict3rdpartystorage.rollout.enabledByDefault"',
+            # DNS over HTTPS
+            '"network.trr.mode"',
+            '"network.trr.uri"',
+            '"network.trr.bootstrapAddress"',
+            # Network performance
+            '"network.dns.disablePrefetch"',
+            '"network.prefetch-next"',
+            '"network.predictor.enabled"',
+            # Mixed content
+            '"security.mixed_content.block_active_content"',
+            # WebRTC
+            '"media.peerconnection.enabled"',
+            '"media.peerconnection.ice.proxy_only_if_behind_proxy"',
+            '"media.peerconnection.ice.default_address_only"',
+            # Extensions
+            '"xpinstall.signatures.required"',
+        }
+
+        # Add any metadata-based ADVANCED prefs
+        for key, meta in SETTINGS_METADATA.items():
+            if meta.get('level') == 'advanced' and meta.get('pref'):
+                keys.add(f'"{meta["pref"]}"')
+
+        return keys
+
+    def _parse_prefsjs_line(self, line: str) -> tuple:
+        """
+        Parse a prefs.js line into (key, value) tuple.
+
+        Args:
+            line: A line from prefs.js file (already stripped)
+
+        Returns:
+            Tuple of (pref_key, pref_value) or (None, None) if invalid
+        """
+        if not line.startswith('user_pref('):
+            return (None, None)
+        try:
+            content = line[10:-2]  # Remove 'user_pref(' and ');'
+            parts = content.split(',', 1)
+            if len(parts) == 2:
+                return (parts[0].strip(), parts[1].strip())
+        except (IndexError, ValueError) as e:
+            logger.debug(f"Failed to parse prefs.js line: {line!r} - {e}")
+        return (None, None)
+
+    def _read_prefsjs(self, prefsjs_path: Path) -> Dict[str, str]:
+        """
+        Read and parse a prefs.js file.
+
+        Args:
+            prefsjs_path: Path to prefs.js file
+
+        Returns:
+            Dict mapping pref keys to values
+        """
+        existing_prefs = {}
+        if not prefsjs_path.exists():
+            return existing_prefs
+
+        with open(prefsjs_path, 'r', encoding='utf-8', errors='ignore') as f:
+            for line in f:
+                line = line.strip()
+                pref_key, pref_value = self._parse_prefsjs_line(line)
+                if pref_key is not None:
+                    existing_prefs[pref_key] = pref_value
+
+        return existing_prefs
+
+    def generate_base_preferences(self) -> Dict[str, str]:
+        """
+        Generate Firefox preferences for BASE level settings only.
+        These are settings accessible from Firefox Settings UI.
+        Applied to prefs.js.
 
         Returns:
             Dict mapping Firefox pref keys to formatted values
         """
         prefs = {}
 
-        # Session Restore
+        # Session Restore (BASE)
         if self.privacy_vars['restore_session'].get():
-            prefs['"browser.startup.page"'] = "3"  # Restore session
+            prefs['"browser.startup.page"'] = "3"
             prefs['"browser.sessionstore.resume_from_crash"'] = "true"
             prefs['"browser.sessionstore.restore_on_demand"'] = str(self.privacy_vars['lazy_restore'].get()).lower()
             prefs['"browser.sessionstore.restore_pinned_tabs_on_demand"'] = "false"
             prefs['"browser.sessionstore.restore_tabs_lazily"'] = str(self.privacy_vars['lazy_restore'].get()).lower()
         else:
-            prefs['"browser.startup.page"'] = "1"  # Homepage
+            prefs['"browser.startup.page"'] = "1"
 
-        # Privacy - what to clear
+        # Privacy - what to clear (BASE)
         if any(self.privacy_vars[k].get() for k in ['clear_cache', 'clear_offline', 'clear_thumbnails']):
             prefs['"privacy.sanitize.sanitizeOnShutdown"'] = "true"
-
-            # Set what to clear
             prefs['"privacy.clearOnShutdown.cache"'] = str(self.privacy_vars['clear_cache'].get()).lower()
             prefs['"privacy.clearOnShutdown.offlineApps"'] = str(self.privacy_vars['clear_offline'].get()).lower()
             prefs['"privacy.clearOnShutdown.siteSettings"'] = str(self.privacy_vars['clear_siteprefs'].get()).lower()
-
-            # Set what to keep (inverse logic)
             prefs['"privacy.clearOnShutdown.cookies"'] = str(not self.privacy_vars['keep_cookies'].get()).lower()
             prefs['"privacy.clearOnShutdown.sessions"'] = str(not self.privacy_vars['keep_sessions'].get()).lower()
             prefs['"privacy.clearOnShutdown.history"'] = str(not self.privacy_vars['keep_history'].get()).lower()
             prefs['"privacy.clearOnShutdown.downloads"'] = str(not self.privacy_vars['keep_downloads'].get()).lower()
             prefs['"privacy.clearOnShutdown.formdata"'] = str(not self.privacy_vars['keep_formdata'].get()).lower()
-
-            # Password manager
             prefs['"signon.rememberSignons"'] = str(self.privacy_vars['keep_logins'].get()).lower()
 
-        # Cookie lifetime
+        # Cookie lifetime (BASE)
         if self.privacy_vars['cookie_lifetime'].get() == 'session':
             prefs['"network.cookie.lifetimePolicy"'] = "2"
         elif self.privacy_vars['cookie_lifetime'].get() == 'days':
@@ -2553,42 +2775,82 @@ class GranularPrivacyGUI:
         else:
             prefs['"network.cookie.lifetimePolicy"'] = "0"
 
-        # Third-party cookies
-        cookie_behavior_map = {
-            'all': '0',
-            'cross-site': '5',
-            'none': '1',
-            'visited': '3'
-        }
+        # Third-party cookies (BASE)
+        cookie_behavior_map = {'all': '0', 'cross-site': '5', 'none': '1', 'visited': '3'}
         prefs['"network.cookie.cookieBehavior"'] = cookie_behavior_map.get(
             self.privacy_vars['third_party_cookies'].get(), '5'
         )
 
-        # Tracking Protection
+        # Tracking Protection (BASE)
         if self.privacy_vars['tracking_protection'].get() == 'strict':
             prefs['"browser.contentblocking.category"'] = '"strict"'
         elif self.privacy_vars['tracking_protection'].get() == 'standard':
             prefs['"browser.contentblocking.category"'] = '"standard"'
 
-        prefs['"privacy.trackingprotection.fingerprinting.enabled"'] = str(self.privacy_vars['fingerprint_resist'].get()).lower()
-        prefs['"privacy.trackingprotection.cryptomining.enabled"'] = str(self.privacy_vars['cryptomining_block'].get()).lower()
-
-        # Fix site issues for strict mode
-        prefs['"privacy.annotate_channels.strict_list.enabled"'] = str(self.privacy_vars['fix_major_issues'].get()).lower()
-        if self.privacy_vars['fix_minor_issues'].get():
-            prefs['"privacy.purge_trackers.date_in_cookie_database"'] = '"0"'
-            prefs['"privacy.restrict3rdpartystorage.rollout.enabledByDefault"'] = "false"
-
-        # Telemetry
+        # Telemetry (BASE)
         prefs['"datareporting.healthreport.uploadEnabled"'] = str(self.privacy_vars['telemetry_enabled'].get()).lower()
         prefs['"toolkit.telemetry.enabled"'] = str(self.privacy_vars['telemetry_enabled'].get()).lower()
         prefs['"app.shield.optoutstudies.enabled"'] = str(self.privacy_vars['studies_enabled'].get()).lower()
         prefs['"browser.tabs.crashReporting.sendReport"'] = str(self.privacy_vars['crash_reports'].get()).lower()
 
-        # DNS over HTTPS
-        # network.trr.mode values:
-        # 0 = Off, 2 = TRR first (with fallback), 3 = TRR only (strict)
-        # Firefox TRR modes: 0=off, 2=TRR-first (fallback), 3=TRR-only (strict)
+        # HTTPS (BASE)
+        prefs['"dom.security.https_only_mode"'] = str(self.privacy_vars['https_only'].get()).lower()
+        prefs['"dom.security.https_only_mode_pbm"'] = str(self.privacy_vars['https_only_pbm'].get()).lower()
+
+        # Search and autofill (BASE)
+        prefs['"browser.search.suggest.enabled"'] = str(self.privacy_vars['search_suggestions'].get()).lower()
+        prefs['"browser.urlbar.suggest.history"'] = str(self.privacy_vars['url_suggestions'].get()).lower()
+        prefs['"browser.formfill.enable"'] = str(self.privacy_vars['autofill_forms'].get()).lower()
+        prefs['"signon.autofillForms"'] = str(self.privacy_vars['autofill_passwords'].get()).lower()
+
+        # Permissions (BASE)
+        perm_map = {'allow': '1', 'ask': '0', 'block': '2'}
+        perms = {
+            'location_permission': 'geo.enabled',
+            'camera_permission': 'permissions.default.camera',
+            'microphone_permission': 'permissions.default.microphone',
+            'notifications_permission': 'permissions.default.desktop-notification'
+        }
+        for var_name, pref_name in perms.items():
+            value = self.privacy_vars[var_name].get()
+            if var_name == 'location_permission' and value == 'block':
+                prefs[f'"{pref_name}"'] = "false"
+            elif var_name != 'location_permission':
+                prefs[f'"{pref_name}"'] = perm_map.get(value, '0')
+
+        # Autoplay (BASE)
+        if self.privacy_vars['autoplay_permission'].get() == 'block':
+            prefs['"media.autoplay.default"'] = "5"
+        else:
+            prefs['"media.autoplay.default"'] = "0"
+
+        # Add metadata-based BASE settings
+        self._generate_metadata_prefs_by_level(prefs, 'base')
+
+        return prefs
+
+    def generate_advanced_preferences(self) -> Dict[str, str]:
+        """
+        Generate Firefox preferences for ADVANCED level settings only.
+        These are settings only accessible via about:config.
+        Applied to user.js.
+
+        Returns:
+            Dict mapping Firefox pref keys to formatted values
+        """
+        prefs = {}
+
+        # Fingerprinting and cryptomining (ADVANCED)
+        prefs['"privacy.trackingprotection.fingerprinting.enabled"'] = str(self.privacy_vars['fingerprint_resist'].get()).lower()
+        prefs['"privacy.trackingprotection.cryptomining.enabled"'] = str(self.privacy_vars['cryptomining_block'].get()).lower()
+
+        # Fix site issues for strict mode (ADVANCED)
+        prefs['"privacy.annotate_channels.strict_list.enabled"'] = str(self.privacy_vars['fix_major_issues'].get()).lower()
+        if self.privacy_vars['fix_minor_issues'].get():
+            prefs['"privacy.purge_trackers.date_in_cookie_database"'] = '"0"'
+            prefs['"privacy.restrict3rdpartystorage.rollout.enabledByDefault"'] = "false"
+
+        # DNS over HTTPS (ADVANCED)
         doh_mode_map = {'off': '0', 'default': '2', 'increased': '2', 'max': '3'}
         prefs['"network.trr.mode"'] = doh_mode_map.get(self.privacy_vars['dns_over_https'].get(), '2')
 
@@ -2602,100 +2864,271 @@ class GranularPrivacyGUI:
             prefs['"network.trr.uri"'] = '"https://dns.nextdns.io"'
             prefs['"network.trr.bootstrapAddress"'] = '"45.90.28.0"'
 
-        # Network performance
+        # Network performance (ADVANCED)
         prefs['"network.dns.disablePrefetch"'] = str(not self.privacy_vars['prefetch_dns'].get()).lower()
         prefs['"network.prefetch-next"'] = str(self.privacy_vars['prefetch_links'].get()).lower()
         prefs['"network.predictor.enabled"'] = str(self.privacy_vars['predictor'].get()).lower()
 
-        # HTTPS
-        prefs['"dom.security.https_only_mode"'] = str(self.privacy_vars['https_only'].get()).lower()
-        prefs['"dom.security.https_only_mode_pbm"'] = str(self.privacy_vars['https_only_pbm'].get()).lower()
+        # Mixed content (ADVANCED)
         prefs['"security.mixed_content.block_active_content"'] = str(self.privacy_vars['mixed_content_block'].get()).lower()
 
-        # WebRTC
+        # WebRTC (ADVANCED)
         prefs['"media.peerconnection.enabled"'] = str(self.privacy_vars['webrtc_enabled'].get()).lower()
         if self.privacy_vars['webrtc_ip_leak'].get():
             prefs['"media.peerconnection.ice.proxy_only_if_behind_proxy"'] = "true"
             prefs['"media.peerconnection.ice.default_address_only"'] = "true"
 
-        # Search and autofill
-        prefs['"browser.search.suggest.enabled"'] = str(self.privacy_vars['search_suggestions'].get()).lower()
-        prefs['"browser.urlbar.suggest.history"'] = str(self.privacy_vars['url_suggestions'].get()).lower()
-        prefs['"browser.formfill.enable"'] = str(self.privacy_vars['autofill_forms'].get()).lower()
-        prefs['"signon.autofillForms"'] = str(self.privacy_vars['autofill_passwords'].get()).lower()
-
-        # Permissions
-        perm_map = {'allow': '1', 'ask': '0', 'block': '2'}
-
-        perms = {
-            'location_permission': 'geo.enabled',
-            'camera_permission': 'permissions.default.camera',
-            'microphone_permission': 'permissions.default.microphone',
-            'notifications_permission': 'permissions.default.desktop-notification'
-        }
-
-        for var_name, pref_name in perms.items():
-            value = self.privacy_vars[var_name].get()
-            if var_name == 'location_permission' and value == 'block':
-                prefs[f'"{pref_name}"'] = "false"
-            elif var_name != 'location_permission':
-                prefs[f'"{pref_name}"'] = perm_map.get(value, '0')
-
-        # Autoplay
-        if self.privacy_vars['autoplay_permission'].get() == 'block':
-            prefs['"media.autoplay.default"'] = "5"
-        else:
-            prefs['"media.autoplay.default"'] = "0"
-
-        # Allow unsigned extensions (needed for extensions not from AMO like Bypass Paywalls Clean)
+        # Allow unsigned extensions (ADVANCED)
         prefs['"xpinstall.signatures.required"'] = "false"
 
-        # Add all settings from metadata (Performance, Experimental, etc.)
-        self._generate_metadata_prefs(prefs)
+        # Add metadata-based ADVANCED settings (Performance, Experimental, etc.)
+        self._generate_metadata_prefs_by_level(prefs, 'advanced')
 
         return prefs
 
-    def apply_configuration(self):
-        """Apply configuration to Firefox"""
+    def apply_base_configuration(self):
+        """Apply BASE configuration to Firefox via prefs.js"""
         if not self.profile_path:
             messagebox.showerror("Error", "Please select a valid Firefox profile first!")
             return
 
-        if not messagebox.askyesno("Confirm", "Apply this configuration to Firefox?"):
+        if not messagebox.askyesno("Apply Base Settings",
+            "Apply BASE settings to prefs.js?\n\n"
+            "These are standard Firefox settings that you can\n"
+            "also modify from Firefox Settings page.\n\n"
+            "Changes can be overridden by Firefox."):
             return
 
         try:
-            prefs = self.generate_preferences()
+            prefs = self.generate_base_preferences()
+            prefsjs_path = self.profile_path / "prefs.js"
+
+            # Read existing prefs.js using helper
+            existing_prefs = self._read_prefsjs(prefsjs_path)
+
+            # Merge: keep existing, overwrite managed ones
+            merged_prefs = existing_prefs.copy()
+            for key, value in prefs.items():
+                merged_prefs[key] = value
+
+            # Write prefs.js
+            with open(prefsjs_path, 'w', encoding='utf-8') as f:
+                f.write("// Mozilla User Preferences\n")
+                f.write(f"// Modified by Hardzilla (BASE) at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
+                for key, value in sorted(merged_prefs.items()):
+                    f.write(f'user_pref({key}, {value});\n')
+
+            self.profile_state['last_applied'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            self.profile_state['modified'] = False
+            self.update_profile_status()
+
+            messagebox.showinfo("Success",
+                "BASE configuration applied to prefs.js!\n\n"
+                "These settings can be modified from Firefox Settings.\n"
+                "Restart Firefox for changes to take effect.")
+
+            self.status_bar.configure(text=f"BASE settings applied at {self.profile_state['last_applied']}")
+
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to apply BASE configuration:\n{str(e)}")
+
+    def apply_advanced_configuration(self):
+        """Apply ADVANCED configuration to Firefox via user.js"""
+        if not self.profile_path:
+            messagebox.showerror("Error", "Please select a valid Firefox profile first!")
+            return
+
+        if not messagebox.askyesno("Apply Advanced Settings",
+            "Apply ADVANCED settings to user.js?\n\n"
+            "These are about:config flags that provide\n"
+            "granular control over Firefox behavior.\n\n"
+            "These settings OVERRIDE Firefox and cannot be\n"
+            "changed without editing/removing user.js."):
+            return
+
+        try:
+            prefs = self.generate_advanced_preferences()
             userjs_path = self.profile_path / "user.js"
 
             with open(userjs_path, 'w', encoding='utf-8') as f:
-                # Header
-                f.write("// Hardzilla - Firefox Hardening Configuration\n")
+                f.write("// Hardzilla - Firefox Hardening Configuration (ADVANCED)\n")
                 f.write(f"// Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-                f.write("// Generated by: Hardzilla\n\n")
+                f.write("// These settings override Firefox defaults and cannot be changed\n")
+                f.write("// from about:config until this file is removed.\n\n")
 
-                # Critical session settings first
                 f.write("// ============================================================================\n")
-                f.write("// CRITICAL SETTINGS FOR SESSION RESTORE\n")
-                f.write("// ============================================================================\n")
-
-                critical = ['"browser.startup.page"', '"privacy.clearOnShutdown.sessions"',
-                           '"browser.sessionstore.resume_from_crash"']
-                for key in critical:
-                    if key in prefs:
-                        f.write(f'user_pref({key}, {prefs[key]});\n')
-                f.write("\n")
-
-                # Other preferences
-                f.write("// ============================================================================\n")
-                f.write("// PRIVACY AND SECURITY SETTINGS\n")
-                f.write("// ============================================================================\n")
+                f.write("// ADVANCED SETTINGS (about:config flags)\n")
+                f.write("// ============================================================================\n\n")
 
                 for key, value in sorted(prefs.items()):
-                    if key not in critical:
-                        f.write(f'user_pref({key}, {value});\n')
+                    f.write(f'user_pref({key}, {value});\n')
 
-            # Update profile state - configuration now matches Firefox
+            self.profile_state['last_applied'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            self.profile_state['modified'] = False
+            self.update_profile_status()
+
+            messagebox.showinfo("Success",
+                "ADVANCED configuration applied to user.js!\n\n"
+                "These settings cannot be changed from about:config.\n"
+                "To remove them, delete or rename user.js.\n\n"
+                "Restart Firefox for changes to take effect.")
+
+            self.status_bar.configure(text=f"ADVANCED settings applied at {self.profile_state['last_applied']}")
+
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to apply ADVANCED configuration:\n{str(e)}")
+
+    def restore_base_defaults(self):
+        """Remove Hardzilla BASE settings from prefs.js"""
+        if not self.profile_path:
+            messagebox.showerror("Error", "Please select a valid Firefox profile first!")
+            return
+
+        if not messagebox.askyesno("Restore Base Defaults",
+            "Remove Hardzilla BASE settings from prefs.js?\n\n"
+            "This will restore Firefox default values for the\n"
+            "settings managed by the BASE configuration."):
+            return
+
+        try:
+            prefsjs_path = self.profile_path / "prefs.js"
+            if not prefsjs_path.exists():
+                messagebox.showinfo("Info", "prefs.js not found. Nothing to restore.")
+                return
+
+            # Get list of prefs we manage (use static list to avoid UI state dependency)
+            managed_prefs = self._get_base_pref_keys()
+
+            # Read prefs.js and filter out managed prefs
+            existing_prefs = self._read_prefsjs(prefsjs_path)
+            remaining_prefs = {k: v for k, v in existing_prefs.items() if k not in managed_prefs}
+
+            # Rewrite prefs.js without our settings
+            with open(prefsjs_path, 'w', encoding='utf-8') as f:
+                f.write("// Mozilla User Preferences\n\n")
+                for key, value in sorted(remaining_prefs.items()):
+                    f.write(f'user_pref({key}, {value});\n')
+
+            messagebox.showinfo("Success",
+                "BASE settings removed from prefs.js!\n\n"
+                "Firefox will use default values for these settings.\n"
+                "Restart Firefox for changes to take effect.")
+
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to restore BASE defaults:\n{str(e)}")
+
+    def restore_advanced_defaults(self):
+        """Remove user.js to restore Firefox defaults for ADVANCED settings"""
+        if not self.profile_path:
+            messagebox.showerror("Error", "Please select a valid Firefox profile first!")
+            return
+
+        userjs_path = self.profile_path / "user.js"
+        if not userjs_path.exists():
+            messagebox.showinfo("Info", "user.js not found. Nothing to restore.")
+            return
+
+        if not messagebox.askyesno("Restore Advanced Defaults",
+            "Remove user.js to restore ADVANCED defaults?\n\n"
+            "This will backup user.js to user.js.bak and\n"
+            "remove the original, allowing Firefox to use\n"
+            "its default about:config values."):
+            return
+
+        try:
+            # Backup user.js
+            backup_path = self.profile_path / "user.js.bak"
+            import shutil
+            shutil.copy2(userjs_path, backup_path)
+
+            # Remove user.js
+            userjs_path.unlink()
+
+            messagebox.showinfo("Success",
+                "user.js backed up and removed!\n\n"
+                f"Backup saved to: user.js.bak\n\n"
+                "Firefox will use default about:config values.\n"
+                "Restart Firefox for changes to take effect.")
+
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to restore ADVANCED defaults:\n{str(e)}")
+
+    def generate_preferences(self) -> Dict[str, str]:
+        """
+        Generate Firefox preferences from all settings.
+
+        Combines BASE and ADVANCED preferences.
+        DEPRECATED: Use generate_base_preferences() and generate_advanced_preferences()
+        separately for proper file targeting (prefs.js vs user.js).
+
+        Returns:
+            Dict mapping Firefox pref keys to formatted values
+        """
+        # Combine base and advanced preferences
+        prefs = self.generate_base_preferences()
+        prefs.update(self.generate_advanced_preferences())
+        return prefs
+
+    def apply_configuration(self):
+        """
+        Apply configuration to Firefox.
+
+        DEPRECATED: This function applies ALL settings to user.js.
+        Use apply_base_configuration() and apply_advanced_configuration()
+        for proper separation:
+        - BASE settings → prefs.js (user can override in Firefox Settings)
+        - ADVANCED settings → user.js (permanent overrides)
+        """
+        if not self.profile_path:
+            messagebox.showerror("Error", "Please select a valid Firefox profile first!")
+            return
+
+        # Show deprecation warning with option to use new functions
+        response = messagebox.askyesnocancel(
+            "Apply Configuration",
+            "This legacy button applies ALL settings to user.js.\n\n"
+            "RECOMMENDED: Use the new separated buttons:\n"
+            "• 'Apply Base' → prefs.js (overridable by Firefox)\n"
+            "• 'Apply Advanced' → user.js (permanent overrides)\n\n"
+            "Do you want to apply BOTH Base and Advanced settings?\n"
+            "(Cancel to abort, No to apply only Advanced to user.js)"
+        )
+
+        if response is None:  # Cancel
+            return
+        elif response:  # Yes - apply both
+            # Apply base to prefs.js
+            try:
+                base_prefs = self.generate_base_preferences()
+                prefsjs_path = self.profile_path / "prefs.js"
+                existing_prefs = self._read_prefsjs(prefsjs_path)
+                merged_prefs = existing_prefs.copy()
+                merged_prefs.update(base_prefs)
+
+                with open(prefsjs_path, 'w', encoding='utf-8') as f:
+                    f.write("// Mozilla User Preferences\n")
+                    f.write(f"// Modified by Hardzilla (BASE) at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
+                    for key, value in sorted(merged_prefs.items()):
+                        f.write(f'user_pref({key}, {value});\n')
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to apply BASE configuration:\n{str(e)}")
+                return
+
+        # Apply advanced to user.js (both Yes and No lead here)
+        try:
+            advanced_prefs = self.generate_advanced_preferences()
+            userjs_path = self.profile_path / "user.js"
+
+            with open(userjs_path, 'w', encoding='utf-8') as f:
+                f.write("// Hardzilla - Firefox Hardening Configuration (ADVANCED)\n")
+                f.write(f"// Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+                f.write("// These settings override Firefox defaults and cannot be changed\n")
+                f.write("// from about:config until this file is removed.\n\n")
+
+                for key, value in sorted(advanced_prefs.items()):
+                    f.write(f'user_pref({key}, {value});\n')
+
+            # Update profile state
             self.profile_state['last_applied'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             self.profile_state['modified'] = False
             if not self.profile_state['loaded']:
@@ -2704,15 +3137,17 @@ class GranularPrivacyGUI:
             self.update_profile_status()
 
             session_status = "ENABLED" if self.privacy_vars['restore_session'].get() else "DISABLED"
+            applied_what = "BASE + ADVANCED" if response else "ADVANCED only"
             messagebox.showinfo("Success",
-                              f"Configuration applied successfully!\n\n" +
-                              f"Session Restore: {session_status}\n\n" +
-                              "Please restart Firefox for changes to take effect.")
+                f"Configuration applied successfully!\n\n"
+                f"Applied: {applied_what}\n"
+                f"Session Restore: {session_status}\n\n"
+                "Please restart Firefox for changes to take effect.")
 
             self.status_bar.configure(text=f"Applied to Firefox at {self.profile_state['last_applied']}")
 
         except Exception as e:
-            messagebox.showerror("Error", f"Failed to apply configuration:\n{str(e)}")
+            messagebox.showerror("Error", f"Failed to apply ADVANCED configuration:\n{str(e)}")
 
     def _download_file_safely(
         self,

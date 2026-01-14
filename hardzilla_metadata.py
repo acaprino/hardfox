@@ -12,6 +12,10 @@ __all__ = [
     'CATEGORIES',
     'PRESET_PROFILES',
     'SETTINGS_METADATA',
+    'get_base_settings',
+    'get_advanced_settings',
+    'get_settings_by_level',
+    'get_settings_by_mechanism',
 ]
 
 # =============================================================================
@@ -228,6 +232,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Disk Cache',
         'category': 'performance',
         'subcategory': 'cache',
+        'level': 'advanced',
+        'mechanism': 'userjs',
         'short': 'Store cached files on disk for faster page loads on revisits.',
         'full': (
             'When enabled, Firefox stores website resources (images, scripts, stylesheets) '
@@ -257,6 +263,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Disk Cache Size',
         'category': 'performance',
         'subcategory': 'cache',
+        'level': 'advanced',
+        'mechanism': 'userjs',
         'short': 'Maximum disk space for cached web content.',
         'full': (
             'Sets the maximum amount of disk space Firefox will use for caching web content. '
@@ -286,6 +294,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Memory Cache',
         'category': 'performance',
         'subcategory': 'cache',
+        'level': 'advanced',
+        'mechanism': 'userjs',
         'short': 'Store cached content in RAM for fastest possible access.',
         'full': (
             'When enabled, Firefox keeps frequently accessed web content in system memory (RAM) '
@@ -314,6 +324,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Memory Cache Size',
         'category': 'performance',
         'subcategory': 'cache',
+        'level': 'advanced',
+        'mechanism': 'userjs',
         'short': 'Maximum RAM for cached web content.',
         'full': (
             'Sets the maximum amount of system memory (RAM) Firefox will use for caching. '
@@ -343,6 +355,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Session History Entries',
         'category': 'performance',
         'subcategory': 'cache',
+        'level': 'advanced',
+        'mechanism': 'userjs',
         'short': 'Number of back/forward history entries per tab.',
         'full': (
             'Controls how many pages Firefox remembers in the back/forward history for each tab. '
@@ -372,6 +386,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Cached Pages in Memory',
         'category': 'performance',
         'subcategory': 'cache',
+        'level': 'advanced',
+        'mechanism': 'userjs',
         'short': 'Number of pages kept fully rendered in memory for instant back/forward.',
         'full': (
             'Controls the Back-Forward Cache (bfcache), which keeps recently visited pages '
@@ -401,6 +417,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Session Save Interval',
         'category': 'performance',
         'subcategory': 'cache',
+        'level': 'advanced',
+        'mechanism': 'userjs',
         'short': 'How often Firefox saves session data to disk.',
         'full': (
             'Controls how frequently Firefox saves your current session (open tabs, windows, '
@@ -434,6 +452,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Content Processes',
         'category': 'performance',
         'subcategory': 'processes',
+        'level': 'advanced',
+        'mechanism': 'userjs',
         'short': 'Number of separate processes for rendering web content.',
         'full': (
             'Firefox uses multiple processes to render web pages, isolating tabs for stability '
@@ -463,6 +483,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Isolated Web Processes',
         'category': 'performance',
         'subcategory': 'processes',
+        'level': 'advanced',
+        'mechanism': 'userjs',
         'short': 'Number of isolated processes per site for enhanced security.',
         'full': (
             'Controls how many isolated content processes Firefox uses for Site Isolation '
@@ -492,6 +514,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'WebRender',
         'category': 'performance',
         'subcategory': 'processes',
+        'level': 'advanced',
+        'mechanism': 'userjs',
         'short': 'Use GPU-accelerated rendering engine for smoother graphics.',
         'full': (
             'WebRender is a GPU-based rendering engine that offloads page rendering to your '
@@ -521,6 +545,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Force GPU Acceleration',
         'category': 'performance',
         'subcategory': 'processes',
+        'level': 'advanced',
+        'mechanism': 'userjs',
         'short': 'Force hardware acceleration even on unsupported configurations.',
         'full': (
             'Forces Firefox to use GPU acceleration for compositing and rendering, bypassing '
@@ -550,6 +576,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'GPU Process',
         'category': 'performance',
         'subcategory': 'processes',
+        'level': 'advanced',
+        'mechanism': 'userjs',
         'short': 'Run GPU operations in a separate process for stability.',
         'full': (
             'Isolates GPU operations into a dedicated process separate from the main browser '
@@ -579,6 +607,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Hardware Video Decoding',
         'category': 'performance',
         'subcategory': 'processes',
+        'level': 'advanced',
+        'mechanism': 'userjs',
         'short': 'Use GPU for video decoding to reduce CPU usage.',
         'full': (
             'Enables hardware-accelerated video decoding, offloading video processing from the '
@@ -607,6 +637,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Force WebGL',
         'category': 'performance',
         'subcategory': 'processes',
+        'level': 'advanced',
+        'mechanism': 'userjs',
         'short': 'Force WebGL support for 3D graphics in web pages.',
         'full': (
             'WebGL enables hardware-accelerated 3D graphics in web pages, required for 3D games, '
@@ -636,6 +668,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'WebGPU',
         'category': 'performance',
         'subcategory': 'processes',
+        'level': 'advanced',
+        'mechanism': 'userjs',
         'short': 'Enable next-generation GPU API for advanced graphics and compute.',
         'full': (
             'WebGPU is a modern graphics API providing low-level GPU access for advanced 3D '
@@ -665,6 +699,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Frame Rate Limit',
         'category': 'performance',
         'subcategory': 'processes',
+        'level': 'advanced',
+        'mechanism': 'userjs',
         'short': 'Maximum frame rate for rendering and animations.',
         'full': (
             'Sets the maximum frames per second (FPS) for page rendering, animations, and '
@@ -698,6 +734,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Maximum Connections',
         'category': 'performance',
         'subcategory': 'network_perf',
+        'level': 'advanced',
+        'mechanism': 'userjs',
         'short': 'Maximum total simultaneous network connections.',
         'full': (
             'Sets the maximum number of simultaneous HTTP connections Firefox can open across '
@@ -727,6 +765,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Connections Per Server',
         'category': 'performance',
         'subcategory': 'network_perf',
+        'level': 'advanced',
+        'mechanism': 'userjs',
         'short': 'Maximum simultaneous connections to each server.',
         'full': (
             'Limits concurrent connections to a single server (domain). HTTP/1.1 benefits from '
@@ -756,6 +796,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Speculative Connections',
         'category': 'performance',
         'subcategory': 'network_perf',
+        'level': 'advanced',
+        'mechanism': 'userjs',
         'short': 'Pre-open connections to links you might click.',
         'full': (
             'Firefox can speculatively open connections to links when you hover over them or '
@@ -789,6 +831,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Tab Groups',
         'category': 'features',
         'subcategory': 'ui',
+        'level': 'advanced',
+        'mechanism': 'userjs',
         'short': 'Enable tab grouping to organize tabs into collapsible groups.',
         'full': (
             'Tab Groups allow you to organize your open tabs into named, collapsible groups. '
@@ -815,6 +859,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Smart Tab Groups',
         'category': 'features',
         'subcategory': 'ui',
+        'level': 'advanced',
+        'mechanism': 'userjs',
         'short': 'AI-powered automatic tab grouping based on content.',
         'full': (
             'Smart Tab Groups uses machine learning to automatically organize your tabs into '
@@ -842,6 +888,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'New Sidebar Design',
         'category': 'features',
         'subcategory': 'ui',
+        'level': 'advanced',
+        'mechanism': 'userjs',
         'short': 'Enable the redesigned Firefox sidebar interface.',
         'full': (
             'The sidebar revamp introduces a modernized sidebar design with improved aesthetics '
@@ -868,6 +916,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Vertical Tabs',
         'category': 'features',
         'subcategory': 'ui',
+        'level': 'advanced',
+        'mechanism': 'userjs',
         'short': 'Display tabs vertically in the sidebar instead of horizontally.',
         'full': (
             'Vertical Tabs moves the tab bar from the top of the browser to a sidebar on the '
@@ -899,6 +949,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Machine Learning Features',
         'category': 'features',
         'subcategory': 'ai',
+        'level': 'advanced',
+        'mechanism': 'userjs',
         'short': 'Enable Firefox machine learning capabilities.',
         'full': (
             'This master toggle enables Firefox machine learning features that run locally '
@@ -926,6 +978,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Built-in AI Assistant',
         'category': 'features',
         'subcategory': 'ai',
+        'level': 'advanced',
+        'mechanism': 'userjs',
         'short': 'Enable the integrated AI chat assistant in Firefox.',
         'full': (
             'The built-in AI assistant provides conversational AI capabilities directly in '
@@ -953,6 +1007,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'AI Chat in Sidebar',
         'category': 'features',
         'subcategory': 'ai',
+        'level': 'advanced',
+        'mechanism': 'userjs',
         'short': 'Show the AI assistant in the browser sidebar.',
         'full': (
             'When enabled, the AI chat assistant appears in the browser sidebar for easy access '
@@ -980,6 +1036,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'AI Link Previews',
         'category': 'features',
         'subcategory': 'ai',
+        'level': 'advanced',
+        'mechanism': 'userjs',
         'short': 'Show AI-generated previews when hovering over links.',
         'full': (
             'AI Link Previews uses machine learning to generate quick summaries of linked '
@@ -1007,6 +1065,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Visual Search',
         'category': 'features',
         'subcategory': 'ai',
+        'level': 'advanced',
+        'mechanism': 'userjs',
         'short': 'Search the web using images instead of text.',
         'full': (
             'Visual Search allows you to search using images by right-clicking on any image '
@@ -1038,6 +1098,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'AVIF Image Format',
         'category': 'features',
         'subcategory': 'graphics',
+        'level': 'advanced',
+        'mechanism': 'userjs',
         'short': 'Enable support for AVIF image format.',
         'full': (
             'AVIF (AV1 Image File Format) is a modern image format based on the AV1 video '
@@ -1065,6 +1127,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Animated AVIF',
         'category': 'features',
         'subcategory': 'graphics',
+        'level': 'advanced',
+        'mechanism': 'userjs',
         'short': 'Enable support for animated AVIF images.',
         'full': (
             'Animated AVIF (AVIF sequences) allows AVIF images to contain multiple frames, '
@@ -1092,6 +1156,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'JPEG XL Format',
         'category': 'features',
         'subcategory': 'graphics',
+        'level': 'advanced',
+        'mechanism': 'userjs',
         'short': 'Enable JPEG XL image format support (Nightly only).',
         'full': (
             'JPEG XL (JXL) is a next-generation image format designed to replace JPEG with '
@@ -1123,6 +1189,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Scroll-Driven Animations',
         'category': 'features',
         'subcategory': 'css',
+        'level': 'advanced',
+        'mechanism': 'userjs',
         'short': 'Enable CSS animations triggered by scroll position.',
         'full': (
             'Scroll-driven animations allow CSS animations to progress based on scroll '
@@ -1150,6 +1218,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'CSS Masonry Layout',
         'category': 'features',
         'subcategory': 'css',
+        'level': 'advanced',
+        'mechanism': 'userjs',
         'short': 'Enable CSS Grid masonry layout support.',
         'full': (
             'CSS Masonry layout extends CSS Grid to allow items to flow into gaps left by '
@@ -1177,6 +1247,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'CSS :has() Selector',
         'category': 'features',
         'subcategory': 'css',
+        'level': 'advanced',
+        'mechanism': 'userjs',
         'short': 'Enable the CSS :has() parent selector.',
         'full': (
             'The CSS :has() selector (also known as the parent selector) allows selecting '
@@ -1208,6 +1280,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Sanitizer API',
         'category': 'features',
         'subcategory': 'dom',
+        'level': 'advanced',
+        'mechanism': 'userjs',
         'short': 'Enable the HTML Sanitizer API for safe content injection.',
         'full': (
             'The Sanitizer API provides a built-in way to safely insert untrusted HTML content '
@@ -1235,6 +1309,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'HTTP/3 Protocol',
         'category': 'features',
         'subcategory': 'dom',
+        'level': 'advanced',
+        'mechanism': 'userjs',
         'short': 'Enable HTTP/3 (QUIC) for faster, more reliable connections.',
         'full': (
             'HTTP/3 is the latest version of HTTP, built on the QUIC transport protocol instead '
@@ -1262,6 +1338,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'WebTransport API',
         'category': 'features',
         'subcategory': 'dom',
+        'level': 'advanced',
+        'mechanism': 'userjs',
         'short': 'Enable WebTransport for low-latency client-server communication.',
         'full': (
             'WebTransport is a modern API for bidirectional, low-latency communication between '
@@ -1293,6 +1371,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Restore Session',
         'category': 'privacy',
         'subcategory': 'session',
+        'level': 'base',
+        'mechanism': 'prefs',
         'short': 'Restore tabs from your last session when Firefox starts.',
         'full': (
             'When enabled, Firefox will restore all windows and tabs from your previous browsing '
@@ -1319,6 +1399,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Restore Pinned Tabs on Demand',
         'category': 'privacy',
         'subcategory': 'session',
+        'level': 'base',
+        'mechanism': 'prefs',
         'short': 'Load pinned tabs only when you click on them.',
         'full': (
             'When enabled, pinned tabs from your previous session are not loaded immediately on '
@@ -1345,6 +1427,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Restore After Crash',
         'category': 'privacy',
         'subcategory': 'session',
+        'level': 'base',
+        'mechanism': 'prefs',
         'short': 'Automatically restore your session after Firefox crashes.',
         'full': (
             'When enabled, if Firefox crashes unexpectedly, it will offer to restore your previous '
@@ -1371,6 +1455,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Lazy Session Restore',
         'category': 'privacy',
         'subcategory': 'session',
+        'level': 'base',
+        'mechanism': 'prefs',
         'short': 'Load tabs on demand instead of all at once.',
         'full': (
             'When enabled, tabs from your restored session are not loaded until you click on them. '
@@ -1401,6 +1487,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Keep Cookies on Shutdown',
         'category': 'privacy',
         'subcategory': 'data',
+        'level': 'base',
+        'mechanism': 'prefs',
         'short': 'Preserve website cookies when Firefox closes.',
         'full': (
             'When enabled, cookies are NOT cleared when Firefox shuts down. Cookies store login '
@@ -1427,6 +1515,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Keep Session Data on Shutdown',
         'category': 'privacy',
         'subcategory': 'data',
+        'level': 'base',
+        'mechanism': 'prefs',
         'short': 'Preserve open tabs and windows data when Firefox closes.',
         'full': (
             'When enabled, session data (open tabs, windows, scroll positions, form data) is NOT '
@@ -1453,6 +1543,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Remember Logins',
         'category': 'privacy',
         'subcategory': 'data',
+        'level': 'base',
+        'mechanism': 'prefs',
         'short': 'Allow Firefox to save and remember website passwords.',
         'full': (
             'When enabled, Firefox offers to save passwords you enter on websites and can auto-fill '
@@ -1479,6 +1571,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Keep Form Data on Shutdown',
         'category': 'privacy',
         'subcategory': 'data',
+        'level': 'base',
+        'mechanism': 'prefs',
         'short': 'Preserve form autocomplete history when Firefox closes.',
         'full': (
             'When enabled, form data (text entered in search boxes, forms, etc.) is NOT cleared '
@@ -1505,6 +1599,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Keep History on Shutdown',
         'category': 'privacy',
         'subcategory': 'data',
+        'level': 'base',
+        'mechanism': 'prefs',
         'short': 'Preserve browsing history when Firefox closes.',
         'full': (
             'When enabled, your browsing history is NOT cleared when Firefox shuts down. History '
@@ -1531,6 +1627,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Keep Download History on Shutdown',
         'category': 'privacy',
         'subcategory': 'data',
+        'level': 'base',
+        'mechanism': 'prefs',
         'short': 'Preserve download history when Firefox closes.',
         'full': (
             'When enabled, the list of downloaded files is NOT cleared when Firefox shuts down. '
@@ -1557,6 +1655,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Clear Cache on Shutdown',
         'category': 'privacy',
         'subcategory': 'data',
+        'level': 'base',
+        'mechanism': 'prefs',
         'short': 'Delete cached web content when Firefox closes.',
         'full': (
             'When enabled, the browser cache (stored images, scripts, stylesheets) is cleared '
@@ -1583,6 +1683,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Clear Offline Data on Shutdown',
         'category': 'privacy',
         'subcategory': 'data',
+        'level': 'base',
+        'mechanism': 'prefs',
         'short': 'Delete offline website data when Firefox closes.',
         'full': (
             'When enabled, offline website data (data stored by web apps for offline use) is '
@@ -1609,6 +1711,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Clear Site Preferences on Shutdown',
         'category': 'privacy',
         'subcategory': 'data',
+        'level': 'base',
+        'mechanism': 'prefs',
         'short': 'Reset site-specific permissions when Firefox closes.',
         'full': (
             'When enabled, site-specific preferences (zoom levels, notification permissions, '
@@ -1640,6 +1744,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Cookie Lifetime',
         'category': 'privacy',
         'subcategory': 'cookies',
+        'level': 'base',
+        'mechanism': 'prefs',
         'short': 'Control how long cookies are kept.',
         'full': (
             'Controls the default lifetime policy for cookies. "Normal" keeps cookies until they '
@@ -1666,6 +1772,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Cookie Maximum Age',
         'category': 'privacy',
         'subcategory': 'cookies',
+        'level': 'base',
+        'mechanism': 'prefs',
         'short': 'Maximum number of days to keep cookies.',
         'full': (
             'When cookie lifetime is set to "Custom Days," this controls the maximum age in days '
@@ -1692,6 +1800,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Third-Party Cookies',
         'category': 'privacy',
         'subcategory': 'cookies',
+        'level': 'base',
+        'mechanism': 'prefs',
         'short': 'Control cookies from sites other than the one you are visiting.',
         'full': (
             'Third-party cookies are set by domains other than the site you are visiting, typically '
@@ -1722,6 +1832,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Tracking Protection Level',
         'category': 'privacy',
         'subcategory': 'tracking',
+        'level': 'base',
+        'mechanism': 'prefs',
         'short': 'Choose the level of tracking protection.',
         'full': (
             'Firefox Enhanced Tracking Protection blocks trackers, cryptominers, and fingerprinters. '
@@ -1749,6 +1861,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Fingerprint Resistance',
         'category': 'privacy',
         'subcategory': 'tracking',
+        'level': 'advanced',
+        'mechanism': 'userjs',
         'short': 'Block fingerprinting attempts by websites.',
         'full': (
             'Fingerprinting is a technique to identify you based on your browser configuration, '
@@ -1775,6 +1889,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Block Cryptominers',
         'category': 'privacy',
         'subcategory': 'tracking',
+        'level': 'advanced',
+        'mechanism': 'userjs',
         'short': 'Block cryptocurrency mining scripts.',
         'full': (
             'Cryptomining scripts run in your browser to mine cryptocurrency using your CPU and '
@@ -1801,6 +1917,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Telemetry',
         'category': 'privacy',
         'subcategory': 'tracking',
+        'level': 'base',
+        'mechanism': 'prefs',
         'short': 'Send usage data to Mozilla.',
         'full': (
             'When enabled, Firefox collects and sends anonymous usage data to Mozilla to help '
@@ -1827,6 +1945,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Firefox Studies',
         'category': 'privacy',
         'subcategory': 'tracking',
+        'level': 'base',
+        'mechanism': 'prefs',
         'short': 'Allow Mozilla to run studies in Firefox.',
         'full': (
             'Firefox Studies let Mozilla test new features and changes with a subset of users '
@@ -1853,6 +1973,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Crash Reports',
         'category': 'privacy',
         'subcategory': 'tracking',
+        'level': 'base',
+        'mechanism': 'prefs',
         'short': 'Send crash reports to Mozilla.',
         'full': (
             'When Firefox crashes, it can send a report to Mozilla containing technical information '
@@ -1883,6 +2005,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'DNS over HTTPS',
         'category': 'security',
         'subcategory': 'network',
+        'level': 'advanced',
+        'mechanism': 'userjs',
         'short': 'Encrypt DNS queries for privacy and security.',
         'full': (
             'DNS over HTTPS (DoH) encrypts your DNS queries, preventing your ISP or network from '
@@ -1909,6 +2033,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'DoH Provider',
         'category': 'security',
         'subcategory': 'network',
+        'level': 'advanced',
+        'mechanism': 'userjs',
         'short': 'Choose your DNS over HTTPS provider.',
         'full': (
             'Select which DNS provider to use for encrypted DNS queries. Cloudflare (1.1.1.1) is '
@@ -1939,6 +2065,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'HTTPS-Only Mode',
         'category': 'security',
         'subcategory': 'network',
+        'level': 'base',
+        'mechanism': 'prefs',
         'short': 'Force all connections to use HTTPS.',
         'full': (
             'HTTPS-Only Mode upgrades all connections to HTTPS and warns before loading sites '
@@ -1965,6 +2093,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'HTTPS-Only in Private Browsing',
         'category': 'security',
         'subcategory': 'network',
+        'level': 'base',
+        'mechanism': 'prefs',
         'short': 'Force HTTPS in private browsing mode.',
         'full': (
             'Enables HTTPS-Only Mode specifically for Private Browsing windows. Even if HTTPS-Only '
@@ -1991,6 +2121,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Block Mixed Content',
         'category': 'security',
         'subcategory': 'network',
+        'level': 'advanced',
+        'mechanism': 'userjs',
         'short': 'Block insecure content on HTTPS pages.',
         'full': (
             'Mixed content occurs when an HTTPS page loads resources (scripts, images, etc.) over '
@@ -2017,6 +2149,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'WebRTC',
         'category': 'security',
         'subcategory': 'network',
+        'level': 'advanced',
+        'mechanism': 'userjs',
         'short': 'Enable WebRTC for video calls and P2P communication.',
         'full': (
             'WebRTC (Web Real-Time Communication) enables video calling, voice chat, and peer-to-peer '
@@ -2043,6 +2177,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'WebRTC IP Leak Prevention',
         'category': 'security',
         'subcategory': 'network',
+        'level': 'advanced',
+        'mechanism': 'userjs',
         'short': 'Prevent WebRTC from leaking your real IP address.',
         'full': (
             'WebRTC can reveal your real IP address even when using a VPN, through ICE candidate '
@@ -2069,6 +2205,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'DNS Prefetching',
         'category': 'security',
         'subcategory': 'network',
+        'level': 'advanced',
+        'mechanism': 'userjs',
         'short': 'Pre-resolve DNS for links on the page.',
         'full': (
             'DNS prefetching resolves domain names for links on a page before you click them, '
@@ -2095,6 +2233,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Link Prefetching',
         'category': 'security',
         'subcategory': 'network',
+        'level': 'advanced',
+        'mechanism': 'userjs',
         'short': 'Pre-load linked pages in the background.',
         'full': (
             'Link prefetching loads pages that you might navigate to in the background, making '
@@ -2121,6 +2261,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Network Predictor',
         'category': 'security',
         'subcategory': 'network',
+        'level': 'advanced',
+        'mechanism': 'userjs',
         'short': 'Predict and pre-connect to sites you might visit.',
         'full': (
             'The network predictor learns your browsing patterns and pre-connects to sites it '
@@ -2151,6 +2293,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Location Permission',
         'category': 'security',
         'subcategory': 'permissions',
+        'level': 'base',
+        'mechanism': 'prefs',
         'short': 'Default permission for location access.',
         'full': (
             'Controls the default behavior when websites request your location. "Allow" grants '
@@ -2177,6 +2321,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Camera Permission',
         'category': 'security',
         'subcategory': 'permissions',
+        'level': 'base',
+        'mechanism': 'prefs',
         'short': 'Default permission for camera access.',
         'full': (
             'Controls the default behavior when websites request camera access. "Allow" grants '
@@ -2202,6 +2348,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Microphone Permission',
         'category': 'security',
         'subcategory': 'permissions',
+        'level': 'base',
+        'mechanism': 'prefs',
         'short': 'Default permission for microphone access.',
         'full': (
             'Controls the default behavior when websites request microphone access. "Allow" grants '
@@ -2227,6 +2375,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Notifications Permission',
         'category': 'security',
         'subcategory': 'permissions',
+        'level': 'base',
+        'mechanism': 'prefs',
         'short': 'Default permission for desktop notifications.',
         'full': (
             'Controls whether websites can send desktop notifications. "Allow" enables notifications '
@@ -2253,6 +2403,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Autoplay Permission',
         'category': 'security',
         'subcategory': 'permissions',
+        'level': 'base',
+        'mechanism': 'prefs',
         'short': 'Control automatic video and audio playback.',
         'full': (
             'Controls whether websites can automatically play audio and video content. "Allow" '
@@ -2279,6 +2431,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Search Suggestions',
         'category': 'security',
         'subcategory': 'permissions',
+        'level': 'base',
+        'mechanism': 'prefs',
         'short': 'Show search suggestions as you type.',
         'full': (
             'When enabled, Firefox sends your keystrokes to your search engine as you type, '
@@ -2305,6 +2459,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'URL Bar Suggestions',
         'category': 'security',
         'subcategory': 'permissions',
+        'level': 'base',
+        'mechanism': 'prefs',
         'short': 'Suggest URLs from history in the address bar.',
         'full': (
             'When enabled, the address bar suggests URLs from your browsing history as you type. '
@@ -2331,6 +2487,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Autofill Forms',
         'category': 'security',
         'subcategory': 'permissions',
+        'level': 'base',
+        'mechanism': 'prefs',
         'short': 'Automatically fill in form fields.',
         'full': (
             'When enabled, Firefox can automatically fill in form fields based on your previous '
@@ -2357,6 +2515,8 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Autofill Passwords',
         'category': 'security',
         'subcategory': 'permissions',
+        'level': 'base',
+        'mechanism': 'prefs',
         'short': 'Automatically fill in saved passwords.',
         'full': (
             'When enabled and you have saved passwords, Firefox automatically fills them into '
@@ -2426,6 +2586,38 @@ def validate_setting_value(setting_key: str, value: Any) -> bool:
         return False
     setting = SETTINGS_METADATA[setting_key]
     return value in setting.get('values', [])
+
+
+def get_base_settings() -> Dict[str, Dict[str, Any]]:
+    """Get all settings that should be applied via prefs.js (base level)."""
+    return {
+        key: value for key, value in SETTINGS_METADATA.items()
+        if value.get('level') == 'base'
+    }
+
+
+def get_advanced_settings() -> Dict[str, Dict[str, Any]]:
+    """Get all settings that should be applied via user.js (advanced level)."""
+    return {
+        key: value for key, value in SETTINGS_METADATA.items()
+        if value.get('level') == 'advanced'
+    }
+
+
+def get_settings_by_level(level: str) -> Dict[str, Dict[str, Any]]:
+    """Get all settings for a specific level ('base' or 'advanced')."""
+    return {
+        key: value for key, value in SETTINGS_METADATA.items()
+        if value.get('level') == level
+    }
+
+
+def get_settings_by_mechanism(mechanism: str) -> Dict[str, Dict[str, Any]]:
+    """Get all settings for a specific mechanism ('prefs' or 'userjs')."""
+    return {
+        key: value for key, value in SETTINGS_METADATA.items()
+        if value.get('mechanism') == mechanism
+    }
 
 
 # =============================================================================
