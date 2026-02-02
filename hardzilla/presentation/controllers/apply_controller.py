@@ -11,6 +11,7 @@ from typing import Callable, Optional
 
 from hardzilla.presentation.view_models import ApplyViewModel
 from hardzilla.application.use_cases import ApplySettingsUseCase, SaveProfileUseCase
+from hardzilla.application.use_cases.install_extensions_use_case import InstallExtensionsUseCase
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +28,7 @@ class ApplyController:
         view_model: ApplyViewModel,
         apply_settings: ApplySettingsUseCase,
         save_profile: SaveProfileUseCase,
+        install_extensions: InstallExtensionsUseCase,
         ui_callback: Optional[Callable[[Callable], None]] = None
     ):
         """
@@ -41,8 +43,10 @@ class ApplyController:
         self.view_model = view_model
         self.apply_settings = apply_settings
         self.save_profile = save_profile
+        self.install_extensions = install_extensions
         self.ui_callback = ui_callback
         self._apply_thread: Optional[threading.Thread] = None
+        self._extension_thread: Optional[threading.Thread] = None
 
     def handle_apply(self) -> None:
         """
@@ -149,6 +153,112 @@ class ApplyController:
                 self.view_model.error_message = ""
 
         # Schedule on main thread if callback provided, otherwise run directly
+        if self.ui_callback:
+            self.ui_callback(update)
+        else:
+            update()
+
+    def handle_install_extensions(self) -> None:
+        """
+        Handle install extensions button click.
+
+        Installs extensions to Firefox in background thread.
+        """
+        # Prevent double-clicks
+        if self._extension_thread and self._extension_thread.is_alive():
+            logger.warning("Extension installation already in progress")
+            return
+
+        # Validate inputs
+        if not self.view_model.selected_extensions:
+            self._update_extension_ui_state(error="No extensions selected")
+            return
+
+        if not self.view_model.firefox_path:
+            self._update_extension_ui_state(error="No Firefox path selected")
+            return
+
+        # Snapshot extension IDs and firefox path to avoid race conditions
+        extension_ids = list(self.view_model.selected_extensions)
+        firefox_path = self.view_model.firefox_path
+
+        # Set installing state
+        self.view_model.is_installing_extensions = True
+
+        # Run in background thread with snapshotted values
+        self._extension_thread = threading.Thread(
+            target=self._install_extensions_worker,
+            args=(extension_ids, firefox_path),
+            daemon=True,
+            name="InstallExtensionsThread"
+        )
+        self._extension_thread.start()
+
+    def _install_extensions_worker(self, extension_ids: list, firefox_path: str) -> None:
+        """
+        Worker thread for installing extensions.
+
+        Runs installation operations without blocking UI.
+
+        Args:
+            extension_ids: Snapshot of extension IDs to install
+            firefox_path: Snapshot of Firefox profile path
+        """
+        try:
+            # Execute use case with snapshotted values
+            results = self.install_extensions.execute(
+                profile_path=Path(firefox_path),
+                extension_ids=extension_ids
+            )
+
+            logger.info(
+                f"Installed {len(results['installed'])} of {results['total']} extensions"
+            )
+
+            # Schedule UI update
+            self._update_extension_ui_state(
+                is_installing=False,
+                success=True,
+                results=results
+            )
+
+        except Exception as e:
+            logger.error(f"Failed to install extensions: {e}", exc_info=True)
+            self._update_extension_ui_state(
+                is_installing=False,
+                success=False,
+                error=str(e)
+            )
+
+    def _update_extension_ui_state(
+        self,
+        is_installing: Optional[bool] = None,
+        success: Optional[bool] = None,
+        error: Optional[str] = None,
+        results: Optional[dict] = None
+    ) -> None:
+        """
+        Update extension-related ViewModel state safely from any thread.
+
+        Args:
+            is_installing: Whether installation is in progress
+            success: Whether installation succeeded
+            error: Error message if failed
+            results: Installation results dictionary
+        """
+        def update():
+            if is_installing is not None:
+                self.view_model.is_installing_extensions = is_installing
+            if results is not None:
+                self.view_model.extension_install_results = results
+            if success is not None:
+                self.view_model.extension_install_success = success
+            if error is not None:
+                self.view_model.error_message = error
+            else:
+                self.view_model.error_message = ""
+
+        # Schedule on main thread if callback provided
         if self.ui_callback:
             self.ui_callback(update)
         else:
