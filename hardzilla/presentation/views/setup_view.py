@@ -49,7 +49,9 @@ class SetupView(ctk.CTkScrollableFrame):
         parent,
         view_model: SetupViewModel,
         on_generate_recommendation: Callable,
-        on_next: Callable
+        on_next: Callable,
+        on_firefox_path_changed: Callable = None,
+        on_preset_selected: Callable = None
     ):
         """
         Initialize Setup View.
@@ -59,11 +61,15 @@ class SetupView(ctk.CTkScrollableFrame):
             view_model: SetupViewModel for state management
             on_generate_recommendation: Callback to generate recommendation
             on_next: Callback for Next button
+            on_firefox_path_changed: Callback when Firefox path is selected
+            on_preset_selected: Callback when preset is selected
         """
         super().__init__(parent)
         self.view_model = view_model
         self.on_generate_recommendation = on_generate_recommendation
         self.on_next = on_next
+        self.on_firefox_path_changed = on_firefox_path_changed
+        self.on_preset_selected = on_preset_selected
 
         # Configure grid
         self.grid_columnconfigure(0, weight=1)
@@ -123,6 +129,15 @@ class SetupView(ctk.CTkScrollableFrame):
             command=self._browse_firefox_path
         )
         browse_btn.grid(row=0, column=2, padx=10, pady=10)
+
+        # Import status label (initially hidden)
+        self.import_status_label = ctk.CTkLabel(
+            self.firefox_section,
+            text="",
+            font=ctk.CTkFont(size=12),
+            text_color="#3B82F6"
+        )
+        self.import_status_label.grid(row=1, column=0, columnspan=3, padx=10, pady=(0, 10), sticky="w")
 
     def _build_quick_presets(self):
         """Build quick preset selection cards"""
@@ -343,6 +358,13 @@ class SetupView(ctk.CTkScrollableFrame):
                 self.path_entry.insert(0, path)
                 self.view_model.firefox_path = path
                 self._clear_path_error()
+
+                # Show import status
+                self._show_import_status("🔄 Loading current Firefox settings...")
+
+                # Trigger import callback
+                if self.on_firefox_path_changed:
+                    self.on_firefox_path_changed(path)
             else:
                 # Invalid path - show error
                 self._show_path_error(error_msg)
@@ -392,6 +414,21 @@ class SetupView(ctk.CTkScrollableFrame):
         """Clear error message for Firefox path"""
         if hasattr(self, 'path_error_label'):
             self.path_error_label.configure(text="")
+
+    def _show_import_status(self, message: str):
+        """Show import status message"""
+        self.import_status_label.configure(text=message, text_color="#3B82F6")
+
+    def _clear_import_status(self):
+        """Clear import status message"""
+        self.import_status_label.configure(text="")
+
+    def show_import_success(self, settings_count: int):
+        """Show successful import message"""
+        self.import_status_label.configure(
+            text=f"✓ Loaded {settings_count} settings from Firefox profile",
+            text_color="#2FA572"
+        )
 
     def _on_use_case_toggle(self, value: str, var: ctk.BooleanVar):
         """Handle use case checkbox toggle"""
@@ -506,8 +543,12 @@ class SetupView(ctk.CTkScrollableFrame):
         # Store selected preset
         self.selected_card = preset_key
 
-        # Trigger generation immediately with preset
+        # Update view model
         self.view_model.selected_preset = preset_key
+
+        # Trigger preset loading callback
+        if self.on_preset_selected:
+            self.on_preset_selected(preset_key)
 
         # Show success message
         self._show_preset_selected_message(preset_key)

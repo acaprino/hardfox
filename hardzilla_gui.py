@@ -107,7 +107,7 @@ class HardzillaGUI(ctk.CTk):
     def _init_view_models(self):
         """Initialize view models"""
         self.setup_vm = SetupViewModel()
-        self.customize_vm = CustomizeViewModel()
+        self.customize_vm = CustomizeViewModel(settings_repo=self.settings_repo)
         self.apply_vm = ApplyViewModel()
 
     def _init_controllers(self):
@@ -115,7 +115,9 @@ class HardzillaGUI(ctk.CTk):
         self.setup_controller = SetupController(
             view_model=self.setup_vm,
             generate_recommendation=self.generate_recommendation,
+            import_from_firefox=self.import_from_firefox,
             on_next=self._on_setup_next,
+            on_profile_imported=self._on_profile_imported,
             ui_callback=self._schedule_ui_update
         )
 
@@ -197,7 +199,9 @@ class HardzillaGUI(ctk.CTk):
             parent=self.tabview.tab("Setup & Presets"),
             view_model=self.setup_vm,
             on_generate_recommendation=self._on_generate_recommendation,
-            on_next=self._on_setup_next
+            on_next=self._on_setup_next,
+            on_firefox_path_changed=self._on_firefox_path_changed,
+            on_preset_selected=self._on_preset_selected
         )
         self.setup_view.pack(fill="both", expand=True)
 
@@ -245,6 +249,56 @@ class HardzillaGUI(ctk.CTk):
         self.after(0, callback)
 
     # Event handlers
+    def _on_preset_selected(self, preset_key: str):
+        """Handle preset selection - update customize settings"""
+        try:
+            # Load preset
+            profile = self.load_preset.execute(preset_key)
+            logger.info(f"Loaded preset '{preset_key}': {len(profile.settings)} settings")
+
+            # Update customize view with preset values
+            self.customize_vm.profile = profile
+
+        except Exception as e:
+            logger.error(f"Failed to load preset: {e}")
+            self._show_error("Failed to load preset", str(e))
+
+    def _on_firefox_path_changed(self, path: str):
+        """Handle Firefox path selection - import current settings"""
+        try:
+            self.setup_controller.handle_firefox_path_changed(path)
+        except Exception as e:
+            logger.error(f"Failed to import from Firefox: {e}")
+            self._show_error("Failed to import settings", str(e))
+
+    def _on_profile_imported(self, profile):
+        """Handle profile imported from Firefox"""
+        if profile is None:
+            # Import failed - clear loading status and show error
+            self.setup_view._clear_import_status()
+            self._show_error(
+                "Import Failed",
+                "Failed to import settings from the selected Firefox profile.\n\n"
+                "Please check that Firefox is closed and the profile is valid."
+            )
+            return
+
+        logger.info(f"Profile imported: {profile.name} with {len(profile.settings)} settings")
+
+        # Update customize view with imported profile
+        self.customize_vm.profile = profile
+
+        # Update setup view to show success
+        self.setup_view.show_import_success(len(profile.settings))
+
+        # Show notification
+        self._show_info(
+            "Firefox Settings Imported",
+            f"Loaded {profile.get_base_settings_count()} BASE and "
+            f"{profile.get_advanced_settings_count()} ADVANCED settings from your Firefox profile.\n\n"
+            f"Switch to the 'Customize Settings' tab to review and modify your settings."
+        )
+
     def _on_generate_recommendation(self):
         """Handle generate recommendation button"""
         try:
@@ -255,52 +309,50 @@ class HardzillaGUI(ctk.CTk):
 
     def _on_setup_next(self):
         """Handle next from setup tab"""
-        # Validate Firefox path before proceeding
-        if not self.setup_vm.firefox_path:
-            self._show_error(
-                "Firefox Path Required",
-                "Please select a Firefox profile directory before proceeding."
-            )
-            return
-
-        if not self.setup_controller.validate_firefox_path(self.setup_vm.firefox_path):
-            self._show_error(
-                "Invalid Firefox Path",
-                "The selected directory is not a valid Firefox profile.\n\n"
-                "Please select a directory containing prefs.js or times.json."
-            )
-            return
-
-        # Get or generate profile
-        profile = self.setup_vm.generated_profile
-
-        # If no generated profile but preset is selected, load preset
-        if not profile and self.setup_vm.selected_preset:
+        # Optional: Load preset if selected
+        if self.setup_vm.selected_preset and not self.setup_vm.generated_profile:
             try:
                 profile = self.load_preset.execute(self.setup_vm.selected_preset)
-                self.setup_vm.generated_profile = profile  # Cache it
+                self.setup_vm.generated_profile = profile
+                self.customize_vm.profile = profile  # Update settings values
             except Exception as e:
                 logger.error(f"Failed to load preset: {e}")
                 self._show_error("Failed to load preset", str(e))
                 return
+        elif self.setup_vm.generated_profile:
+            # Update customize view with generated profile
+            self.customize_vm.profile = self.setup_vm.generated_profile
 
-        # Proceed to next tab
-        if profile:
-            self.customize_vm.profile = profile
-            self.tabview.set("Customize Settings")
-        else:
-            self._show_error(
-                "No Configuration Selected",
-                "Please select a preset or generate a recommendation before proceeding."
-            )
+        # Always allow going to customize tab (settings are pre-loaded from metadata)
+        self.tabview.set("Customize Settings")
 
     def _on_customize_next(self):
         """Handle next from customize tab"""
-        # Pass profile and firefox path to apply view
-        if self.customize_vm.profile:
-            self.apply_vm.profile = self.customize_vm.profile
-            self.apply_vm.firefox_path = self.setup_vm.firefox_path
-            self.tabview.set("Apply to Firefox")
+        from hardzilla.domain.entities import Profile
+
+        # Build profile from current ViewModel settings (includes user modifications)
+        settings = self.customize_vm.settings
+
+        if not settings:
+            self._show_error(
+                "No Settings",
+                "No settings available to apply. Please select a preset or import from Firefox."
+            )
+            return
+
+        # Create or update profile with current settings
+        profile_name = self.customize_vm.profile.name if self.customize_vm.profile else "Custom Configuration"
+        profile = Profile(
+            name=profile_name,
+            settings=settings.copy(),
+            metadata={},
+            generated_by="user_customization"
+        )
+
+        # Pass to apply view
+        self.apply_vm.profile = profile
+        self.apply_vm.firefox_path = self.setup_vm.firefox_path
+        self.tabview.set("Apply to Firefox")
 
     def _on_customize_back(self):
         """Handle back from customize tab"""
@@ -342,6 +394,35 @@ class HardzillaGUI(ctk.CTk):
             error_window,
             text="OK",
             command=error_window.destroy
+        ).pack(pady=10)
+
+    def _show_info(self, title: str, message: str):
+        """Show info dialog"""
+        info_window = ctk.CTkToplevel(self)
+        info_window.title(title)
+        info_window.geometry("450x250")
+
+        # Success icon
+        ctk.CTkLabel(
+            info_window,
+            text="✓",
+            font=ctk.CTkFont(size=48),
+            text_color="#2FA572"
+        ).pack(pady=(20, 10))
+
+        ctk.CTkLabel(
+            info_window,
+            text=message,
+            wraplength=400,
+            font=ctk.CTkFont(size=13)
+        ).pack(padx=20, pady=10)
+
+        ctk.CTkButton(
+            info_window,
+            text="OK",
+            command=info_window.destroy,
+            fg_color="#2FA572",
+            hover_color="#238C5C"
         ).pack(pady=10)
 
 

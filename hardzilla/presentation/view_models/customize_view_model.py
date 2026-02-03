@@ -16,7 +16,7 @@ class CustomizeViewModel(BaseViewModel):
     Manages the state of 140+ settings with modifications tracking.
 
     Properties:
-    - profile: Current profile being customized
+    - profile: Current profile being customized (optional, for metadata only)
     - settings: Dictionary of all settings (key -> Setting)
     - modified_settings: Set of keys that have been modified
     - search_query: Current search filter text
@@ -24,13 +24,22 @@ class CustomizeViewModel(BaseViewModel):
     - show_advanced: Whether to show advanced settings
     """
 
-    def __init__(self):
-        """Initialize customize view model"""
+    def __init__(self, settings_repo=None):
+        """
+        Initialize customize view model.
+
+        Args:
+            settings_repo: Repository to load all available settings
+        """
         super().__init__()
+
+        # Load all settings from metadata
+        all_settings = settings_repo.get_all() if settings_repo else {}
 
         self._properties = {
             'profile': None,
-            'settings': {},
+            'settings': all_settings.copy(),  # Start with all settings at default values
+            'base_settings': all_settings,  # Keep reference to base metadata
             'modified_settings': set(),
             'search_query': '',
             'selected_category': None,
@@ -45,9 +54,25 @@ class CustomizeViewModel(BaseViewModel):
 
     @profile.setter
     def profile(self, value: Optional[Profile]):
+        """
+        Set profile and UPDATE setting values (not replace).
+
+        When a preset is selected or Firefox profile is imported,
+        this updates the values of the settings without replacing
+        the entire settings dictionary.
+        """
         self.set_property('profile', value)
         if value:
-            self._properties['settings'] = value.settings.copy()
+            # Update values from the profile settings
+            current_settings = self._properties['settings']
+            for key, profile_setting in value.settings.items():
+                if key in current_settings:
+                    # Update existing setting value
+                    current_settings[key] = profile_setting
+                else:
+                    # Add new setting if not in metadata
+                    current_settings[key] = profile_setting
+
             self._notify('settings', self._properties['settings'])
 
     # Settings
@@ -95,12 +120,20 @@ class CustomizeViewModel(BaseViewModel):
             self._notify('settings', self._properties['settings'])
 
     def reset_all(self) -> None:
-        """Reset all settings to original profile values"""
+        """Reset all settings to current profile values (or defaults if no profile)"""
         if self.profile:
-            self._properties['settings'] = self.profile.settings.copy()
-            self.set_property('modified_settings', set())
-            self.set_property('modification_count', 0)
-            self._notify('settings', self._properties['settings'])
+            # Reset to profile values
+            current_settings = self._properties['settings']
+            for key, profile_setting in self.profile.settings.items():
+                if key in current_settings:
+                    current_settings[key] = profile_setting
+        else:
+            # Reset to base metadata defaults
+            self._properties['settings'] = self._properties['base_settings'].copy()
+
+        self.set_property('modified_settings', set())
+        self.set_property('modification_count', 0)
+        self._notify('settings', self._properties['settings'])
 
     # Search Query
     @property

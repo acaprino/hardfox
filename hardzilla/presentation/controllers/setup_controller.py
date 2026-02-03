@@ -26,7 +26,9 @@ class SetupController:
         self,
         view_model: SetupViewModel,
         generate_recommendation: GenerateRecommendationUseCase,
+        import_from_firefox = None,
         on_next: Callable = None,
+        on_profile_imported: Callable = None,
         ui_callback: Optional[Callable[[Callable], None]] = None
     ):
         """
@@ -35,14 +37,19 @@ class SetupController:
         Args:
             view_model: SetupViewModel instance
             generate_recommendation: Use case for generating recommendations
+            import_from_firefox: Use case for importing from Firefox
             on_next: Callback when user proceeds to next screen
+            on_profile_imported: Callback when profile is imported
             ui_callback: Callback for scheduling UI updates from background thread
         """
         self.view_model = view_model
         self.generate_recommendation = generate_recommendation
+        self.import_from_firefox = import_from_firefox
         self.on_next = on_next
+        self.on_profile_imported = on_profile_imported
         self.ui_callback = ui_callback
         self._generate_thread: Optional[threading.Thread] = None
+        self._import_thread: Optional[threading.Thread] = None
 
     def handle_generate_recommendation(self) -> None:
         """
@@ -158,6 +165,74 @@ class SetupController:
         has_times = (firefox_path / "times.json").exists()
 
         return has_prefs or has_times
+
+    def handle_firefox_path_changed(self, path: str) -> None:
+        """
+        Handle Firefox path selection - import current settings.
+
+        Args:
+            path: Firefox profile path
+        """
+        if not self.import_from_firefox:
+            logger.warning("Import use case not available")
+            return
+
+        # Prevent double-imports
+        if self._import_thread and self._import_thread.is_alive():
+            logger.warning("Import already in progress")
+            return
+
+        # Run import in background thread
+        self._import_thread = threading.Thread(
+            target=self._import_worker,
+            args=(path,),
+            daemon=True,
+            name="ImportFromFirefoxThread"
+        )
+        self._import_thread.start()
+
+    def _import_worker(self, path: str) -> None:
+        """
+        Worker thread for importing Firefox settings.
+
+        Args:
+            path: Firefox profile path
+        """
+        try:
+            from pathlib import Path
+            firefox_path = Path(path)
+
+            # Import settings
+            profile = self.import_from_firefox.execute(
+                profile_path=firefox_path,
+                profile_name=f"Current - {firefox_path.name}"
+            )
+
+            logger.info(f"Imported profile from {firefox_path.name}: {len(profile.settings)} settings")
+
+            # Notify via callback
+            if self.on_profile_imported:
+                def update():
+                    self.on_profile_imported(profile)
+
+                if self.ui_callback:
+                    self.ui_callback(update)
+                else:
+                    update()
+
+        except Exception as e:
+            logger.error(f"Failed to import from Firefox: {e}", exc_info=True)
+
+            # Show error to user
+            def show_error():
+                if self.on_profile_imported:
+                    # Signal error with None
+                    self.on_profile_imported(None)
+
+            if self.ui_callback:
+                self.ui_callback(show_error)
+            else:
+                show_error()
 
     def handle_next(self) -> None:
         """Handle next button click"""

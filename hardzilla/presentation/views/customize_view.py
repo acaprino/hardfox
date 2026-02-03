@@ -67,6 +67,9 @@ class CustomizeView(ctk.CTkFrame):
         # Subscribe to view model changes
         self.view_model.subscribe('profile', self._on_profile_changed)
 
+        # Initial render with default settings
+        self._on_profile_changed(None)
+
     def _build_header(self):
         """Build screen header with legend"""
         header_frame = ctk.CTkFrame(self, fg_color="transparent")
@@ -233,23 +236,35 @@ class CustomizeView(ctk.CTkFrame):
 
     def _on_profile_changed(self, profile):
         """Update display when profile changes"""
+        # Always render settings (even if profile is None, we have base metadata)
+        settings = self.view_model.settings
+
         if profile:
-            # Update summary
+            # Update summary with profile info
             self.profile_name_label.configure(text=f"{profile.name}")
             base_count = profile.get_base_settings_count()
             adv_count = profile.get_advanced_settings_count()
             total_count = len(profile.settings)
-            self.stats_label.configure(
-                text=f"{base_count} BASE | {adv_count} ADVANCED | {total_count} total settings"
-            )
+        else:
+            # Show default info when no profile loaded
+            self.profile_name_label.configure(text="All Settings (Default Values)")
+            # Count from ViewModel settings
+            base_count = sum(1 for s in settings.values() if s.level.value == "BASE")
+            adv_count = sum(1 for s in settings.values() if s.level.value == "ADVANCED")
+            total_count = len(settings)
 
-            # Render settings list
-            self._render_settings()
+        self.stats_label.configure(
+            text=f"{base_count} BASE | {adv_count} ADVANCED | {total_count} total settings"
+        )
+
+        # Render settings list
+        self._render_settings()
 
     def _render_settings(self):
         """Render settings list organized by category"""
-        profile = self.view_model.profile
-        if not profile:
+        # Get settings from ViewModel (not profile) to reflect user modifications
+        settings = self.view_model.settings
+        if not settings:
             return
 
         # Clear existing widgets
@@ -259,7 +274,7 @@ class CustomizeView(ctk.CTkFrame):
         self.setting_rows.clear()
 
         # Group settings by category
-        categories = self._group_by_category(profile.settings)
+        categories = self._group_by_category(settings)
 
         # Filter by search and visibility
         search_text = self.search_entry.get().lower()
