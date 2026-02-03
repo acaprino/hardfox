@@ -111,6 +111,7 @@ class FirefoxExtensionRepository(IExtensionRepository):
 
         Checks common installation paths across platforms and looks for
         firefox.exe (Windows) or firefox (Linux/macOS) binary.
+        Also detects Firefox Portable installations.
 
         Args:
             profile_path: Path to Firefox profile
@@ -123,6 +124,27 @@ class FirefoxExtensionRepository(IExtensionRepository):
 
         system = platform.system()
 
+        # Determine binary name by platform
+        if system == "Windows":
+            binary_name = "firefox.exe"
+            portable_binary = "FirefoxPortable.exe"
+        elif system == "Linux":
+            binary_name = "firefox"
+            portable_binary = None  # Portable typically Windows-only
+        elif system == "Darwin":  # macOS
+            binary_name = "firefox"
+            portable_binary = None
+        else:
+            logger.warning(f"Unsupported platform: {system}")
+            return None
+
+        # Check if profile is inside a Firefox Portable installation
+        if system == "Windows":
+            portable_dir = self._detect_firefox_portable(profile_path, portable_binary, binary_name)
+            if portable_dir:
+                logger.info(f"Found Firefox Portable installation at: {portable_dir}")
+                return portable_dir
+
         # Common Firefox installation paths by platform
         if system == "Windows":
             common_paths = [
@@ -130,7 +152,6 @@ class FirefoxExtensionRepository(IExtensionRepository):
                 Path("C:/Program Files (x86)/Mozilla Firefox"),
                 Path(os.path.expandvars("%LOCALAPPDATA%/Mozilla Firefox")),
             ]
-            binary_name = "firefox.exe"
         elif system == "Linux":
             common_paths = [
                 Path("/usr/lib/firefox"),
@@ -138,17 +159,12 @@ class FirefoxExtensionRepository(IExtensionRepository):
                 Path("/opt/firefox"),
                 Path("/snap/firefox/current/usr/lib/firefox"),
             ]
-            binary_name = "firefox"
         elif system == "Darwin":  # macOS
             common_paths = [
                 Path("/Applications/Firefox.app/Contents/MacOS"),
             ]
-            binary_name = "firefox"
-        else:
-            logger.warning(f"Unsupported platform: {system}")
-            return None
 
-        # Check common paths first
+        # Check common paths
         for path in common_paths:
             if path.exists() and (path / binary_name).exists():
                 logger.info(f"Found Firefox installation at: {path}")
@@ -179,6 +195,48 @@ class FirefoxExtensionRepository(IExtensionRepository):
                 logger.debug(f"Registry lookup failed: {e}")
 
         logger.warning("Could not find Firefox installation directory")
+        return None
+
+    def _detect_firefox_portable(self, profile_path: Path, portable_binary: str, firefox_binary: str) -> Path:
+        """
+        Detect if the profile is inside a Firefox Portable installation.
+
+        Firefox Portable structure:
+        - FirefoxPortable/
+          - FirefoxPortable.exe
+          - App/Firefox64/firefox.exe (64-bit installation)
+          - App/Firefox/firefox.exe (32-bit installation, may be empty)
+          - Data/profile/ (user profile)
+
+        Args:
+            profile_path: Path to Firefox profile
+            portable_binary: Name of portable launcher (e.g., "FirefoxPortable.exe")
+            firefox_binary: Name of Firefox binary (e.g., "firefox.exe")
+
+        Returns:
+            Path to Firefox installation directory (App/Firefox64 or App/Firefox), or None if not portable
+        """
+        # Walk up the directory tree looking for FirefoxPortable.exe
+        current = profile_path.resolve()
+        max_depth = 10  # Limit search depth
+
+        for _ in range(max_depth):
+            parent = current.parent
+            if parent == current:  # Reached root
+                break
+
+            # Check if this directory contains FirefoxPortable.exe
+            portable_exe = parent / portable_binary
+            if portable_exe.exists():
+                # Found portable directory, check for Firefox installation
+                # Try Firefox64 first (64-bit), then Firefox (32-bit)
+                for firefox_dir_name in ["Firefox64", "Firefox"]:
+                    firefox_install = parent / "App" / firefox_dir_name
+                    if firefox_install.exists() and (firefox_install / firefox_binary).exists():
+                        return firefox_install
+
+            current = parent
+
         return None
 
     def _create_distribution_dir(self, dist_dir: Path) -> None:

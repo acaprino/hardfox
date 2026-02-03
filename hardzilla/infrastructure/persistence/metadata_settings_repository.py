@@ -123,6 +123,7 @@ class MetadataSettingsRepository(ISettingsRepository):
         max_value = None
         step = None
         options = None
+        firefox_values = None
 
         if setting_type == SettingType.SLIDER:
             # For sliders, use values list
@@ -141,17 +142,25 @@ class MetadataSettingsRepository(ISettingsRepository):
 
         elif setting_type == SettingType.DROPDOWN:
             # For dropdowns, use labels if available, else values
-            options = metadata.get('labels', metadata.get('values', []))
-            # Convert to strings
-            options = [str(opt) for opt in options]
+            values_list = metadata.get('values', [])
+            labels_list = metadata.get('labels', [])
 
-            # For dropdowns, ensure the default value is in the options
-            # If not, try to find it in the values list and map to label
+            # If both values and labels exist, use labels for UI (options)
+            # and keep values for Firefox mapping (firefox_values)
+            if labels_list:
+                options = [str(opt) for opt in labels_list]
+                firefox_values = values_list if values_list else None
+            else:
+                # No labels, use values for both
+                options = [str(opt) for opt in values_list]
+                firefox_values = None
+
+            # For dropdowns, ensure the default value is in the correct format
+            # If it's a Firefox value (URL), convert to label
             if value not in options:
-                values_list = metadata.get('values', [])
-                if value in values_list:
+                if firefox_values and value in firefox_values:
                     # Find index and use corresponding label
-                    idx = values_list.index(value)
+                    idx = firefox_values.index(value)
                     if idx < len(options):
                         value = options[idx]
                 else:
@@ -180,6 +189,7 @@ class MetadataSettingsRepository(ISettingsRepository):
             max_value=max_value,
             step=step,
             options=options,
+            firefox_values=firefox_values,
             intent_tags=intent_tags,
             breakage_score=breakage_score,
             visibility=visibility

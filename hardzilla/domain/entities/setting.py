@@ -26,7 +26,8 @@ class Setting:
         min_value: Minimum value for sliders
         max_value: Maximum value for sliders
         step: Step increment for sliders
-        options: Available choices for dropdowns
+        options: Available choices for dropdowns (UI labels)
+        firefox_values: For dropdowns - actual Firefox pref values (parallel to options)
         intent_tags: Tags for intent matching (e.g., ["banking", "privacy"])
         breakage_score: 0-10 scale of likelihood to break sites
         visibility: "core" (show by default) or "advanced" (progressive disclosure)
@@ -43,6 +44,7 @@ class Setting:
     max_value: Optional[int] = None
     step: Optional[int] = None
     options: Optional[List[str]] = None
+    firefox_values: Optional[List[Any]] = None  # For dropdowns: actual Firefox pref values (parallel to options/labels)
     intent_tags: List[str] = field(default_factory=list)
     breakage_score: int = 0
     visibility: str = "core"
@@ -128,6 +130,7 @@ class Setting:
             max_value=self.max_value,
             step=self.step,
             options=self.options,
+            firefox_values=self.firefox_values,
             intent_tags=self.intent_tags.copy(),
             breakage_score=self.breakage_score,
             visibility=self.visibility
@@ -144,3 +147,53 @@ class Setting:
             True if any tag matches
         """
         return bool(set(self.intent_tags) & set(intent_tags))
+
+    def label_to_firefox_value(self, label: Any) -> Any:
+        """
+        Convert a UI label to its corresponding Firefox preference value.
+
+        For dropdowns with separate labels and values (e.g., DNS providers),
+        this maps 'Quad9 (9.9.9.9)' → 'https://dns.quad9.net/dns-query'.
+
+        Args:
+            label: The UI label value
+
+        Returns:
+            Corresponding Firefox preference value, or label if no mapping exists
+        """
+        if self.setting_type != SettingType.DROPDOWN or not self.firefox_values:
+            return label
+
+        # Try exact match
+        if label in self.options:
+            idx = self.options.index(label)
+            if idx < len(self.firefox_values):
+                return self.firefox_values[idx]
+
+        # No mapping found, return original
+        return label
+
+    def firefox_value_to_label(self, firefox_value: Any) -> Any:
+        """
+        Convert a Firefox preference value to its corresponding UI label.
+
+        For dropdowns with separate labels and values (e.g., DNS providers),
+        this maps 'https://dns.quad9.net/dns-query' → 'Quad9 (9.9.9.9)'.
+
+        Args:
+            firefox_value: The Firefox preference value
+
+        Returns:
+            Corresponding UI label, or firefox_value if no mapping exists
+        """
+        if self.setting_type != SettingType.DROPDOWN or not self.firefox_values:
+            return firefox_value
+
+        # Try exact match
+        if firefox_value in self.firefox_values:
+            idx = self.firefox_values.index(firefox_value)
+            if idx < len(self.options):
+                return self.options[idx]
+
+        # No mapping found, return original
+        return firefox_value
