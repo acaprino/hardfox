@@ -2176,22 +2176,25 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'short': 'Encrypt DNS queries for privacy and security.',
         'full': (
             'DNS over HTTPS (DoH) encrypts your DNS queries, preventing your ISP or network from '
-            'seeing what websites you visit. "Off" uses standard unencrypted DNS. "Default" uses '
-            'your system DNS settings. "Increased" uses DoH when available but falls back to '
-            'regular DNS. "Max" enforces DoH and fails if unavailable. Increased or Max protection '
-            'is recommended for privacy. Choose a trusted DoH provider.'
+            'seeing what websites you visit. "Off" disables DoH entirely. "Increased Protection" '
+            'uses DoH when available but falls back to regular DNS if needed. "Max Protection" '
+            'enforces DoH-only and blocks connections if DoH is unavailable. "Explicitly Off" '
+            'prevents Firefox from auto-enabling DoH. Increased or Max protection is recommended '
+            'for privacy. Choose a trusted DoH provider.'
         ),
         'pref': 'network.trr.mode',
         'type': 'choice',
         'impact': 'high',
         'compatibility': 'minor',
-        'values': [0, 1, 2, 3],  # 0=off, 1=default, 2=increased, 3=max
-        'labels': ['Off', 'Default', 'Increased Protection', 'Max Protection'],
+        'values': [0, 2, 3, 5],  # 0=off, 2=increased, 3=max, 5=explicitly off
+        'labels': ['Off', 'Increased Protection', 'Max Protection', 'Explicitly Off'],
         'default': 2,
         'recommended': {
-            'balanced': 2,
-            'paranoid': 3,
-            'open': 0
+            'max_power': 0,      # Performance - DoH disabled
+            'balanced': 2,       # Privacy with fallback
+            'battery': 2,        # Reasonable privacy
+            'paranoid': 3,       # Maximum privacy
+            'open': 0            # No restrictions
         }
     },
 
@@ -2203,11 +2206,17 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'mechanism': 'userjs',
         'short': 'Choose your DNS over HTTPS provider.',
         'full': (
-            'Select which DNS provider to use for encrypted DNS queries. Cloudflare (1.1.1.1) is '
-            'fast and privacy-focused. Quad9 (9.9.9.9) blocks malicious domains and is run by a '
-            'nonprofit. NextDNS offers customizable filtering and analytics. Each provider has '
-            'different privacy policies and features. Research providers to choose one that aligns '
-            'with your privacy needs.'
+            'Select which DNS provider to use for encrypted DNS queries. '
+            'Cloudflare (1.1.1.1): Fast, privacy-focused, global network. '
+            'Quad9 (9.9.9.9): Blocks malicious domains, nonprofit, no logging. '
+            'NextDNS: Customizable filtering and analytics. '
+            'Google (8.8.8.8): Fast, reliable, but Google privacy policy applies. '
+            'AdGuard: Blocks ads/trackers at DNS level, privacy-focused. '
+            'Mullvad: Run by VPN provider, no logging, privacy-first. '
+            'OpenDNS/Cisco: Enterprise-grade, content filtering options. '
+            'Control D: Privacy-focused, customizable blocking. '
+            'Each provider has different privacy policies and features. Research providers to '
+            'choose one that aligns with your privacy needs.'
         ),
         'pref': 'network.trr.uri',
         'type': 'choice',
@@ -2216,14 +2225,122 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'values': [
             'https://mozilla.cloudflare-dns.com/dns-query',
             'https://dns.quad9.net/dns-query',
-            'https://firefox.dns.nextdns.io/'
+            'https://firefox.dns.nextdns.io/',
+            'https://dns.google/dns-query',
+            'https://dns.adguard-dns.com/dns-query',
+            'https://doh.mullvad.net/dns-query',
+            'https://doh.opendns.com/dns-query',
+            'https://freedns.controld.com/p0'
         ],
-        'labels': ['Cloudflare', 'Quad9', 'NextDNS'],
+        'labels': [
+            'Cloudflare (1.1.1.1)',
+            'Quad9 (9.9.9.9)',
+            'NextDNS',
+            'Google (8.8.8.8)',
+            'AdGuard DNS',
+            'Mullvad DNS',
+            'OpenDNS (Cisco)',
+            'Control D'
+        ],
         'default': 'https://dns.quad9.net/dns-query',
         'recommended': {
-            'balanced': 'https://dns.quad9.net/dns-query',
-            'paranoid': 'https://dns.quad9.net/dns-query',
-            'open': 'https://mozilla.cloudflare-dns.com/dns-query'
+            'max_power': 'https://mozilla.cloudflare-dns.com/dns-query',  # Fastest
+            'balanced': 'https://dns.quad9.net/dns-query',               # Security + privacy
+            'battery': 'https://mozilla.cloudflare-dns.com/dns-query',   # Fast, low overhead
+            'paranoid': 'https://doh.mullvad.net/dns-query',             # No logging, privacy-first VPN provider
+            'open': 'https://mozilla.cloudflare-dns.com/dns-query'       # Fast, reliable
+        }
+    },
+
+    'dns_disable_ecs': {
+        'name': 'Disable EDNS Client Subnet (ECS)',
+        'category': 'security',
+        'subcategory': 'network',
+        'level': 'advanced',
+        'mechanism': 'userjs',
+        'short': 'Prevent partial IP address from being sent to DNS servers.',
+        'full': (
+            'EDNS Client Subnet (ECS) sends part of your IP address to DNS servers to enable '
+            'geo-located responses. While this can improve CDN performance, it reduces privacy by '
+            'revealing your approximate location to DNS providers and authoritative nameservers. '
+            'Disabling ECS improves privacy but may result in slightly slower CDN performance for '
+            'some websites. Recommended for privacy-conscious users.'
+        ),
+        'pref': 'network.trr.disable-ECS',
+        'type': 'toggle',
+        'impact': 'low',
+        'compatibility': 'minor',
+        'values': [True, False],
+        'labels': ['ECS Off (More Private)', 'ECS On (Faster CDN)'],
+        'default': True,
+        'recommended': {
+            'max_power': False,  # Faster CDN
+            'balanced': True,    # Privacy
+            'battery': True,     # Privacy
+            'paranoid': True,    # Maximum privacy
+            'open': False        # Performance
+        }
+    },
+
+    'dns_fallback_behavior': {
+        'name': 'DoH Fallback to Native DNS',
+        'category': 'security',
+        'subcategory': 'network',
+        'level': 'advanced',
+        'mechanism': 'userjs',
+        'short': 'Allow fallback to system DNS when DoH fails.',
+        'full': (
+            'Controls how aggressively Firefox falls back to system DNS when the DoH provider '
+            'encounters issues. "Allow Fallback" permits fallback on any TRR failure or timeout, '
+            'maintaining connectivity but potentially exposing DNS queries. "Block Fallback" '
+            'restricts fallback to only critical cases (provider confirmed down, connection '
+            'failures after TRR resolution, or NXDOMAIN), keeping most DNS queries encrypted '
+            'while maintaining basic connectivity. Only relevant when DoH mode is "Increased Protection".'
+        ),
+        'pref': 'network.trr.strict_native_fallback',
+        'type': 'toggle',
+        'impact': 'medium',
+        'compatibility': 'major',
+        'values': [False, True],  # Inverted: False = allows fallback
+        'labels': ['Allow Fallback (Reliable)', 'Block Fallback (Private)'],
+        'default': False,
+        'recommended': {
+            'max_power': False,  # Allow fallback
+            'balanced': False,   # Allow fallback
+            'battery': False,    # Allow fallback
+            'paranoid': True,    # Block fallback for privacy
+            'open': False        # Allow fallback
+        }
+    },
+
+    'dns_captive_portal': {
+        'name': 'Wait for Captive Portal Detection',
+        'category': 'security',
+        'subcategory': 'network',
+        'level': 'advanced',
+        'mechanism': 'userjs',
+        'short': 'Delay DoH until captive portal login completes.',
+        'full': (
+            'On public WiFi networks with login pages (captive portals), Firefox waits for you '
+            'to complete login before enabling DoH. This prevents DoH from breaking the login '
+            'process. "Wait for Login" ensures captive portals work smoothly. "Force DoH Immediately" '
+            'enables DoH right away, which may prevent captive portal login. WARNING: Disabling '
+            'this will make hotel/airport WiFi logins fail. Only disable if you never use public '
+            'WiFi with login pages.'
+        ),
+        'pref': 'network.trr.wait-for-portal',
+        'type': 'toggle',
+        'impact': 'low',
+        'compatibility': 'minor',
+        'values': [True, False],
+        'labels': ['Wait for Login (Compatible)', 'Force DoH Immediately'],
+        'default': True,
+        'recommended': {
+            'max_power': True,   # Compatibility
+            'balanced': True,    # Compatibility
+            'battery': True,     # Compatibility
+            'paranoid': True,    # Even paranoid users need captive portals
+            'open': True         # Compatibility
         }
     },
 
