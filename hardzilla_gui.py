@@ -7,6 +7,7 @@ Main entry point for the graphical user interface
 import sys
 import logging
 from pathlib import Path
+import json
 import customtkinter as ctk
 
 # Configure logging
@@ -201,7 +202,9 @@ class HardzillaGUI(ctk.CTk):
             on_generate_recommendation=self._on_generate_recommendation,
             on_next=self._on_setup_next,
             on_firefox_path_changed=self._on_firefox_path_changed,
-            on_preset_selected=self._on_preset_selected
+            on_preset_selected=self._on_preset_selected,
+            on_json_imported=self._on_json_imported,
+            profiles_dir=self.profiles_dir
         )
         self.setup_view.pack(fill="both", expand=True)
 
@@ -259,9 +262,59 @@ class HardzillaGUI(ctk.CTk):
             # Update customize view with preset values
             self.customize_vm.profile = profile
 
+            # Clear any previously imported JSON profile (mutual exclusivity)
+            self.setup_vm.generated_profile = None
+
         except Exception as e:
             logger.error(f"Failed to load preset: {e}")
             self._show_error("Failed to load preset", str(e))
+
+    def _on_json_imported(self, json_path: str):
+        """Handle JSON profile import"""
+        try:
+            # Load profile from JSON
+            profile = self.load_profile.execute(json_path)
+            logger.info(f"Loaded JSON profile '{profile.name}': {len(profile.settings)} settings")
+
+            # Update view models
+            self.setup_vm.generated_profile = profile
+            self.customize_vm.profile = profile
+
+            # Show success in setup view
+            self.setup_view.show_json_import_success(profile.name, len(profile.settings))
+
+            # Show info dialog
+            self._show_info(
+                "Profile Imported",
+                f"Successfully loaded '{profile.name}' with {len(profile.settings)} settings.\n\n"
+                f"BASE: {profile.get_base_settings_count()} | "
+                f"ADVANCED: {profile.get_advanced_settings_count()}\n\n"
+                f"Switch to the 'Customize Settings' tab to review and modify your settings."
+            )
+
+        except FileNotFoundError:
+            logger.error(f"JSON file not found: {json_path}")
+            self.setup_view.show_json_import_error("File not found")
+            self._show_error(
+                "Import Failed",
+                "Could not find the selected JSON file.\n\nPlease check the file path and try again."
+            )
+
+        except json.JSONDecodeError as e:
+            logger.error(f"Invalid JSON format: {e}")
+            self.setup_view.show_json_import_error("Invalid JSON format")
+            self._show_error(
+                "Import Failed",
+                "The selected file is not valid JSON.\n\nPlease select a valid profile JSON file."
+            )
+
+        except Exception as e:
+            logger.error(f"Failed to import JSON profile: {e}")
+            self.setup_view.show_json_import_error(str(e))
+            self._show_error(
+                "Import Failed",
+                f"Failed to import profile from JSON:\n\n{str(e)}"
+            )
 
     def _on_firefox_path_changed(self, path: str):
         """Handle Firefox path selection - import current settings"""

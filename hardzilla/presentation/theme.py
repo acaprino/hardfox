@@ -64,6 +64,10 @@ class Theme:
         'card_bg': '#FFFFFF',
         'card_border': '#E5E7EB',
         'card_shadow': 'rgba(0, 0, 0, 0.05)',
+
+        # Frame Colors (CustomTkinter defaults)
+        'frame_bg': '#1E1E1E',  # Dark frame background
+        'frame_bg_light': '#2B2B2B',
     }
 
     # Typography
@@ -197,4 +201,7 @@ class DarkTheme(Theme):
         'border_light': '#374151',
         'border_medium': '#4B5563',
         'border_dark': '#6B7280',
+
+        'frame_bg': '#1E1E1E',
+        'frame_bg_light': '#2B2B2B',
     }

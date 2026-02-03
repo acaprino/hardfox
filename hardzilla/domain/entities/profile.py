@@ -134,7 +134,47 @@ class Profile:
 
         Returns:
             Profile instance
+
+        Raises:
+            ValueError: If required fields are missing or have invalid types
         """
+        # Validate required fields
+        if not isinstance(data, dict):
+            raise ValueError("Profile data must be a dictionary")
+
+        if "name" not in data:
+            raise ValueError("Profile data missing required field: 'name'")
+
+        if not isinstance(data["name"], str):
+            raise ValueError("Profile 'name' must be a string")
+
+        if data["name"].strip() == "":
+            raise ValueError("Profile 'name' cannot be empty")
+
+        # Validate settings field if present
+        if "settings" in data:
+            if not isinstance(data["settings"], dict):
+                raise ValueError("Profile 'settings' must be a dictionary")
+
+            # Validate each setting entry
+            for key, setting_data in data["settings"].items():
+                if not isinstance(setting_data, dict):
+                    raise ValueError(f"Setting '{key}' must be a dictionary")
+
+                if "value" not in setting_data:
+                    raise ValueError(f"Setting '{key}' missing required field: 'value'")
+
+                if "level" not in setting_data:
+                    raise ValueError(f"Setting '{key}' missing required field: 'level'")
+
+        # Validate optional fields have correct types
+        if "metadata" in data and not isinstance(data["metadata"], dict):
+            raise ValueError("Profile 'metadata' must be a dictionary")
+
+        if "generated_by" in data and not isinstance(data["generated_by"], str):
+            raise ValueError("Profile 'generated_by' must be a string")
+
+        # Create profile instance
         profile = cls(
             name=data["name"],
             metadata=data.get("metadata", {}),

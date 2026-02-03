@@ -11,6 +11,7 @@ from typing import Callable, Optional
 
 from hardzilla.presentation.view_models import SetupViewModel
 from hardzilla.presentation.widgets import PresetCard
+from hardzilla.presentation.theme import Theme
 from hardzilla.metadata.settings_metadata import PRESET_PROFILES
 
 
@@ -51,7 +52,9 @@ class SetupView(ctk.CTkScrollableFrame):
         on_generate_recommendation: Callable,
         on_next: Callable,
         on_firefox_path_changed: Callable = None,
-        on_preset_selected: Callable = None
+        on_preset_selected: Callable = None,
+        on_json_imported: Callable = None,
+        profiles_dir: Optional[Path] = None
     ):
         """
         Initialize Setup View.
@@ -63,6 +66,8 @@ class SetupView(ctk.CTkScrollableFrame):
             on_next: Callback for Next button
             on_firefox_path_changed: Callback when Firefox path is selected
             on_preset_selected: Callback when preset is selected
+            on_json_imported: Callback when JSON profile is imported
+            profiles_dir: Path to profiles directory for JSON import dialog
         """
         super().__init__(parent)
         self.view_model = view_model
@@ -70,6 +75,8 @@ class SetupView(ctk.CTkScrollableFrame):
         self.on_next = on_next
         self.on_firefox_path_changed = on_firefox_path_changed
         self.on_preset_selected = on_preset_selected
+        self.on_json_imported = on_json_imported
+        self.profiles_dir = profiles_dir or Path.cwd() / "profiles"
 
         # Configure grid
         self.grid_columnconfigure(0, weight=1)
@@ -81,6 +88,7 @@ class SetupView(ctk.CTkScrollableFrame):
         # Build UI
         self._build_header()
         self._build_firefox_selector()
+        self._build_json_import()
         self._build_quick_presets()
         # Removed old manual customization (intent questions)
         self._build_recommendation_panel()
@@ -135,14 +143,58 @@ class SetupView(ctk.CTkScrollableFrame):
             self.firefox_section,
             text="",
             font=ctk.CTkFont(size=12),
-            text_color="#3B82F6"
+            text_color=Theme.get_color('info')
         )
         self.import_status_label.grid(row=1, column=0, columnspan=3, padx=10, pady=(0, 10), sticky="w")
 
+    def _build_json_import(self):
+        """Build JSON profile import section"""
+        section = ctk.CTkFrame(self, fg_color=Theme.get_color('frame_bg'), corner_radius=10)
+        section.grid(row=2, column=0, pady=10, sticky="ew", padx=10)
+        section.grid_columnconfigure(1, weight=1)
+
+        # Label
+        label = ctk.CTkLabel(
+            section,
+            text="Or Import Saved Profile:",
+            font=ctk.CTkFont(size=16, weight="bold")
+        )
+        label.grid(row=0, column=0, padx=10, pady=10, sticky="w")
+
+        # Entry to show imported filename
+        self.json_entry = ctk.CTkEntry(
+            section,
+            placeholder_text="No profile imported",
+            font=ctk.CTkFont(size=13),
+            height=36,
+            state="disabled"
+        )
+        self.json_entry.grid(row=0, column=1, padx=10, pady=10, sticky="ew")
+
+        # Import button
+        import_btn = ctk.CTkButton(
+            section,
+            text="Import JSON",
+            width=120,
+            font=ctk.CTkFont(size=13),
+            height=36,
+            command=self._import_json_profile
+        )
+        import_btn.grid(row=0, column=2, padx=10, pady=10)
+
+        # Status label (initially hidden)
+        self.json_status_label = ctk.CTkLabel(
+            section,
+            text="",
+            font=ctk.CTkFont(size=12),
+            text_color=Theme.get_color('info')
+        )
+        self.json_status_label.grid(row=1, column=0, columnspan=3, padx=10, pady=(0, 10), sticky="w")
+
     def _build_quick_presets(self):
         """Build quick preset selection cards"""
-        section = ctk.CTkFrame(self, fg_color="#1E1E1E", corner_radius=10)
-        section.grid(row=2, column=0, pady=10, sticky="ew", padx=10)
+        section = ctk.CTkFrame(self, fg_color=Theme.get_color('frame_bg'), corner_radius=10)
+        section.grid(row=3, column=0, pady=10, sticky="ew", padx=10)
 
         # Header
         title = ctk.CTkLabel(
@@ -318,8 +370,8 @@ class SetupView(ctk.CTkScrollableFrame):
 
     def _build_navigation(self):
         """Build navigation buttons"""
-        nav_frame = ctk.CTkFrame(self, fg_color="#1E1E1E", corner_radius=10)
-        nav_frame.grid(row=4, column=0, pady=20, sticky="ew", padx=10)
+        nav_frame = ctk.CTkFrame(self, fg_color=Theme.get_color('frame_bg'), corner_radius=10)
+        nav_frame.grid(row=5, column=0, pady=20, sticky="ew", padx=10)
         nav_frame.grid_columnconfigure(0, weight=1)
 
         # Status label (shows why Next is disabled)
@@ -339,8 +391,8 @@ class SetupView(ctk.CTkScrollableFrame):
             state="disabled",
             font=ctk.CTkFont(size=16, weight="bold"),
             height=50,
-            fg_color="#2FA572",
-            hover_color="#238C5C"
+            fg_color=Theme.get_color('badge_base'),
+            hover_color=Theme.get_color('secondary_hover')
         )
         self.next_btn.grid(row=1, column=0, padx=20, pady=(5, 15), sticky="ew")
 
@@ -403,7 +455,7 @@ class SetupView(ctk.CTkScrollableFrame):
                 self.firefox_section,
                 text="",
                 font=ctk.CTkFont(size=11),
-                text_color="#EF4444"  # Red
+                text_color=Theme.get_color('error')
             )
             self.path_error_label.grid(row=2, column=0, columnspan=3,
                                       sticky="w", padx=10, pady=(5, 0))
@@ -417,7 +469,7 @@ class SetupView(ctk.CTkScrollableFrame):
 
     def _show_import_status(self, message: str):
         """Show import status message"""
-        self.import_status_label.configure(text=message, text_color="#3B82F6")
+        self.import_status_label.configure(text=message, text_color=Theme.get_color('info'))
 
     def _clear_import_status(self):
         """Clear import status message"""
@@ -427,8 +479,73 @@ class SetupView(ctk.CTkScrollableFrame):
         """Show successful import message"""
         self.import_status_label.configure(
             text=f"✓ Loaded {settings_count} settings from Firefox profile",
-            text_color="#2FA572"
+            text_color=Theme.get_color('badge_base')
         )
+
+    def _import_json_profile(self):
+        """Open file dialog and import JSON profile"""
+        file_path = filedialog.askopenfilename(
+            title="Select Profile JSON File",
+            filetypes=[("JSON Files", "*.json"), ("All Files", "*.*")],
+            initialdir=str(self.profiles_dir)
+        )
+
+        if file_path:
+            # Show loading status
+            self._show_json_import_status("🔄 Loading profile from JSON...", Theme.get_color('info'))
+
+            # Update entry with filename
+            self.json_entry.configure(state="normal")
+            self.json_entry.delete(0, "end")
+            self.json_entry.insert(0, Path(file_path).name)
+            self.json_entry.configure(state="disabled")
+
+            # Clear preset selection (mutually exclusive)
+            self._clear_preset_selection()
+
+            # Trigger callback to handle import
+            if self.on_json_imported:
+                self.on_json_imported(file_path)
+
+    def _show_json_import_status(self, message: str, color: str):
+        """Show JSON import status message"""
+        self.json_status_label.configure(text=message, text_color=color)
+
+    def _clear_json_import_status(self):
+        """Clear JSON import status message"""
+        self.json_status_label.configure(text="")
+
+    def show_json_import_success(self, profile_name: str, settings_count: int):
+        """Show successful JSON import message"""
+        self.json_status_label.configure(
+            text=f"✓ Loaded '{profile_name}' with {settings_count} settings",
+            text_color=Theme.get_color('badge_base')
+        )
+
+    def show_json_import_error(self, error_msg: str):
+        """Show JSON import error message"""
+        self.json_status_label.configure(
+            text=f"✗ Import failed: {error_msg}",
+            text_color=Theme.get_color('error')
+        )
+
+        # Clear entry
+        self._clear_json_entry()
+
+    def _clear_json_entry(self):
+        """Clear JSON entry field and reset placeholder"""
+        self.json_entry.configure(state="normal")
+        self.json_entry.delete(0, "end")
+        self.json_entry.configure(placeholder_text="No profile imported")
+        self.json_entry.configure(state="disabled")
+
+    def _clear_preset_selection(self):
+        """Deselect all preset cards"""
+        for card in self.preset_cards.values():
+            card.set_selected(False)
+
+        self.selected_card = None
+        self.view_model.selected_preset = None
 
     def _on_use_case_toggle(self, value: str, var: ctk.BooleanVar):
         """Handle use case checkbox toggle"""
@@ -463,7 +580,7 @@ class SetupView(ctk.CTkScrollableFrame):
 
     def _show_recommendation(self, profile):
         """Display the generated recommendation"""
-        self.recommendation_frame.grid(row=3, column=0, pady=10, sticky="ew")
+        self.recommendation_frame.grid(row=4, column=0, pady=10, sticky="ew")
 
         # Clear previous content
         for widget in self.recommendation_frame.winfo_children():
@@ -506,7 +623,7 @@ class SetupView(ctk.CTkScrollableFrame):
         if can_proceed:
             self.nav_status_label.configure(
                 text="✓ Ready to proceed",
-                text_color="#2FA572"
+                text_color=Theme.get_color('badge_base')
             )
         else:
             # Check what's missing
@@ -515,23 +632,23 @@ class SetupView(ctk.CTkScrollableFrame):
 
             if not has_firefox and not has_preset:
                 self.nav_status_label.configure(
-                    text="⚠ Please select Firefox profile and choose a preset above",
-                    text_color="#FFA726"
+                    text="⚠ Please select Firefox profile and choose a preset or import JSON above",
+                    text_color=Theme.get_color('warning')
                 )
             elif not has_firefox:
                 self.nav_status_label.configure(
                     text="⚠ Please select a Firefox profile above to continue",
-                    text_color="#FFA726"
+                    text_color=Theme.get_color('warning')
                 )
             elif not has_preset:
                 self.nav_status_label.configure(
-                    text="⚠ Please choose a preset or generate a recommendation above",
-                    text_color="#FFA726"
+                    text="⚠ Please choose a preset, import JSON, or generate a recommendation above",
+                    text_color=Theme.get_color('warning')
                 )
             else:
                 self.nav_status_label.configure(
                     text="",
-                    text_color="#888888"
+                    text_color=Theme.get_color('text_secondary')
                 )
 
     def _on_preset_selected(self, preset_key: str):
@@ -545,6 +662,10 @@ class SetupView(ctk.CTkScrollableFrame):
 
         # Update view model
         self.view_model.selected_preset = preset_key
+
+        # Clear JSON import (mutually exclusive)
+        self._clear_json_entry()
+        self._clear_json_import_status()
 
         # Trigger preset loading callback
         if self.on_preset_selected:
@@ -560,7 +681,7 @@ class SetupView(ctk.CTkScrollableFrame):
             return
 
         # Show in recommendation panel
-        self.recommendation_frame.grid(row=3, column=0, pady=10, sticky="ew")
+        self.recommendation_frame.grid(row=4, column=0, pady=10, sticky="ew")
 
         # Clear previous content
         for widget in self.recommendation_frame.winfo_children():
@@ -571,7 +692,7 @@ class SetupView(ctk.CTkScrollableFrame):
             self.recommendation_frame,
             text=f"✓ Selected: {preset_data['name']}",
             font=ctk.CTkFont(size=18, weight="bold"),
-            text_color="#2FA572"
+            text_color=Theme.get_color('badge_base')
         )
         title.pack(padx=10, pady=(10, 5))
 
@@ -593,7 +714,7 @@ class SetupView(ctk.CTkScrollableFrame):
                 self.recommendation_frame,
                 text=stats_text,
                 font=ctk.CTkFont(size=13),
-                text_color="#888888"
+                text_color=Theme.get_color('text_secondary')
             )
             stats_label.pack(padx=10, pady=5)
 
@@ -604,7 +725,7 @@ class SetupView(ctk.CTkScrollableFrame):
                 self.recommendation_frame,
                 text="⚠ Don't forget to select your Firefox profile above before clicking Next!",
                 font=ctk.CTkFont(size=14, weight="bold"),
-                text_color="#FFA726"
+                text_color=Theme.get_color('warning')
             )
             firefox_warning.pack(padx=10, pady=(10, 15))
         else:
@@ -613,6 +734,6 @@ class SetupView(ctk.CTkScrollableFrame):
                 self.recommendation_frame,
                 text="✓ Click the big green 'Next' button below to customize settings →",
                 font=ctk.CTkFont(size=14, weight="bold"),
-                text_color="#2FA572"
+                text_color=Theme.get_color('badge_base')
             )
             next_instruction.pack(padx=10, pady=(10, 15))

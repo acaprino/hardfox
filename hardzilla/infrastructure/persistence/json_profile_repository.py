@@ -78,6 +78,15 @@ class JsonProfileRepository(IProfileRepository):
         if not path.exists():
             raise FileNotFoundError(f"Profile not found: {name_or_path}")
 
+        # Check file size (max 10MB)
+        MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB in bytes
+        file_size = path.stat().st_size
+        if file_size > MAX_FILE_SIZE:
+            raise ValueError(
+                f"Profile file too large: {file_size / 1024 / 1024:.1f}MB "
+                f"(maximum: {MAX_FILE_SIZE / 1024 / 1024:.0f}MB)"
+            )
+
         # Load JSON
         with open(path, 'r', encoding='utf-8') as f:
             data = json.load(f)
