@@ -12,6 +12,7 @@ from typing import Callable, Optional
 from hardzilla.presentation.view_models import ApplyViewModel
 from hardzilla.application.use_cases import ApplySettingsUseCase, SaveProfileUseCase
 from hardzilla.application.use_cases.install_extensions_use_case import InstallExtensionsUseCase
+from hardzilla.infrastructure.persistence.firefox_detection import is_firefox_running
 
 logger = logging.getLogger(__name__)
 
@@ -66,6 +67,16 @@ class ApplyController:
 
         if not self.view_model.firefox_path:
             self._update_ui_state(error="No Firefox path specified")
+            return
+
+        # Check if Firefox is running
+        if is_firefox_running():
+            logger.warning("Cannot apply settings: Firefox is running")
+            self._update_ui_state(
+                error="Firefox is currently running.\n\n"
+                      "Please close Firefox completely before applying settings.\n"
+                      "Changes to user.js are only loaded when Firefox starts."
+            )
             return
 
         # Set applying state (we're on main thread, set directly)
@@ -176,6 +187,16 @@ class ApplyController:
 
         if not self.view_model.firefox_path:
             self._update_extension_ui_state(error="No Firefox path selected")
+            return
+
+        # Check if Firefox is running
+        if is_firefox_running():
+            logger.warning("Cannot install extensions: Firefox is running")
+            self._update_extension_ui_state(
+                error="Firefox is currently running.\n\n"
+                      "Please close Firefox completely before installing extensions.\n"
+                      "Extension policies are loaded when Firefox starts."
+            )
             return
 
         # Snapshot extension IDs and firefox path to avoid race conditions

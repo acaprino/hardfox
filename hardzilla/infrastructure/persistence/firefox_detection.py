@@ -9,10 +9,71 @@ Used by FirefoxExtensionRepository and PortableConversionRepository.
 import logging
 import os
 import platform
+import subprocess
 from pathlib import Path
 from typing import Optional
 
 logger = logging.getLogger(__name__)
+
+
+def is_firefox_running() -> bool:
+    """
+    Check if Firefox is currently running.
+
+    Returns:
+        True if Firefox is running, False otherwise
+    """
+    system = platform.system()
+
+    try:
+        if system == "Windows":
+            # Use tasklist to check for firefox.exe
+            result = subprocess.run(
+                ["tasklist", "/FI", "IMAGENAME eq firefox.exe", "/NH"],
+                capture_output=True,
+                text=True,
+                timeout=5,
+                creationflags=subprocess.CREATE_NO_WINDOW
+            )
+            # tasklist returns "INFO: No tasks are running..." if not found
+            # or the process info if found
+            is_running = "firefox.exe" in result.stdout.lower()
+            logger.debug(f"Firefox running check (Windows): {is_running}")
+            return is_running
+
+        elif system == "Linux":
+            result = subprocess.run(
+                ["pgrep", "-x", "firefox"],
+                capture_output=True,
+                timeout=5
+            )
+            is_running = result.returncode == 0
+            logger.debug(f"Firefox running check (Linux): {is_running}")
+            return is_running
+
+        elif system == "Darwin":
+            result = subprocess.run(
+                ["pgrep", "-x", "firefox"],
+                capture_output=True,
+                timeout=5
+            )
+            is_running = result.returncode == 0
+            logger.debug(f"Firefox running check (macOS): {is_running}")
+            return is_running
+
+        else:
+            logger.warning(f"Cannot check Firefox process on platform: {system}")
+            return False
+
+    except subprocess.TimeoutExpired:
+        logger.warning("Timeout checking if Firefox is running")
+        return False
+    except FileNotFoundError as e:
+        logger.warning(f"Process check command not found: {e}")
+        return False
+    except Exception as e:
+        logger.warning(f"Failed to check if Firefox is running: {e}")
+        return False
 
 
 def get_firefox_installation_dir(profile_path: Path = None) -> Optional[Path]:
