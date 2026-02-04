@@ -116,6 +116,7 @@ class HardzillaGUI(ctk.CTk):
         self.load_preset = self.composition_root.load_preset
         self.install_extensions = self.composition_root.install_extensions
         self.convert_to_portable = self.composition_root.convert_to_portable
+        self.update_portable_firefox = self.composition_root.update_portable_firefox
 
     def _init_view_models(self):
         """Initialize view models"""
@@ -147,6 +148,7 @@ class HardzillaGUI(ctk.CTk):
             view_model=self.utilities_vm,
             convert_to_portable=self.convert_to_portable,
             portable_repo=self.composition_root.portable_repo,
+            update_portable_firefox=self.update_portable_firefox,
             ui_callback=self._schedule_ui_update
         )
 
@@ -267,7 +269,10 @@ class HardzillaGUI(ctk.CTk):
             on_convert=self._on_convert_to_portable,
             on_cancel_convert=self._on_cancel_portable_conversion,
             on_estimate_requested=self._on_estimate_portable_size,
-            on_back=self._on_utilities_back
+            on_back=self._on_utilities_back,
+            on_check_update=self._on_check_portable_update,
+            on_update=self._on_update_portable_firefox,
+            on_cancel_update=self._on_cancel_portable_update
         )
         self.utilities_view.pack(fill="both", expand=True)
 
@@ -314,8 +319,8 @@ class HardzillaGUI(ctk.CTk):
             logger.debug("_sync_apply_vm: syncing firefox_path from setup_vm: %s", self.setup_vm.firefox_path)
             self.apply_vm.firefox_path = self.setup_vm.firefox_path
 
-        # Sync profile from customize_vm settings if apply_vm has no profile yet
-        if not self.apply_vm.profile and self.customize_vm.settings:
+        # Always sync profile from customize_vm settings to reflect latest changes
+        if self.customize_vm.settings:
             profile_name = self.customize_vm.profile.name if self.customize_vm.profile else "Custom Configuration"
             profile = Profile(
                 name=profile_name,
@@ -569,6 +574,27 @@ class HardzillaGUI(ctk.CTk):
         """Handle size estimation request (destination change or profile toggle)."""
         logger.debug("_on_estimate_portable_size: updating size estimate")
         self.utilities_controller.estimate_size()
+
+    def _on_check_portable_update(self):
+        """Handle Check for Updates button click."""
+        logger.debug("_on_check_portable_update: checking for updates")
+        portable_path = self.utilities_vm.portable_path
+        if portable_path:
+            self.utilities_controller.check_for_update(portable_path)
+
+    def _on_update_portable_firefox(self):
+        """Handle Update Firefox button click."""
+        logger.debug("_on_update_portable_firefox: starting update")
+        try:
+            self.utilities_controller.handle_update()
+        except Exception as e:
+            logger.error(f"Failed to start update: {e}", exc_info=True)
+            self._show_error("Update Failed", str(e))
+
+    def _on_cancel_portable_update(self):
+        """Handle Cancel button during portable update."""
+        logger.debug("_on_cancel_portable_update: cancelling")
+        self.utilities_controller.cancel_update()
 
     def _show_error(self, title: str, message: str):
         """Show error dialog"""

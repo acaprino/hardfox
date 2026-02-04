@@ -20,11 +20,9 @@ class ApplySettingsUseCase:
     """
     Use case for applying settings to a Firefox profile.
 
-    Responsibilities:
-    - Filter settings by level (BASE/ADVANCED/BOTH)
-    - Create backups before modification
-    - Write to appropriate files (prefs.js/user.js)
-    - Handle merge vs replace logic
+    All settings (BASE and ADVANCED) are written to user.js because
+    Firefox overwrites prefs.js on every shutdown. user.js is read-only
+    from Firefox's perspective and applied on every startup.
     """
 
     def __init__(
@@ -32,13 +30,6 @@ class ApplySettingsUseCase:
         firefox_repo: IFirefoxRepository,
         mapper: SettingToPrefMapper = None
     ):
-        """
-        Initialize use case.
-
-        Args:
-            firefox_repo: Repository for Firefox file operations
-            mapper: Mapper for Setting -> Pref conversion
-        """
         self.firefox_repo = firefox_repo
         self.mapper = mapper or SettingToPrefMapper()
 
@@ -51,6 +42,9 @@ class ApplySettingsUseCase:
         """
         Apply settings to Firefox profile.
 
+        All settings are consolidated into a single user.js write to prevent
+        overwrites between BASE and ADVANCED levels.
+
         Args:
             profile_path: Path to Firefox profile directory
             settings: Dictionary of setting_key -> Setting entity
@@ -58,81 +52,47 @@ class ApplySettingsUseCase:
 
         Returns:
             Dictionary with counts: {"base_applied": N, "advanced_applied": M}
-
-        Raises:
-            ValueError: If profile path is invalid
-            PermissionError: If can't write to profile
         """
-        # Validate profile path
         if not self.firefox_repo.validate_profile_path(profile_path):
             raise ValueError(f"Invalid Firefox profile path: {profile_path}")
 
+        # Collect all settings to apply, filtered by requested level
+        base_settings = []
+        advanced_settings = []
+
+        for s in settings.values():
+            if s.level == SettingLevel.BASE and (level is None or level == SettingLevel.BASE):
+                base_settings.append(s)
+            elif s.level == SettingLevel.ADVANCED and (level is None or level == SettingLevel.ADVANCED):
+                advanced_settings.append(s)
+
+        # Convert all settings to Firefox prefs
+        all_prefs = {}
+        if base_settings:
+            all_prefs.update(self.mapper.map_many(base_settings))
+        if advanced_settings:
+            all_prefs.update(self.mapper.map_many(advanced_settings))
+
+        if not all_prefs:
+            logger.info("No settings to apply")
+            return {"base_applied": 0, "advanced_applied": 0}
+
+        # Single consolidated write to user.js (merge with existing)
+        self.firefox_repo.write_prefs(
+            profile_path=profile_path,
+            prefs=all_prefs,
+            level=SettingLevel.ADVANCED,  # Always user.js
+            merge=True  # Merge with existing user.js prefs
+        )
+
         results = {
-            "base_applied": 0,
-            "advanced_applied": 0
+            "base_applied": len(base_settings),
+            "advanced_applied": len(advanced_settings)
         }
-
-        # Apply BASE settings if requested
-        if level is None or level == SettingLevel.BASE:
-            base_settings = [s for s in settings.values() if s.level == SettingLevel.BASE]
-            if base_settings:
-                results["base_applied"] = self._apply_level(
-                    profile_path,
-                    base_settings,
-                    SettingLevel.BASE
-                )
-
-        # Apply ADVANCED settings if requested
-        if level is None or level == SettingLevel.ADVANCED:
-            advanced_settings = [s for s in settings.values() if s.level == SettingLevel.ADVANCED]
-            if advanced_settings:
-                results["advanced_applied"] = self._apply_level(
-                    profile_path,
-                    advanced_settings,
-                    SettingLevel.ADVANCED
-                )
 
         logger.info(
             f"Applied {results['base_applied']} BASE and "
-            f"{results['advanced_applied']} ADVANCED settings to {profile_path.name}"
+            f"{results['advanced_applied']} ADVANCED settings to user.js in {profile_path.name}"
         )
 
         return results
-
-    def _apply_level(
-        self,
-        profile_path: Path,
-        settings: list[Setting],
-        level: SettingLevel
-    ) -> int:
-        """
-        Apply settings for a specific level.
-
-        Args:
-            profile_path: Path to Firefox profile
-            settings: List of settings to apply
-            level: Level to apply (BASE or ADVANCED)
-
-        Returns:
-            Number of settings applied
-        """
-        # Convert settings to prefs
-        prefs = self.mapper.map_many(settings)
-
-        if not prefs:
-            logger.info(f"No {level} settings to apply")
-            return 0
-
-        # Write prefs
-        # BASE: Merge with existing prefs.js
-        # ADVANCED: Replace user.js entirely
-        merge = (level == SettingLevel.BASE)
-
-        self.firefox_repo.write_prefs(
-            profile_path=profile_path,
-            prefs=prefs,
-            level=level,
-            merge=merge
-        )
-
-        return len(prefs)

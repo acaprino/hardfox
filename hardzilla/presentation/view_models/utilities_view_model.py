@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Utilities ViewModel
-State management for the Utilities tab (Convert to Portable, etc.)
+State management for the Utilities tab (Convert to Portable, Update Portable, etc.)
 """
 
 from typing import Optional, Dict
@@ -12,7 +12,7 @@ class UtilitiesViewModel(BaseViewModel):
     """
     ViewModel for the Utilities tab.
 
-    Properties:
+    Properties (Convert to Portable):
     - firefox_install_dir: Detected Firefox installation path
     - destination_dir: User-selected destination directory
     - copy_profile: Whether to copy Firefox profile data
@@ -22,12 +22,24 @@ class UtilitiesViewModel(BaseViewModel):
     - conversion_status: Current step description
     - conversion_result: Dict with success/files_copied/size_mb/error
     - estimated_size_mb: Pre-conversion size estimate
+
+    Properties (Update Portable Firefox):
+    - portable_path: Path to portable Firefox root directory
+    - current_version: Currently installed Firefox version
+    - latest_version: Latest available Firefox version
+    - update_available: Whether an update is available
+    - is_checking_update: Whether an update check is in progress
+    - is_updating: Whether an update is in progress
+    - update_progress: Float 0.0-1.0
+    - update_status: Current update step description
+    - update_result: Dict with success/old_version/new_version/error
     """
 
     def __init__(self):
         super().__init__()
 
         self._properties = {
+            # Convert to Portable
             'firefox_install_dir': '',
             'destination_dir': '',
             'copy_profile': False,
@@ -37,6 +49,16 @@ class UtilitiesViewModel(BaseViewModel):
             'conversion_status': '',
             'conversion_result': None,
             'estimated_size_mb': 0.0,
+            # Update Portable Firefox
+            'portable_path': '',
+            'current_version': '',
+            'latest_version': '',
+            'update_available': False,
+            'is_checking_update': False,
+            'is_updating': False,
+            'update_progress': 0.0,
+            'update_status': '',
+            'update_result': None,
         }
 
     # Firefox install directory
@@ -122,3 +144,79 @@ class UtilitiesViewModel(BaseViewModel):
     @estimated_size_mb.setter
     def estimated_size_mb(self, value: float):
         self.set_property('estimated_size_mb', value)
+
+    # --- Update Portable Firefox properties ---
+
+    @property
+    def portable_path(self) -> str:
+        return self.get_property('portable_path', '')
+
+    @portable_path.setter
+    def portable_path(self, value: str):
+        self.set_property('portable_path', value)
+
+    @property
+    def current_version(self) -> str:
+        return self.get_property('current_version', '')
+
+    @current_version.setter
+    def current_version(self, value: str):
+        self.set_property('current_version', value)
+
+    @property
+    def latest_version(self) -> str:
+        return self.get_property('latest_version', '')
+
+    @latest_version.setter
+    def latest_version(self, value: str):
+        self.set_property('latest_version', value)
+
+    @property
+    def update_available(self) -> bool:
+        return self.get_property('update_available', False)
+
+    @update_available.setter
+    def update_available(self, value: bool):
+        self.set_property('update_available', value)
+
+    @property
+    def is_checking_update(self) -> bool:
+        return self.get_property('is_checking_update', False)
+
+    @is_checking_update.setter
+    def is_checking_update(self, value: bool):
+        self.set_property('is_checking_update', value)
+
+    @property
+    def is_updating(self) -> bool:
+        return self.get_property('is_updating', False)
+
+    @is_updating.setter
+    def is_updating(self, value: bool):
+        self.set_property('is_updating', value)
+
+    @property
+    def update_progress(self) -> float:
+        return self.get_property('update_progress', 0.0)
+
+    @update_progress.setter
+    def update_progress(self, value: float):
+        self.set_property('update_progress', value)
+
+    @property
+    def update_status(self) -> str:
+        return self.get_property('update_status', '')
+
+    @update_status.setter
+    def update_status(self, value: str):
+        self.set_property('update_status', value)
+
+    @property
+    def update_result(self) -> Optional[Dict]:
+        return self.get_property('update_result', None)
+
+    @update_result.setter
+    def update_result(self, value: Optional[Dict]):
+        # Always notify (same pattern as conversion_result)
+        self._properties['update_result'] = value
+        self._notify('update_result', value)

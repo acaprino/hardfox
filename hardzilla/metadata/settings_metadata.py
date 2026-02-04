@@ -1649,6 +1649,33 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
     # PRIVACY - DATA (subcategory: 'data')
     # =========================================================================
 
+    'sanitize_on_shutdown': {
+        'name': 'Clear Data on Shutdown (Master Switch)',
+        'category': 'privacy',
+        'subcategory': 'data',
+        'level': 'base',
+        'mechanism': 'prefs',
+        'short': 'Enable clearing of selected data when Firefox closes.',
+        'full': (
+            'MASTER SWITCH: This must be enabled for ANY of the individual shutdown clearing '
+            'settings to take effect (cookies, history, cache, downloads, form data, etc.). '
+            'Without this enabled, all privacy.clearOnShutdown.* preferences are silently ignored '
+            'by Firefox. Enable this first, then configure which data types to clear below.'
+        ),
+        'pref': 'privacy.sanitize.sanitizeOnShutdown',
+        'type': 'toggle',
+        'impact': 'high',
+        'compatibility': 'none',
+        'values': [True, False],
+        'labels': ['Enabled', 'Disabled'],
+        'default': True,
+        'recommended': {
+            'balanced': True,
+            'paranoid': True,
+            'open': False
+        }
+    },
+
     'keep_cookies': {
         'name': 'Keep Cookies on Shutdown',
         'category': 'privacy',
@@ -2079,6 +2106,36 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         }
     },
 
+    'webcompat_fixes': {
+        'name': 'Fix Minor Site Issues',
+        'category': 'privacy',
+        'subcategory': 'tracking',
+        'level': 'base',
+        'mechanism': 'prefs',
+        'short': 'Reduce minor site issues by unblocking components that may include trackers.',
+        'full': (
+            'Enables web compatibility fixes that can restore elements like embedded videos in '
+            'articles or comment sections by unblocking components that might include tracking '
+            'elements. This reduces site breakage but provides less tracking protection. It is '
+            'designed to work alongside Enhanced Tracking Protection in Strict mode. When '
+            'enabled, Firefox uses SmartBlock and other heuristics to selectively unblock '
+            'third-party resources that are likely to cause site breakage while still blocking '
+            'most trackers. Disable for maximum tracking protection at the cost of more site issues.'
+        ),
+        'pref': 'privacy.antitracking.enableWebcompat',
+        'type': 'toggle',
+        'impact': 'medium',
+        'compatibility': 'moderate',
+        'values': [True, False],
+        'labels': ['Enabled', 'Disabled'],
+        'default': True,
+        'recommended': {
+            'balanced': True,
+            'paranoid': False,
+            'open': True
+        }
+    },
+
     'telemetry_enabled': {
         'name': 'Telemetry',
         'category': 'privacy',
@@ -2160,6 +2217,198 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
             'balanced': False,
             'paranoid': False,
             'open': True
+        }
+    },
+
+    'health_report': {
+        'name': 'Health Report Upload',
+        'category': 'privacy',
+        'subcategory': 'tracking',
+        'level': 'base',
+        'mechanism': 'prefs',
+        'short': 'Send health report data to Mozilla.',
+        'full': (
+            'Controls whether Firefox sends health report data to Mozilla. This includes '
+            'information about browser performance, hardware, usage patterns, and customizations. '
+            'Mozilla uses this to understand how Firefox performs across different configurations. '
+            'Disable for maximum privacy. This is separate from crash reports and telemetry.'
+        ),
+        'pref': 'datareporting.healthreport.uploadEnabled',
+        'type': 'toggle',
+        'impact': 'low',
+        'compatibility': 'none',
+        'values': [True, False],
+        'labels': ['Enabled', 'Disabled'],
+        'default': False,
+        'recommended': {
+            'balanced': False,
+            'paranoid': False,
+            'open': True
+        }
+    },
+
+    'data_submission': {
+        'name': 'Data Submission Policy',
+        'category': 'privacy',
+        'subcategory': 'tracking',
+        'level': 'base',
+        'mechanism': 'prefs',
+        'short': 'Allow Firefox to submit data to Mozilla.',
+        'full': (
+            'Master switch for all data reporting to Mozilla. When disabled, it prevents Firefox '
+            'from sending any telemetry, health reports, or usage data to Mozilla. This is the '
+            'most effective single toggle to stop all data collection. Disable for complete '
+            'data privacy from Mozilla.'
+        ),
+        'pref': 'datareporting.policy.dataSubmissionEnabled',
+        'type': 'toggle',
+        'impact': 'low',
+        'compatibility': 'none',
+        'values': [True, False],
+        'labels': ['Enabled', 'Disabled'],
+        'default': False,
+        'recommended': {
+            'balanced': False,
+            'paranoid': False,
+            'open': True
+        }
+    },
+
+    'normandy_enabled': {
+        'name': 'Normandy / Remote Settings',
+        'category': 'privacy',
+        'subcategory': 'tracking',
+        'level': 'advanced',
+        'mechanism': 'userjs',
+        'short': 'Allow Mozilla to remotely modify Firefox settings and run experiments.',
+        'full': (
+            'Normandy (also known as Shield) allows Mozilla to push remote changes to Firefox, '
+            'including A/B experiments, feature rollouts, and hotfixes. When enabled, Mozilla can '
+            'modify browser behavior between updates. This is used for studies, Pocket integration, '
+            'and gradual feature rollouts. Disable for full control over your browser configuration. '
+            'Note: disabling may delay receiving some security hotfixes.'
+        ),
+        'pref': 'app.normandy.enabled',
+        'type': 'toggle',
+        'impact': 'low',
+        'compatibility': 'none',
+        'values': [True, False],
+        'labels': ['Enabled', 'Disabled'],
+        'default': False,
+        'recommended': {
+            'balanced': False,
+            'paranoid': False,
+            'open': True
+        }
+    },
+
+    'ping_centre': {
+        'name': 'Ping Centre Telemetry',
+        'category': 'privacy',
+        'subcategory': 'tracking',
+        'level': 'advanced',
+        'mechanism': 'userjs',
+        'short': 'Send daily usage pings to Mozilla.',
+        'full': (
+            'Ping Centre sends structured telemetry pings to Mozilla servers including daily '
+            'active usage data, new tab interactions, and other usage metrics. This helps Mozilla '
+            'estimate active users and measure feature engagement. Disable to prevent sending '
+            'these usage pings.'
+        ),
+        'pref': 'browser.ping-centre.telemetry',
+        'type': 'toggle',
+        'impact': 'low',
+        'compatibility': 'none',
+        'values': [True, False],
+        'labels': ['Enabled', 'Disabled'],
+        'default': False,
+        'recommended': {
+            'balanced': False,
+            'paranoid': False,
+            'open': True
+        }
+    },
+
+    'extension_recommendations': {
+        'name': 'Extension Recommendations',
+        'category': 'privacy',
+        'subcategory': 'tracking',
+        'level': 'base',
+        'mechanism': 'prefs',
+        'short': 'Show personalized extension recommendations.',
+        'full': (
+            'When enabled, Firefox sends browsing data to Mozilla to receive personalized '
+            'extension recommendations. This requires sharing information about your browsing '
+            'habits. Disable to prevent Firefox from collecting this data and showing extension '
+            'suggestions based on your activity.'
+        ),
+        'pref': 'browser.discovery.enabled',
+        'type': 'toggle',
+        'impact': 'low',
+        'compatibility': 'none',
+        'values': [True, False],
+        'labels': ['Enabled', 'Disabled'],
+        'default': False,
+        'recommended': {
+            'balanced': False,
+            'paranoid': False,
+            'open': True
+        }
+    },
+
+    'autofill_addresses': {
+        'name': 'Autofill Addresses',
+        'category': 'privacy',
+        'subcategory': 'data',
+        'level': 'base',
+        'mechanism': 'prefs',
+        'short': 'Save and autofill postal addresses in forms.',
+        'full': (
+            'When enabled, Firefox saves postal addresses you enter in web forms and can '
+            'automatically fill them in on future visits. This stores personal information '
+            'including your name, street address, city, and postal code on disk. Convenient '
+            'for frequent online shopping but stores sensitive personal data. Disable if you '
+            'prefer not to have your address information stored in the browser.'
+        ),
+        'pref': 'extensions.formautofill.addresses.enabled',
+        'type': 'toggle',
+        'impact': 'low',
+        'compatibility': 'none',
+        'values': [True, False],
+        'labels': ['Enabled', 'Disabled'],
+        'default': False,
+        'recommended': {
+            'balanced': False,
+            'paranoid': False,
+            'open': True
+        }
+    },
+
+    'autofill_creditcards': {
+        'name': 'Autofill Credit Cards',
+        'category': 'privacy',
+        'subcategory': 'data',
+        'level': 'base',
+        'mechanism': 'prefs',
+        'short': 'Save and autofill credit card information in forms.',
+        'full': (
+            'When enabled, Firefox can save and autofill credit card numbers, expiration dates, '
+            'and cardholder names. Card data is stored encrypted on disk. While convenient for '
+            'online shopping, storing payment information in the browser carries security risks. '
+            'Consider using a dedicated password manager for payment information instead. '
+            'Disable for maximum financial security.'
+        ),
+        'pref': 'extensions.formautofill.creditCards.enabled',
+        'type': 'toggle',
+        'impact': 'low',
+        'compatibility': 'none',
+        'values': [True, False],
+        'labels': ['Enabled', 'Disabled'],
+        'default': False,
+        'recommended': {
+            'balanced': False,
+            'paranoid': False,
+            'open': False
         }
     },
 

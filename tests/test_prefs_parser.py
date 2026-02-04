@@ -252,7 +252,9 @@ user_pref("test.int", 42);
         parser.write_prefs({}, temp_file, use_user_pref=True)
 
         content = temp_file.read_text(encoding='utf-8')
-        assert content.strip() == ""
+        # File contains header comments but no pref lines
+        for line in content.strip().splitlines():
+            assert line.startswith("//") or line.strip() == "", f"Unexpected pref line: {line}"
 
     def test_write_preserves_encoding(self, parser, temp_file):
         """Test writing preserves UTF-8 encoding"""

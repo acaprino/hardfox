@@ -6,10 +6,13 @@ Handles file operations for converting a standard Firefox installation
 into a PortableApps.com-format portable installation.
 """
 
+import configparser
+import json
 import logging
 import os
 import shutil
 import threading
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable, Dict, List, Optional
 
@@ -119,6 +122,9 @@ class PortableConversionRepository:
             # Ensure Data/profile directory exists even without copy
             profile_dir = dest_dir / "Data" / "profile"
             profile_dir.mkdir(parents=True, exist_ok=True)
+
+            # Write portable_metadata.json
+            self._write_portable_metadata(dest_dir, firefox_dest)
 
             if progress_cb:
                 progress_cb("Conversion complete!", 1.0)
@@ -370,25 +376,32 @@ class PortableConversionRepository:
     def _create_launcher(self, dest_dir: Path) -> None:
         """
         Copy pre-built MyFox.exe if available, otherwise generate .bat.
+        Also copies UpdateFirefox.exe if available.
 
-        The .exe is built via tools/build_portable_launcher.py and placed in dist/.
+        The executables are built via tools/build_portable_launcher.py and
+        tools/build_portable_updater.py, placed in dist/.
 
         Args:
             dest_dir: Root of portable installation
         """
-        # Look for pre-built exe in dist/ relative to project root
-        exe_candidates = [
-            Path(__file__).resolve().parents[3] / "dist" / "MyFox.exe",
-        ]
-        for exe_src in exe_candidates:
-            if exe_src.exists():
-                exe_dst = dest_dir / "MyFox.exe"
-                shutil.copy2(str(exe_src), str(exe_dst))
-                logger.info(f"Copied launcher exe: {exe_dst}")
-                return
+        dist_dir = Path(__file__).resolve().parents[3] / "dist"
 
-        # Fallback: create .bat launcher
-        self._create_launcher_bat(dest_dir)
+        # Copy MyFox.exe launcher
+        launcher_src = dist_dir / "MyFox.exe"
+        if launcher_src.exists():
+            exe_dst = dest_dir / "MyFox.exe"
+            shutil.copy2(str(launcher_src), str(exe_dst))
+            logger.info(f"Copied launcher exe: {exe_dst}")
+        else:
+            # Fallback: create .bat launcher
+            self._create_launcher_bat(dest_dir)
+
+        # Copy UpdateFirefox.exe updater (optional)
+        updater_src = dist_dir / "UpdateFirefox.exe"
+        if updater_src.exists():
+            updater_dst = dest_dir / "UpdateFirefox.exe"
+            shutil.copy2(str(updater_src), str(updater_dst))
+            logger.info(f"Copied updater exe: {updater_dst}")
 
     def _create_launcher_bat(self, dest_dir: Path) -> None:
         """
@@ -413,6 +426,45 @@ class PortableConversionRepository:
         bat_path = dest_dir / "FirefoxPortable.bat"
         bat_path.write_bytes(bat_content.encode('ascii'))
         logger.info(f"Created launcher: {bat_path}")
+
+    def _write_portable_metadata(self, dest_dir: Path, firefox_dest: Path) -> None:
+        """
+        Write portable_metadata.json to the portable root directory.
+
+        Records creation time, Firefox version, and build ID for use by
+        the update system.
+
+        Args:
+            dest_dir: Root of portable installation
+            firefox_dest: Path to copied Firefox directory (App/Firefox64)
+        """
+        try:
+            # Read Firefox version from application.ini
+            version = ""
+            build_id = ""
+            ini_path = firefox_dest / "application.ini"
+            if ini_path.exists():
+                config = configparser.ConfigParser()
+                config.read(str(ini_path), encoding="utf-8")
+                if config.has_section("App"):
+                    version = config.get("App", "Version", fallback="")
+                    build_id = config.get("App", "BuildID", fallback="")
+
+            metadata = {
+                "created": datetime.now(timezone.utc).isoformat(),
+                "firefox_version": version,
+                "firefox_build_id": build_id,
+                "hardzilla_version": "4.0",
+            }
+
+            meta_path = dest_dir / "portable_metadata.json"
+            meta_path.write_text(
+                json.dumps(metadata, indent=2, ensure_ascii=False),
+                encoding="utf-8"
+            )
+            logger.info(f"Wrote portable_metadata.json: version={version}, build={build_id}")
+        except Exception as e:
+            logger.warning(f"Failed to write portable_metadata.json: {e}")
 
     def _check_disk_space(self, dest_path: Path, required_mb: float) -> Optional[str]:
         """

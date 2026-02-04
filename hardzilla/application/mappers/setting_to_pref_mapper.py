@@ -66,7 +66,4 @@ class SettingToPrefMapper:
         Returns:
             Dictionary of pref_key -> pref_value
         """
-        return {
-            setting.key: setting.value
-            for setting in settings.values()
-        }
+        return self.map_many(list(settings.values()))

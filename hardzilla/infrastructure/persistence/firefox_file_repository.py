@@ -77,7 +77,7 @@ class FirefoxFileRepository(IFirefoxRepository):
             self.parser.write_prefs(
                 merged_prefs,
                 pref_file,
-                use_user_pref=(level == SettingLevel.BASE)
+                use_user_pref=True
             )
             logger.info(f"Merged {len(prefs)} prefs into {pref_file.name}")
         else:
@@ -85,7 +85,7 @@ class FirefoxFileRepository(IFirefoxRepository):
             self.parser.write_prefs(
                 prefs,
                 pref_file,
-                use_user_pref=(level == SettingLevel.BASE)
+                use_user_pref=True
             )
             logger.info(f"Wrote {len(prefs)} prefs to {pref_file.name}")
 

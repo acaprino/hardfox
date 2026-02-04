@@ -14,6 +14,8 @@ from hardzilla.infrastructure.persistence import (
 )
 from hardzilla.infrastructure.persistence.firefox_extension_repository import FirefoxExtensionRepository
 from hardzilla.infrastructure.persistence.portable_conversion_repository import PortableConversionRepository
+from hardzilla.infrastructure.persistence.portable_metadata_repository import PortableMetadataRepository
+from hardzilla.infrastructure.external.mozilla_download_repository import MozillaDownloadRepository
 from hardzilla.application.mappers import SettingToPrefMapper, PrefToSettingMapper
 from hardzilla.application.services import IntentAnalyzer
 from hardzilla.application.use_cases import (
@@ -26,6 +28,7 @@ from hardzilla.application.use_cases import (
 )
 from hardzilla.application.use_cases.install_extensions_use_case import InstallExtensionsUseCase
 from hardzilla.application.use_cases.convert_to_portable_use_case import ConvertToPortableUseCase
+from hardzilla.application.use_cases.update_portable_firefox_use_case import UpdatePortableFirefoxUseCase
 
 
 class CompositionRoot:
@@ -55,6 +58,8 @@ class CompositionRoot:
         self.profile_repo = JsonProfileRepository(self.profiles_dir, self.settings_repo)
         self.extension_repo = FirefoxExtensionRepository()
         self.portable_repo = PortableConversionRepository()
+        self.portable_metadata_repo = PortableMetadataRepository()
+        self.mozilla_download_repo = MozillaDownloadRepository()
 
         # Initialize application layer (mappers and services)
         self.setting_mapper = SettingToPrefMapper()
@@ -70,3 +75,6 @@ class CompositionRoot:
         self.load_preset = LoadPresetUseCase(self.settings_repo)
         self.install_extensions = InstallExtensionsUseCase(self.extension_repo)
         self.convert_to_portable = ConvertToPortableUseCase(self.portable_repo)
+        self.update_portable_firefox = UpdatePortableFirefoxUseCase(
+            self.portable_metadata_repo, self.mozilla_download_repo
+        )

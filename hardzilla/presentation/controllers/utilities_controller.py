@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Utilities Controller
-Handles logic for the Utilities tab (Convert to Portable, etc.)
+Handles logic for the Utilities tab (Convert to Portable, Update Portable, etc.)
 """
 
 import logging
@@ -11,6 +11,7 @@ from typing import Callable, Optional
 
 from hardzilla.presentation.view_models.utilities_view_model import UtilitiesViewModel
 from hardzilla.application.use_cases.convert_to_portable_use_case import ConvertToPortableUseCase
+from hardzilla.application.use_cases.update_portable_firefox_use_case import UpdatePortableFirefoxUseCase
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +20,8 @@ class UtilitiesController:
     """
     Controller for the Utilities tab.
 
-    Coordinates the Convert to Portable operation with background threading.
+    Coordinates the Convert to Portable and Update Portable operations
+    with background threading.
     """
 
     def __init__(
@@ -27,6 +29,7 @@ class UtilitiesController:
         view_model: UtilitiesViewModel,
         convert_to_portable: ConvertToPortableUseCase,
         portable_repo,
+        update_portable_firefox: Optional[UpdatePortableFirefoxUseCase] = None,
         ui_callback: Optional[Callable[[Callable], None]] = None
     ):
         """
@@ -34,16 +37,25 @@ class UtilitiesController:
             view_model: UtilitiesViewModel instance
             convert_to_portable: Use case for portable conversion
             portable_repo: PortableConversionRepository for detection/estimation
+            update_portable_firefox: Use case for portable Firefox updates
             ui_callback: Callback for scheduling UI updates from background thread
         """
         self.view_model = view_model
         self.convert_to_portable = convert_to_portable
         self.portable_repo = portable_repo
+        self.update_portable_firefox = update_portable_firefox
         self.ui_callback = ui_callback
         self._convert_thread: Optional[threading.Thread] = None
         self._detect_thread: Optional[threading.Thread] = None
         self._estimate_thread: Optional[threading.Thread] = None
+        self._update_check_thread: Optional[threading.Thread] = None
+        self._update_thread: Optional[threading.Thread] = None
         self._cancel_event = threading.Event()
+        self._update_cancel_event = threading.Event()
+
+    # ---------------------------------------------------------------
+    # Convert to Portable
+    # ---------------------------------------------------------------
 
     def detect_firefox_installation(self, profile_path: Optional[str] = None) -> None:
         """
@@ -267,3 +279,150 @@ class UtilitiesController:
             self.ui_callback(update)
         else:
             update()
+
+    # ---------------------------------------------------------------
+    # Update Portable Firefox
+    # ---------------------------------------------------------------
+
+    def check_for_update(self, portable_root: str) -> None:
+        """
+        Check for portable Firefox updates in a background thread.
+
+        Args:
+            portable_root: Path to portable Firefox root directory
+        """
+        if not self.update_portable_firefox:
+            logger.warning("Update use case not configured")
+            return
+
+        if self._update_check_thread and self._update_check_thread.is_alive():
+            return
+
+        self._update_check_thread = threading.Thread(
+            target=self._check_update_worker,
+            args=(portable_root,),
+            daemon=True,
+            name="CheckUpdateThread"
+        )
+        self._update_check_thread.start()
+
+    def _check_update_worker(self, portable_root: str) -> None:
+        """Background worker for update check."""
+        try:
+            def set_checking():
+                self.view_model.is_checking_update = True
+                self.view_model.update_result = None
+
+            self._run_on_ui(set_checking)
+
+            result = self.update_portable_firefox.check_for_update(Path(portable_root))
+
+            def update_check_result():
+                self.view_model.current_version = result.get("current_version", "")
+                self.view_model.latest_version = result.get("latest_version", "")
+                self.view_model.update_available = result.get("update_available", False)
+                self.view_model.is_checking_update = False
+
+                if result.get("error"):
+                    self.view_model.update_result = {
+                        "success": False,
+                        "old_version": "",
+                        "new_version": "",
+                        "error": result["error"]
+                    }
+
+            self._run_on_ui(update_check_result)
+
+        except Exception as e:
+            logger.error(f"Update check failed: {e}", exc_info=True)
+
+            def set_error():
+                self.view_model.is_checking_update = False
+                self.view_model.update_result = {
+                    "success": False,
+                    "old_version": "",
+                    "new_version": "",
+                    "error": str(e)
+                }
+
+            self._run_on_ui(set_error)
+
+    def handle_update(self) -> None:
+        """Start the portable Firefox update in a background thread."""
+        if not self.update_portable_firefox:
+            logger.warning("Update use case not configured")
+            return
+
+        if self._update_thread and self._update_thread.is_alive():
+            logger.warning("Update already in progress")
+            return
+
+        portable_root = self.view_model.portable_path
+        if not portable_root:
+            return
+
+        self._update_cancel_event.clear()
+        self.view_model.is_updating = True
+        self.view_model.update_progress = 0.0
+        self.view_model.update_status = "Starting update..."
+        self.view_model.update_result = None
+
+        self._update_thread = threading.Thread(
+            target=self._update_worker,
+            args=(portable_root,),
+            daemon=True,
+            name="UpdatePortableThread"
+        )
+        self._update_thread.start()
+
+    def _update_worker(self, portable_root: str) -> None:
+        """Background worker for portable Firefox update."""
+        try:
+            result = self.update_portable_firefox.execute(
+                portable_root=Path(portable_root),
+                progress_cb=self._update_progress_callback,
+                cancel_event=self._update_cancel_event
+            )
+
+            def set_result():
+                self.view_model.is_updating = False
+                self.view_model.update_result = result
+                if result.get("success") and not result.get("already_up_to_date"):
+                    self.view_model.current_version = result.get("new_version", "")
+                    self.view_model.update_available = False
+
+            self._run_on_ui(set_result)
+
+        except Exception as e:
+            logger.error(f"Update failed: {e}", exc_info=True)
+
+            def set_error():
+                self.view_model.is_updating = False
+                self.view_model.update_result = {
+                    "success": False,
+                    "old_version": "",
+                    "new_version": "",
+                    "error": str(e)
+                }
+
+            self._run_on_ui(set_error)
+
+    def cancel_update(self) -> None:
+        """Signal the background update thread to stop."""
+        self._update_cancel_event.set()
+        logger.info("Cancellation requested for portable update")
+
+    def _update_progress_callback(self, status: str, progress: float) -> None:
+        """Thread-safe progress callback for update operations."""
+        def update():
+            self.view_model.update_progress = progress
+            self.view_model.update_status = status
+
+        self._run_on_ui(update)
+
+    def _run_on_ui(self, callback: Callable) -> None:
+        """Schedule a callback on the UI thread, or run directly if no ui_callback."""
+        if self.ui_callback:
+            self.ui_callback(callback)
+        else:
+            callback()

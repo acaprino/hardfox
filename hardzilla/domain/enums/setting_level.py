@@ -22,10 +22,15 @@ class SettingLevel(Enum):
 
     @property
     def filename(self) -> str:
-        """Returns the Firefox filename for this level"""
-        return "prefs.js" if self == SettingLevel.BASE else "user.js"
+        """Returns the Firefox filename for this level.
+
+        Both BASE and ADVANCED settings are written to user.js because
+        Firefox overwrites prefs.js on every shutdown, reverting changes.
+        user.js is read-only from Firefox's perspective and applied on startup.
+        """
+        return "user.js"
 
     @property
     def prefix(self) -> str:
         """Returns the JavaScript function prefix for this level"""
-        return "pref" if self == SettingLevel.ADVANCED else "user_pref"
+        return "user_pref"
