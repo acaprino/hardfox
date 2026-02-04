@@ -114,7 +114,7 @@ class PortableConversionRepository:
             if progress_cb:
                 progress_cb("Creating launcher...", 0.95)
 
-            self._create_launcher_bat(dest_dir)
+            self._create_launcher(dest_dir)
 
             # Ensure Data/profile directory exists even without copy
             profile_dir = dest_dir / "Data" / "profile"
@@ -366,9 +366,32 @@ class PortableConversionRepository:
 
         return files_copied, total_bytes, failed_files
 
+    def _create_launcher(self, dest_dir: Path) -> None:
+        """
+        Copy pre-built MyFox.exe if available, otherwise generate .bat.
+
+        The .exe is built via tools/build_portable_launcher.py and placed in dist/.
+
+        Args:
+            dest_dir: Root of portable installation
+        """
+        # Look for pre-built exe in dist/ relative to project root
+        exe_candidates = [
+            Path(__file__).resolve().parents[3] / "dist" / "MyFox.exe",
+        ]
+        for exe_src in exe_candidates:
+            if exe_src.exists():
+                exe_dst = dest_dir / "MyFox.exe"
+                shutil.copy2(str(exe_src), str(exe_dst))
+                logger.info(f"Copied launcher exe: {exe_dst}")
+                return
+
+        # Fallback: create .bat launcher
+        self._create_launcher_bat(dest_dir)
+
     def _create_launcher_bat(self, dest_dir: Path) -> None:
         """
-        Generate FirefoxPortable.bat launcher script.
+        Generate FirefoxPortable.bat launcher script (fallback).
 
         Uses setlocal to prevent special characters in paths (%, &, ^, !)
         from being interpreted by the command processor.

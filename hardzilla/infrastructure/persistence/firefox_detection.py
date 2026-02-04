@@ -118,7 +118,9 @@ def detect_firefox_portable(
             break
 
         portable_exe = parent / portable_binary
-        if portable_exe.exists():
+        portable_bat = parent / "FirefoxPortable.bat"
+        myfox_exe = parent / "MyFox.exe"
+        if portable_exe.exists() or portable_bat.exists() or myfox_exe.exists():
             for firefox_dir_name in ["Firefox64", "Firefox"]:
                 firefox_install = parent / "App" / firefox_dir_name
                 if firefox_install.exists() and (firefox_install / firefox_binary).exists():
