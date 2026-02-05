@@ -254,5 +254,70 @@ class FirefoxExtensionRepository(IExtensionRepository):
         # Merge extension settings (new settings override existing)
         existing_policies["policies"]["ExtensionSettings"].update(new_extension_settings)
 
+        # Add 3rdparty extension configurations (e.g., uBlock Origin filter lists)
+        third_party_config = self._build_third_party_config(new_extension_settings)
+        if third_party_config:
+            if "3rdparty" not in existing_policies["policies"]:
+                existing_policies["policies"]["3rdparty"] = {"Extensions": {}}
+            if "Extensions" not in existing_policies["policies"]["3rdparty"]:
+                existing_policies["policies"]["3rdparty"]["Extensions"] = {}
+            existing_policies["policies"]["3rdparty"]["Extensions"].update(third_party_config)
+            logger.info(f"Added 3rdparty config for {len(third_party_config)} extensions")
+
         logger.info(f"Merged {len(new_extension_settings)} extension settings")
         return existing_policies
+
+    # uBlock Origin default filter list identifiers
+    UBLOCK_DEFAULT_LISTS = [
+        "user-filters",
+        "ublock-filters",
+        "ublock-badware",
+        "ublock-privacy",
+        "ublock-quick-fixes",
+        "ublock-unbreak",
+        "easylist",
+        "easyprivacy",
+        "urlhaus-1",
+        "plowe-0",
+    ]
+
+    def _build_third_party_config(self, extension_settings: dict) -> dict:
+        """
+        Build 3rdparty extension configuration for extensions that support it.
+
+        Currently supports:
+        - uBlock Origin: custom filter lists via adminSettings
+
+        Adds custom filter lists on top of uBlock Origin's default lists
+        using the managed storage format (selectedFilterLists + importedLists).
+
+        Args:
+            extension_settings: Dictionary of extension IDs being installed
+
+        Returns:
+            Dictionary of 3rdparty configurations keyed by extension ID
+        """
+        config = {}
+
+        for ext_id in extension_settings:
+            if ext_id not in EXTENSIONS_METADATA:
+                continue
+
+            ext_data = EXTENSIONS_METADATA[ext_id]
+
+            # uBlock Origin custom filter lists
+            if ext_id == "uBlock0@raymondhill.net" and "custom_filter_lists" in ext_data:
+                filter_lists = ext_data["custom_filter_lists"]
+                if filter_lists:
+                    # selectedFilterLists must include default IDs + custom URLs
+                    selected = list(self.UBLOCK_DEFAULT_LISTS) + list(filter_lists)
+
+                    config[ext_id] = {
+                        "adminSettings": {
+                            "selectedFilterLists": selected,
+                            "importedLists": list(filter_lists)
+                        }
+                    }
+                    logger.info(f"Configured uBlock Origin with defaults + {len(filter_lists)} custom filter lists")
+
+        return config
