@@ -2,15 +2,13 @@
 """Presentation layer view models for MVVM pattern"""
 
 from .base_view_model import BaseViewModel
-from .setup_view_model import SetupViewModel
-from .customize_view_model import CustomizeViewModel
+from .settings_view_model import SettingsViewModel
 from .apply_view_model import ApplyViewModel
 from .utilities_view_model import UtilitiesViewModel
 
 __all__ = [
     'BaseViewModel',
-    'SetupViewModel',
-    'CustomizeViewModel',
+    'SettingsViewModel',
     'ApplyViewModel',
     'UtilitiesViewModel'
 ]

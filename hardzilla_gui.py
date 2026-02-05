@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """
 Hardzilla v4.0 - GUI Application
-Main entry point for the graphical user interface
+Main entry point for the graphical user interface.
+
+3-tab layout: Settings | Extensions | Utilities
+Firefox profile path is global in the header.
 """
 
 import sys
@@ -10,6 +13,7 @@ import argparse
 from pathlib import Path
 import json
 import customtkinter as ctk
+from tkinter import filedialog
 
 # Configure logging (--debug flag enables DEBUG level)
 _parser = argparse.ArgumentParser(add_help=False)
@@ -27,23 +31,21 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from hardzilla.composition_root import CompositionRoot
 from hardzilla.presentation.view_models import (
-    SetupViewModel,
-    CustomizeViewModel,
+    SettingsViewModel,
     ApplyViewModel,
     UtilitiesViewModel
 )
 from hardzilla.presentation.views import (
-    SetupView,
-    CustomizeView,
+    SettingsView,
     ExtensionsView,
-    ApplyView,
     UtilitiesView
 )
 from hardzilla.presentation.controllers import (
-    SetupController,
+    SettingsController,
     ApplyController,
     UtilitiesController
 )
+from hardzilla.presentation.theme import Theme
 from hardzilla.presentation.utils import KeyboardHandler
 
 
@@ -51,16 +53,13 @@ class HardzillaGUI(ctk.CTk):
     """
     Main GUI application for Hardzilla v4.0.
 
-    Implements a 5-tab interface:
-    1. Setup & Presets - Choose profile and Firefox path
-    2. Customize Settings - Review and modify settings
-    3. Extensions - Select and install privacy extensions
-    4. Apply to Firefox - Apply configuration to Firefox
-    5. Utilities - Tools like Convert to Portable Firefox
+    Implements a 3-tab interface with a global Firefox path selector:
+    1. Settings - Presets, customize, and apply settings
+    2. Extensions - Select and install privacy extensions
+    3. Utilities - Portable Firefox tools
     """
 
     def __init__(self):
-        """Initialize the GUI application"""
         super().__init__()
 
         # Configure window
@@ -91,10 +90,9 @@ class HardzillaGUI(ctk.CTk):
         logger.info("Hardzilla v4.0 GUI initialized successfully")
 
     def _init_infrastructure(self):
-        """Initialize infrastructure layer via CompositionRoot"""
+        """Initialize infrastructure layer via CompositionRoot."""
         self.composition_root = CompositionRoot(app_dir=Path(__file__).parent)
 
-        # Expose dependencies for convenience
         self.app_dir = self.composition_root.app_dir
         self.profiles_dir = self.composition_root.profiles_dir
         self.parser = self.composition_root.parser
@@ -103,8 +101,7 @@ class HardzillaGUI(ctk.CTk):
         self.profile_repo = self.composition_root.profile_repo
 
     def _init_use_cases(self):
-        """Initialize application use cases via CompositionRoot"""
-        # Expose use cases and services for convenience
+        """Initialize application use cases via CompositionRoot."""
         self.setting_mapper = self.composition_root.setting_mapper
         self.pref_mapper = self.composition_root.pref_mapper
         self.intent_analyzer = self.composition_root.intent_analyzer
@@ -121,19 +118,18 @@ class HardzillaGUI(ctk.CTk):
         self.create_portable_from_download = self.composition_root.create_portable_from_download
 
     def _init_view_models(self):
-        """Initialize view models"""
-        self.setup_vm = SetupViewModel()
-        self.customize_vm = CustomizeViewModel(settings_repo=self.settings_repo)
-        self.apply_vm = ApplyViewModel()
+        """Initialize view models."""
+        self.settings_vm = SettingsViewModel(settings_repo=self.settings_repo)
+        self.apply_vm = ApplyViewModel()  # Extensions-only
         self.utilities_vm = UtilitiesViewModel()
 
     def _init_controllers(self):
-        """Initialize controllers"""
-        self.setup_controller = SetupController(
-            view_model=self.setup_vm,
-            generate_recommendation=self.generate_recommendation,
+        """Initialize controllers."""
+        self.settings_controller = SettingsController(
+            view_model=self.settings_vm,
             import_from_firefox=self.import_from_firefox,
-            on_next=self._on_setup_next,
+            apply_settings=self.apply_settings,
+            save_profile=self.save_profile,
             on_profile_imported=self._on_profile_imported,
             ui_callback=self._schedule_ui_update
         )
@@ -157,49 +153,45 @@ class HardzillaGUI(ctk.CTk):
         )
 
     def _build_ui(self):
-        """Build the user interface"""
-        # Main container
+        """Build the user interface."""
         main_frame = ctk.CTkFrame(self)
         main_frame.pack(fill="both", expand=True)
 
-        # Header
+        # Header (with global Firefox path)
         header = self._build_header(main_frame)
-        header.pack(fill="x", padx=20, pady=20)
+        header.pack(fill="x", padx=20, pady=(20, 10))
 
-        # Tabview (replaces wizard navigation)
-        self.tabview = ctk.CTkTabview(main_frame, height=700, command=self._on_tab_changed)
+        # Tabview (3 independent tabs)
+        self.tabview = ctk.CTkTabview(main_frame, height=700)
         self.tabview.pack(fill="both", expand=True, padx=20, pady=(0, 20))
 
         # Create tabs
-        self.tabview.add("Setup & Presets")
-        self.tabview.add("Customize Settings")
+        self.tabview.add("Settings")
         self.tabview.add("Extensions")
-        self.tabview.add("Apply to Firefox")
         self.tabview.add("Utilities")
 
         # Create content in each tab
         self._create_tab_content()
 
         # Set default tab
-        self.tabview.set("Setup & Presets")
+        self.tabview.set("Settings")
 
     def _build_header(self, parent):
-        """Build application header with enhanced styling"""
+        """Build application header with global Firefox path selector."""
         header_frame = ctk.CTkFrame(
             parent,
             fg_color="#2D2D2D",
             corner_radius=8,
-            height=80
         )
-        header_frame.grid_columnconfigure(1, weight=1)
+        header_frame.grid_columnconfigure(2, weight=1)
 
         # Icon/Logo
         icon_label = ctk.CTkLabel(
             header_frame,
-            text="🛡️",
+            text="",
             font=ctk.CTkFont(size=36)
         )
-        icon_label.grid(row=0, column=0, rowspan=2, padx=20, pady=10)
+        icon_label.grid(row=0, column=0, rowspan=2, padx=(20, 10), pady=10)
 
         # Title
         title = ctk.CTkLabel(
@@ -219,62 +211,78 @@ class HardzillaGUI(ctk.CTk):
         )
         subtitle.grid(row=1, column=1, sticky="w", pady=(0, 15))
 
+        # Global Firefox Profile selector (right side of header)
+        path_frame = ctk.CTkFrame(header_frame, fg_color="transparent")
+        path_frame.grid(row=0, column=2, rowspan=2, sticky="e", padx=20, pady=10)
+        path_frame.grid_columnconfigure(1, weight=1)
+
+        ctk.CTkLabel(
+            path_frame,
+            text="Firefox Profile:",
+            font=ctk.CTkFont(size=13, weight="bold"),
+            text_color="#CCCCCC"
+        ).grid(row=0, column=0, padx=(0, 8), sticky="w")
+
+        self.global_path_entry = ctk.CTkEntry(
+            path_frame,
+            placeholder_text="Select Firefox profile directory...",
+            font=ctk.CTkFont(size=12),
+            height=32,
+            width=350
+        )
+        self.global_path_entry.grid(row=0, column=1, padx=(0, 8))
+
+        ctk.CTkButton(
+            path_frame,
+            text="Browse",
+            width=80,
+            height=32,
+            font=ctk.CTkFont(size=12),
+            command=self._browse_global_firefox_path
+        ).grid(row=0, column=2)
+
+        # Import status label
+        self.global_import_status = ctk.CTkLabel(
+            path_frame,
+            text="",
+            font=ctk.CTkFont(size=11),
+            text_color=Theme.get_color('info')
+        )
+        self.global_import_status.grid(row=1, column=0, columnspan=3, sticky="w", pady=(2, 0))
+
         return header_frame
 
     def _create_tab_content(self):
-        """Create content for each tab"""
-        logger.debug("_create_tab_content: creating views for all 5 tabs")
-        # Tab 1: Setup & Presets
-        self.setup_view = SetupView(
-            parent=self.tabview.tab("Setup & Presets"),
-            view_model=self.setup_vm,
-            on_generate_recommendation=self._on_generate_recommendation,
-            on_next=self._on_setup_next,
-            on_firefox_path_changed=self._on_firefox_path_changed,
+        """Create content for each tab."""
+        logger.debug("_create_tab_content: creating views for all 3 tabs")
+
+        # Tab 1: Settings (unified)
+        self.settings_view = SettingsView(
+            parent=self.tabview.tab("Settings"),
+            view_model=self.settings_vm,
             on_preset_selected=self._on_preset_selected,
             on_json_imported=self._on_json_imported,
+            on_apply=self._on_apply,
             profiles_dir=self.profiles_dir
         )
-        self.setup_view.pack(fill="both", expand=True)
+        self.settings_view.pack(fill="both", expand=True)
 
-        # Tab 2: Customize Settings
-        self.customize_view = CustomizeView(
-            parent=self.tabview.tab("Customize Settings"),
-            view_model=self.customize_vm,
-            on_next=self._on_customize_next,
-            on_back=self._on_customize_back
-        )
-        self.customize_view.pack(fill="both", expand=True)
-
-        logger.debug("_create_tab_content: creating ExtensionsView (Tab 3)")
-        # Tab 3: Extensions
+        # Tab 2: Extensions
         self.extensions_view = ExtensionsView(
             parent=self.tabview.tab("Extensions"),
             view_model=self.apply_vm,
             on_install_extensions=self._on_install_extensions,
-            on_uninstall_extensions=self._on_uninstall_extensions,
-            on_next=self._on_extensions_next,
-            on_back=self._on_extensions_back
+            on_uninstall_extensions=self._on_uninstall_extensions
         )
         self.extensions_view.pack(fill="both", expand=True)
 
-        # Tab 4: Apply to Firefox
-        self.apply_view = ApplyView(
-            parent=self.tabview.tab("Apply to Firefox"),
-            view_model=self.apply_vm,
-            on_apply=self._on_apply,
-            on_back=self._on_apply_back
-        )
-        self.apply_view.pack(fill="both", expand=True)
-
-        # Tab 5: Utilities
+        # Tab 3: Utilities
         self.utilities_view = UtilitiesView(
             parent=self.tabview.tab("Utilities"),
             view_model=self.utilities_vm,
             on_convert=self._on_convert_to_portable,
             on_cancel_convert=self._on_cancel_portable_conversion,
             on_estimate_requested=self._on_estimate_portable_size,
-            on_back=self._on_utilities_back,
             on_check_update=self._on_check_portable_update,
             on_update=self._on_update_portable_firefox,
             on_cancel_update=self._on_cancel_portable_update,
@@ -284,246 +292,168 @@ class HardzillaGUI(ctk.CTk):
         self.utilities_view.pack(fill="both", expand=True)
 
     def _init_keyboard_shortcuts(self):
-        """Initialize keyboard shortcuts"""
+        """Initialize keyboard shortcuts."""
         self.keyboard_handler = KeyboardHandler(self)
 
-        # Register Ctrl+S for apply (when on apply tab)
+        # Ctrl+S for apply (when on Settings tab)
         def handle_ctrl_s():
-            if self.tabview.get() == "Apply to Firefox":
+            if self.tabview.get() == "Settings":
                 self._on_apply()
 
         self.keyboard_handler.register_shortcut('<Control-s>', handle_ctrl_s)
-
         logger.info("Keyboard shortcuts initialized")
 
     def _schedule_ui_update(self, callback):
-        """
-        Schedule a UI update to run on the main thread.
-
-        Used by controllers to update UI from background threads.
-
-        Args:
-            callback: Function to call on main thread
-        """
+        """Schedule a UI update to run on the main thread."""
         self.after(0, callback)
 
-    # Tab change and state sync
-    def _on_tab_changed(self):
-        """Sync ViewModel state when user clicks tabs directly."""
-        current = self.tabview.get()
-        logger.debug("_on_tab_changed: switched to '%s'", current)
-        if current in ("Extensions", "Apply to Firefox"):
-            self._sync_apply_vm()
-        elif current == "Utilities":
-            self._sync_utilities_vm()
+    # =================================================================
+    # Global Firefox path
+    # =================================================================
 
-    def _sync_apply_vm(self):
-        """Ensure apply_vm has the latest profile and firefox_path from other ViewModels."""
-        from hardzilla.domain.entities import Profile
+    def _browse_global_firefox_path(self):
+        """Open directory browser for Firefox profile."""
+        path = filedialog.askdirectory(title="Select Firefox Profile Directory")
+        if path:
+            is_valid, error_msg = self._validate_firefox_path(path)
+            if is_valid:
+                self.global_path_entry.delete(0, "end")
+                self.global_path_entry.insert(0, path)
+                self._on_firefox_path_changed(path)
+            else:
+                self.global_import_status.configure(
+                    text=f"  {error_msg}",
+                    text_color=Theme.get_color('error')
+                )
 
-        # Sync firefox_path
-        if self.setup_vm.firefox_path and self.apply_vm.firefox_path != self.setup_vm.firefox_path:
-            logger.debug("_sync_apply_vm: syncing firefox_path from setup_vm: %s", self.setup_vm.firefox_path)
-            self.apply_vm.firefox_path = self.setup_vm.firefox_path
+    def _validate_firefox_path(self, path: str) -> tuple:
+        """Validate Firefox profile path."""
+        firefox_path = Path(path)
 
-        # Always sync profile from customize_vm settings to reflect latest changes
-        if self.customize_vm.settings:
-            profile_name = self.customize_vm.profile.name if self.customize_vm.profile else "Custom Configuration"
-            profile = Profile(
-                name=profile_name,
-                settings=self.customize_vm.settings.copy(),
-                metadata={},
-                generated_by="user_customization"
-            )
-            self.apply_vm.profile = profile
-            logger.debug("_sync_apply_vm: synced profile '%s' (%d settings) from customize_vm",
-                          profile.name, len(profile.settings))
+        if not firefox_path.exists():
+            return False, "Directory does not exist"
 
-    # Event handlers
-    def _on_preset_selected(self, preset_key: str):
-        """Handle preset selection - update customize settings"""
-        try:
-            # Load preset
-            profile = self.load_preset.execute(preset_key)
-            logger.info(f"Loaded preset '{preset_key}': {len(profile.settings)} settings")
+        if not firefox_path.is_dir():
+            return False, "Path is not a directory"
 
-            # Update customize view with preset values
-            self.customize_vm.profile = profile
+        has_prefs = (firefox_path / "prefs.js").exists()
+        has_times = (firefox_path / "times.json").exists()
 
-            # Clear any previously imported JSON profile (mutual exclusivity)
-            self.setup_vm.generated_profile = None
+        if not (has_prefs or has_times):
+            return False, "Not a valid Firefox profile (missing prefs.js or times.json)"
 
-        except Exception as e:
-            logger.error(f"Failed to load preset: {e}")
-            self._show_error("Failed to load preset", str(e))
-
-    def _on_json_imported(self, json_path: str):
-        """Handle JSON profile import"""
-        try:
-            # Load profile from JSON
-            profile = self.load_profile.execute(json_path)
-            logger.info(f"Loaded JSON profile '{profile.name}': {len(profile.settings)} settings")
-
-            # Update view models
-            self.setup_vm.generated_profile = profile
-            self.customize_vm.profile = profile
-
-            # Show success in setup view
-            self.setup_view.show_json_import_success(profile.name, len(profile.settings))
-
-            # Show info dialog
-            self._show_info(
-                "Profile Imported",
-                f"Successfully loaded '{profile.name}' with {len(profile.settings)} settings.\n\n"
-                f"BASE: {profile.get_base_settings_count()} | "
-                f"ADVANCED: {profile.get_advanced_settings_count()}\n\n"
-                f"Switch to the 'Customize Settings' tab to review and modify your settings."
-            )
-
-        except FileNotFoundError:
-            logger.error(f"JSON file not found: {json_path}")
-            self.setup_view.show_json_import_error("File not found")
-            self._show_error(
-                "Import Failed",
-                "Could not find the selected JSON file.\n\nPlease check the file path and try again."
-            )
-
-        except json.JSONDecodeError as e:
-            logger.error(f"Invalid JSON format: {e}")
-            self.setup_view.show_json_import_error("Invalid JSON format")
-            self._show_error(
-                "Import Failed",
-                "The selected file is not valid JSON.\n\nPlease select a valid profile JSON file."
-            )
-
-        except Exception as e:
-            logger.error(f"Failed to import JSON profile: {e}")
-            self.setup_view.show_json_import_error(str(e))
-            self._show_error(
-                "Import Failed",
-                f"Failed to import profile from JSON:\n\n{str(e)}"
-            )
+        return True, ""
 
     def _on_firefox_path_changed(self, path: str):
-        """Handle Firefox path selection - import current settings"""
+        """Handle Firefox path selection - propagate to all VMs."""
         logger.debug("_on_firefox_path_changed: path=%s", path)
-        # Sync firefox_path to apply_vm immediately so Extensions tab can use it
-        # regardless of navigation flow (direct tab click vs Next button)
+
+        # Show loading status
+        self.global_import_status.configure(
+            text="Loading current Firefox settings...",
+            text_color=Theme.get_color('info')
+        )
+
+        # Update settings_vm
+        self.settings_vm.firefox_path = path
+
+        # Sync to apply_vm (Extensions tab)
         self.apply_vm.firefox_path = path
-        # Sync to utilities_vm and re-detect Firefox installation
+
+        # Sync to utilities_vm
         self.utilities_vm.profile_path = path
         self.utilities_vm.firefox_install_dir = ''  # Reset to trigger re-detection
-        logger.debug("_on_firefox_path_changed: apply_vm.firefox_path synced")
+        self.utilities_controller.detect_firefox_installation(path)
+
+        # Import settings from Firefox
         try:
-            self.setup_controller.handle_firefox_path_changed(path)
+            self.settings_controller.handle_firefox_path_changed(path)
         except Exception as e:
             logger.error(f"Failed to import from Firefox: {e}")
             self._show_error("Failed to import settings", str(e))
 
     def _on_profile_imported(self, profile):
-        """Handle profile imported from Firefox"""
+        """Handle profile imported from Firefox."""
         if profile is None:
-            # Import failed - clear loading status and show error
-            self.setup_view._clear_import_status()
-            self._show_error(
-                "Import Failed",
-                "Failed to import settings from the selected Firefox profile.\n\n"
-                "Please check that Firefox is closed and the profile is valid."
+            self.global_import_status.configure(
+                text="  Failed to import settings from Firefox profile",
+                text_color=Theme.get_color('error')
             )
             return
 
         logger.info(f"Profile imported: {profile.name} with {len(profile.settings)} settings")
 
-        # Update customize view with imported profile
-        self.customize_vm.profile = profile
+        # Update settings VM with imported profile
+        self.settings_vm.profile = profile
 
-        # Update setup view to show success
-        self.setup_view.show_import_success(len(profile.settings))
-
-        # Show notification
-        self._show_info(
-            "Firefox Settings Imported",
-            f"Loaded {profile.get_base_settings_count()} BASE and "
-            f"{profile.get_advanced_settings_count()} ADVANCED settings from your Firefox profile.\n\n"
-            f"Switch to the 'Customize Settings' tab to review and modify your settings."
+        # Show success in header
+        self.global_import_status.configure(
+            text=f"  Loaded {len(profile.settings)} settings from Firefox profile",
+            text_color=Theme.get_color('primary')
         )
 
-    def _on_generate_recommendation(self):
-        """Handle generate recommendation button"""
+    # =================================================================
+    # Settings tab handlers
+    # =================================================================
+
+    def _on_preset_selected(self, preset_key: str):
+        """Handle preset selection."""
         try:
-            self.setup_controller.handle_generate_recommendation()
+            profile = self.load_preset.execute(preset_key)
+            logger.info(f"Loaded preset '{preset_key}': {len(profile.settings)} settings")
+            self.settings_vm.profile = profile
         except Exception as e:
-            logger.error(f"Failed to generate recommendation: {e}")
-            self._show_error("Failed to generate recommendation", str(e))
+            logger.error(f"Failed to load preset: {e}")
+            self._show_error("Failed to load preset", str(e))
 
-    def _on_setup_next(self):
-        """Handle next from setup tab"""
-        # Optional: Load preset if selected
-        if self.setup_vm.selected_preset and not self.setup_vm.generated_profile:
-            try:
-                profile = self.load_preset.execute(self.setup_vm.selected_preset)
-                self.setup_vm.generated_profile = profile
-                self.customize_vm.profile = profile  # Update settings values
-            except Exception as e:
-                logger.error(f"Failed to load preset: {e}")
-                self._show_error("Failed to load preset", str(e))
-                return
-        elif self.setup_vm.generated_profile:
-            # Update customize view with generated profile
-            self.customize_vm.profile = self.setup_vm.generated_profile
+    def _on_json_imported(self, json_path: str):
+        """Handle JSON profile import."""
+        try:
+            profile = self.load_profile.execute(json_path)
+            logger.info(f"Loaded JSON profile '{profile.name}': {len(profile.settings)} settings")
 
-        # Always allow going to customize tab (settings are pre-loaded from metadata)
-        self.tabview.set("Customize Settings")
+            self.settings_vm.profile = profile
 
-    def _on_customize_next(self):
-        """Handle next from customize tab"""
-        logger.debug("_on_customize_next: navigating from Customize Settings to Extensions")
-        from hardzilla.domain.entities import Profile
+            self.settings_view.show_json_import_success(profile.name, len(profile.settings))
 
-        # Build profile from current ViewModel settings (includes user modifications)
-        settings = self.customize_vm.settings
-        logger.debug("_on_customize_next: customize_vm has %d settings", len(settings) if settings else 0)
-
-        if not settings:
-            self._show_error(
-                "No Settings",
-                "No settings available to apply. Please select a preset or import from Firefox."
+            self._show_info(
+                "Profile Imported",
+                f"Successfully loaded '{profile.name}' with {len(profile.settings)} settings.\n\n"
+                f"BASE: {profile.get_base_settings_count()} | "
+                f"ADVANCED: {profile.get_advanced_settings_count()}\n\n"
+                f"Review and modify settings below, then click 'Apply Settings'."
             )
-            return
 
-        # Create or update profile with current settings
-        profile_name = self.customize_vm.profile.name if self.customize_vm.profile else "Custom Configuration"
-        profile = Profile(
-            name=profile_name,
-            settings=settings.copy(),
-            metadata={},
-            generated_by="user_customization"
-        )
+        except FileNotFoundError:
+            logger.error(f"JSON file not found: {json_path}")
+            self.settings_view.show_json_import_error("File not found")
+            self._show_error("Import Failed", "Could not find the selected JSON file.")
 
-        # Pass to apply view model
-        self.apply_vm.profile = profile
-        self.apply_vm.firefox_path = self.setup_vm.firefox_path
-        logger.debug("_on_customize_next: apply_vm.profile='%s' (%d settings), firefox_path=%s",
-                      profile.name, len(profile.settings), self.setup_vm.firefox_path)
-        self.tabview.set("Extensions")
+        except json.JSONDecodeError as e:
+            logger.error(f"Invalid JSON format: {e}")
+            self.settings_view.show_json_import_error("Invalid JSON format")
+            self._show_error("Import Failed", "The selected file is not valid JSON.")
 
-    def _on_customize_back(self):
-        """Handle back from customize tab"""
-        self.tabview.set("Setup & Presets")
+        except Exception as e:
+            logger.error(f"Failed to import JSON profile: {e}")
+            self.settings_view.show_json_import_error(str(e))
+            self._show_error("Import Failed", f"Failed to import profile:\n\n{str(e)}")
 
     def _on_apply(self):
-        """Handle apply button"""
+        """Handle apply button."""
         try:
-            self.apply_controller.handle_apply()
+            self.settings_controller.handle_apply()
         except Exception as e:
             logger.error(f"Failed to apply settings: {e}")
             self._show_error("Failed to apply settings", str(e))
 
+    # =================================================================
+    # Extensions tab handlers
+    # =================================================================
+
     def _on_install_extensions(self):
-        """Handle install extensions button"""
-        logger.debug("_on_install_extensions: delegating to apply_controller.handle_install_extensions()")
-        logger.debug("_on_install_extensions: selected_extensions=%s", self.apply_vm.selected_extensions)
-        logger.debug("_on_install_extensions: firefox_path=%s", self.apply_vm.firefox_path)
+        """Handle install extensions button."""
+        logger.debug("_on_install_extensions: delegating to apply_controller")
         try:
             self.apply_controller.handle_install_extensions()
         except Exception as e:
@@ -531,49 +461,19 @@ class HardzillaGUI(ctk.CTk):
             self._show_error("Failed to install extensions", str(e))
 
     def _on_uninstall_extensions(self):
-        """Handle uninstall extensions button"""
-        logger.debug("_on_uninstall_extensions: delegating to apply_controller.handle_uninstall_extensions()")
+        """Handle uninstall extensions button."""
+        logger.debug("_on_uninstall_extensions: delegating to apply_controller")
         try:
             self.apply_controller.handle_uninstall_extensions()
         except Exception as e:
             logger.error(f"Failed to uninstall extensions: {e}", exc_info=True)
             self._show_error("Failed to uninstall extensions", str(e))
 
-    def _on_extensions_next(self):
-        """Handle next from extensions tab"""
-        logger.debug("_on_extensions_next: navigating Extensions -> Apply to Firefox")
-        logger.debug("_on_extensions_next: %d extensions selected", len(self.apply_vm.selected_extensions))
-        self.tabview.set("Apply to Firefox")
-
-    def _on_extensions_back(self):
-        """Handle back from extensions tab"""
-        logger.debug("_on_extensions_back: navigating Extensions -> Customize Settings")
-        self.tabview.set("Customize Settings")
-
-    def _on_apply_back(self):
-        """Handle back from apply tab"""
-        logger.debug("_on_apply_back: navigating Apply to Firefox -> Extensions")
-        self.tabview.set("Extensions")
-
-    def _on_utilities_back(self):
-        """Handle back from utilities tab"""
-        logger.debug("_on_utilities_back: navigating Utilities -> Apply to Firefox")
-        self.tabview.set("Apply to Firefox")
-
-    def _sync_utilities_vm(self):
-        """Sync utilities ViewModel with current state from other ViewModels."""
-        # Sync profile path from setup
-        if self.setup_vm.firefox_path:
-            self.utilities_vm.profile_path = self.setup_vm.firefox_path
-
-        # Detect Firefox installation if not already detected
-        if not self.utilities_vm.firefox_install_dir:
-            self.utilities_controller.detect_firefox_installation(
-                self.setup_vm.firefox_path
-            )
+    # =================================================================
+    # Utilities tab handlers
+    # =================================================================
 
     def _on_convert_to_portable(self):
-        """Handle Convert to Portable button click."""
         logger.debug("_on_convert_to_portable: starting conversion")
         try:
             self.utilities_controller.handle_convert()
@@ -582,25 +482,17 @@ class HardzillaGUI(ctk.CTk):
             self._show_error("Conversion Failed", str(e))
 
     def _on_cancel_portable_conversion(self):
-        """Handle Cancel button during portable conversion."""
-        logger.debug("_on_cancel_portable_conversion: cancelling")
         self.utilities_controller.cancel_conversion()
 
     def _on_estimate_portable_size(self):
-        """Handle size estimation request (destination change or profile toggle)."""
-        logger.debug("_on_estimate_portable_size: updating size estimate")
         self.utilities_controller.estimate_size()
 
     def _on_check_portable_update(self):
-        """Handle Check for Updates button click."""
-        logger.debug("_on_check_portable_update: checking for updates")
         portable_path = self.utilities_vm.portable_path
         if portable_path:
             self.utilities_controller.check_for_update(portable_path)
 
     def _on_update_portable_firefox(self):
-        """Handle Update Firefox button click."""
-        logger.debug("_on_update_portable_firefox: starting update")
         try:
             self.utilities_controller.handle_update()
         except Exception as e:
@@ -608,13 +500,9 @@ class HardzillaGUI(ctk.CTk):
             self._show_error("Update Failed", str(e))
 
     def _on_cancel_portable_update(self):
-        """Handle Cancel button during portable update."""
-        logger.debug("_on_cancel_portable_update: cancelling")
         self.utilities_controller.cancel_update()
 
     def _on_create_portable_from_download(self):
-        """Handle Create Portable Firefox button click."""
-        logger.debug("_on_create_portable_from_download: starting creation")
         try:
             self.utilities_controller.handle_create_portable()
         except Exception as e:
@@ -622,12 +510,14 @@ class HardzillaGUI(ctk.CTk):
             self._show_error("Create Portable Failed", str(e))
 
     def _on_cancel_create_portable(self):
-        """Handle Cancel button during create portable."""
-        logger.debug("_on_cancel_create_portable: cancelling")
         self.utilities_controller.cancel_create_portable()
 
+    # =================================================================
+    # Dialogs
+    # =================================================================
+
     def _show_error(self, title: str, message: str):
-        """Show error dialog"""
+        """Show error dialog."""
         error_window = ctk.CTkToplevel(self)
         error_window.title(title)
         error_window.geometry("400x200")
@@ -645,15 +535,14 @@ class HardzillaGUI(ctk.CTk):
         ).pack(pady=10)
 
     def _show_info(self, title: str, message: str):
-        """Show info dialog"""
+        """Show info dialog."""
         info_window = ctk.CTkToplevel(self)
         info_window.title(title)
         info_window.geometry("450x250")
 
-        # Success icon
         ctk.CTkLabel(
             info_window,
-            text="✓",
+            text="",
             font=ctk.CTkFont(size=48),
             text_color="#0F7B0F"
         ).pack(pady=(20, 10))
@@ -692,15 +581,12 @@ def _apply_mica_effect(window):
 
 
 def main():
-    """Main entry point for GUI application"""
-    # Set appearance
+    """Main entry point for GUI application."""
     ctk.set_appearance_mode("dark")
     ctk.set_default_color_theme("blue")
 
-    # Create and run application
     app = HardzillaGUI()
 
-    # Apply Windows 11 Mica backdrop (optional)
     _apply_mica_effect(app)
 
     app.mainloop()

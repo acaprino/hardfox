@@ -7,7 +7,7 @@ import logging
 from pathlib import Path
 
 import customtkinter as ctk
-from tkinter import filedialog, messagebox
+from tkinter import filedialog
 from typing import Callable, Optional
 
 from hardzilla.presentation.view_models.utilities_view_model import UtilitiesViewModel
@@ -30,7 +30,6 @@ class UtilitiesView(ctk.CTkFrame):
         on_convert: Callable,
         on_cancel_convert: Callable,
         on_estimate_requested: Callable,
-        on_back: Callable,
         on_check_update: Optional[Callable] = None,
         on_update: Optional[Callable] = None,
         on_cancel_update: Optional[Callable] = None,
@@ -42,7 +41,6 @@ class UtilitiesView(ctk.CTkFrame):
         self.on_convert = on_convert
         self.on_cancel_convert = on_cancel_convert
         self.on_estimate_requested = on_estimate_requested
-        self.on_back = on_back
         self.on_check_update = on_check_update
         self.on_update = on_update
         self.on_cancel_update = on_cancel_update
@@ -56,7 +54,6 @@ class UtilitiesView(ctk.CTkFrame):
         # Build UI
         self._build_header()
         self._build_content()
-        self._build_navigation()
 
         # Subscribe to ViewModel changes (Convert)
         self.view_model.subscribe('firefox_install_dir', self._on_firefox_dir_changed)
@@ -580,19 +577,6 @@ class UtilitiesView(ctk.CTkFrame):
         self.create_result_label.grid(row=r, column=0, columnspan=3, sticky="w", padx=20, pady=(5, 15))
         self.create_result_label.grid_remove()
 
-    def _build_navigation(self):
-        """Build navigation buttons (back only)."""
-        nav_frame = ctk.CTkFrame(self)
-        nav_frame.grid(row=2, column=0, pady=(10, 20), sticky="ew")
-        nav_frame.grid_columnconfigure(1, weight=1)
-
-        back_btn = ctk.CTkButton(
-            nav_frame,
-            text="\u2190 Back",
-            command=self.on_back
-        )
-        back_btn.grid(row=0, column=0, padx=10, pady=10)
-
     # ===================================================================
     # Convert to Portable - UI Event Handlers
     # ===================================================================
@@ -621,39 +605,18 @@ class UtilitiesView(ctk.CTkFrame):
     def _on_convert_clicked(self):
         """Handle Convert button click."""
         if not self.view_model.firefox_install_dir:
-            messagebox.showerror(
-                "Error",
-                "Firefox installation not detected.\n"
-                "Please select a Firefox profile in the Setup tab."
-            )
+            logger.warning("_on_convert_clicked: Firefox installation not detected")
             return
 
         if not self.view_model.destination_dir:
-            messagebox.showerror("Error", "Please select a destination folder.")
+            logger.warning("_on_convert_clicked: no destination folder selected")
             return
-
-        # Check if destination already has files
-        dest = Path(self.view_model.destination_dir)
-        if dest.exists() and any(dest.iterdir()):
-            if not messagebox.askyesno(
-                "Destination Not Empty",
-                f"The folder '{dest}' already contains files.\n\n"
-                "Existing files may be overwritten. Continue?",
-                icon='warning'
-            ):
-                return
 
         self.on_convert()
 
     def _on_cancel_clicked(self):
         """Handle Cancel button click for conversion."""
-        if messagebox.askyesno(
-            "Cancel Conversion",
-            "Are you sure you want to cancel the conversion?\n\n"
-            "Partially copied files will remain in the destination folder.",
-            icon='warning'
-        ):
-            self.on_cancel_convert()
+        self.on_cancel_convert()
 
     def _update_convert_button_state(self):
         """Enable/disable convert button based on state."""
@@ -783,22 +746,18 @@ class UtilitiesView(ctk.CTkFrame):
     def _on_check_update_clicked(self):
         """Handle Check for Updates button click."""
         if not self.view_model.portable_path:
-            messagebox.showerror("Error", "Please select a portable Firefox folder.")
+            logger.warning("_on_check_update_clicked: no portable path selected")
             return
 
         portable = Path(self.view_model.portable_path)
         if not portable.exists():
-            messagebox.showerror("Error", f"Folder does not exist:\n{portable}")
+            logger.warning("_on_check_update_clicked: folder does not exist: %s", portable)
             return
 
         # Validate it looks like a portable Firefox installation
         has_app = (portable / "App").exists()
         if not has_app:
-            messagebox.showerror(
-                "Error",
-                "This does not appear to be a portable Firefox installation.\n\n"
-                "Expected to find an 'App' directory inside the selected folder."
-            )
+            logger.warning("_on_check_update_clicked: not a valid portable installation (no App dir)")
             return
 
         if self.on_check_update:
@@ -809,28 +768,13 @@ class UtilitiesView(ctk.CTkFrame):
         if not self.view_model.update_available:
             return
 
-        if not messagebox.askyesno(
-            "Update Firefox",
-            f"Update Firefox from {self.view_model.current_version} "
-            f"to {self.view_model.latest_version}?\n\n"
-            "Make sure Firefox is not running.\n"
-            "Your profile data will be preserved.",
-            icon='question'
-        ):
-            return
-
         if self.on_update:
             self.on_update()
 
     def _on_cancel_update_clicked(self):
         """Handle Cancel button click during update."""
-        if messagebox.askyesno(
-            "Cancel Update",
-            "Are you sure you want to cancel the update?",
-            icon='warning'
-        ):
-            if self.on_cancel_update:
-                self.on_cancel_update()
+        if self.on_cancel_update:
+            self.on_cancel_update()
 
     def _update_check_button_state(self):
         """Enable/disable check button based on portable path."""
@@ -982,32 +926,16 @@ class UtilitiesView(ctk.CTkFrame):
     def _on_create_clicked(self):
         """Handle Create Portable Firefox button click."""
         if not self.view_model.create_destination_dir:
-            messagebox.showerror("Error", "Please select a destination folder.")
+            logger.warning("_on_create_clicked: no destination folder selected")
             return
-
-        dest = Path(self.view_model.create_destination_dir)
-        if dest.exists() and any(dest.iterdir()):
-            if not messagebox.askyesno(
-                "Destination Not Empty",
-                f"The folder '{dest}' already contains files.\n\n"
-                "Existing files may be overwritten. Continue?",
-                icon='warning'
-            ):
-                return
 
         if self.on_create_portable:
             self.on_create_portable()
 
     def _on_cancel_create_clicked(self):
         """Handle Cancel button click during creation."""
-        if messagebox.askyesno(
-            "Cancel Download",
-            "Are you sure you want to cancel?\n\n"
-            "The download and any partially created files will be cleaned up.",
-            icon='warning'
-        ):
-            if self.on_cancel_create:
-                self.on_cancel_create()
+        if self.on_cancel_create:
+            self.on_cancel_create()
 
     def _update_create_button_state(self):
         """Enable/disable create button based on state."""

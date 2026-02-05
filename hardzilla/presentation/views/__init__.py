@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 """Presentation layer views"""
 
-from .setup_view import SetupView
-from .customize_view import CustomizeView
+from .settings_view import SettingsView
 from .extensions_view import ExtensionsView
-from .apply_view import ApplyView
 from .utilities_view import UtilitiesView
 
-__all__ = ['SetupView', 'CustomizeView', 'ExtensionsView', 'ApplyView', 'UtilitiesView']
+__all__ = ['SettingsView', 'ExtensionsView', 'UtilitiesView']
