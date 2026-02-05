@@ -28,3 +28,37 @@ class IExtensionRepository(ABC):
             Dictionary mapping extension IDs to installation status
         """
         pass
+
+    @abstractmethod
+    def uninstall_extensions(
+        self,
+        profile_path: Path,
+        extension_ids: List[str]
+    ) -> Dict[str, InstallationStatus]:
+        """
+        Uninstall extensions from Firefox by removing them from policies.json.
+
+        Args:
+            profile_path: Path to Firefox profile directory
+            extension_ids: List of extension IDs to uninstall
+
+        Returns:
+            Dictionary mapping extension IDs to uninstallation status
+        """
+        pass
+
+    @abstractmethod
+    def get_installed_extensions(
+        self,
+        profile_path: Path
+    ) -> List[str]:
+        """
+        Get list of extension IDs currently installed via policies.json.
+
+        Args:
+            profile_path: Path to Firefox profile directory
+
+        Returns:
+            List of extension IDs present in policies.json that match known extensions
+        """
+        pass

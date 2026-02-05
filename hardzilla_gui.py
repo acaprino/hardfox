@@ -115,6 +115,7 @@ class HardzillaGUI(ctk.CTk):
         self.import_from_firefox = self.composition_root.import_from_firefox
         self.load_preset = self.composition_root.load_preset
         self.install_extensions = self.composition_root.install_extensions
+        self.uninstall_extensions = self.composition_root.uninstall_extensions
         self.convert_to_portable = self.composition_root.convert_to_portable
         self.update_portable_firefox = self.composition_root.update_portable_firefox
         self.create_portable_from_download = self.composition_root.create_portable_from_download
@@ -142,6 +143,7 @@ class HardzillaGUI(ctk.CTk):
             apply_settings=self.apply_settings,
             save_profile=self.save_profile,
             install_extensions=self.install_extensions,
+            uninstall_extensions=self.uninstall_extensions,
             ui_callback=self._schedule_ui_update
         )
 
@@ -250,6 +252,7 @@ class HardzillaGUI(ctk.CTk):
             parent=self.tabview.tab("Extensions"),
             view_model=self.apply_vm,
             on_install_extensions=self._on_install_extensions,
+            on_uninstall_extensions=self._on_uninstall_extensions,
             on_next=self._on_extensions_next,
             on_back=self._on_extensions_back
         )
@@ -526,6 +529,15 @@ class HardzillaGUI(ctk.CTk):
         except Exception as e:
             logger.error(f"Failed to install extensions: {e}", exc_info=True)
             self._show_error("Failed to install extensions", str(e))
+
+    def _on_uninstall_extensions(self):
+        """Handle uninstall extensions button"""
+        logger.debug("_on_uninstall_extensions: delegating to apply_controller.handle_uninstall_extensions()")
+        try:
+            self.apply_controller.handle_uninstall_extensions()
+        except Exception as e:
+            logger.error(f"Failed to uninstall extensions: {e}", exc_info=True)
+            self._show_error("Failed to uninstall extensions", str(e))
 
     def _on_extensions_next(self):
         """Handle next from extensions tab"""

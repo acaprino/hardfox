@@ -31,6 +31,7 @@ class Theme:
         'success': '#0F7B0F',        # Windows green
         'warning': '#FFB900',        # Windows yellow
         'error': '#FF4343',          # Windows red
+        'error_hover': '#CC3636',    # Windows red hover
         'info': '#0078D4',           # Windows blue
 
         # Badge Colors (neutral in Win11 style)

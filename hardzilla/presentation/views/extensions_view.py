@@ -4,8 +4,8 @@ Extensions View - Dedicated tab for privacy extension management.
 """
 
 import logging
+import tkinter.messagebox as messagebox
 import customtkinter as ctk
-from tkinter import messagebox
 from typing import Callable
 
 from hardzilla.presentation.view_models import ApplyViewModel
@@ -27,6 +27,7 @@ class ExtensionsView(ctk.CTkFrame):
         parent,
         view_model: ApplyViewModel,
         on_install_extensions: Callable,
+        on_uninstall_extensions: Callable,
         on_next: Callable,
         on_back: Callable
     ):
@@ -34,6 +35,7 @@ class ExtensionsView(ctk.CTkFrame):
         super().__init__(parent)
         self.view_model = view_model
         self.on_install_extensions = on_install_extensions
+        self.on_uninstall_extensions = on_uninstall_extensions
         self.on_next = on_next
         self.on_back = on_back
         self.extension_rows = []
@@ -54,6 +56,8 @@ class ExtensionsView(ctk.CTkFrame):
         logger.debug("ExtensionsView.__init__: subscribing to ViewModel events")
         self.view_model.subscribe('extension_install_success', self._on_extension_install_complete)
         self.view_model.subscribe('is_installing_extensions', self._on_extension_installing_changed)
+        self.view_model.subscribe('extension_uninstall_success', self._on_extension_uninstall_complete)
+        self.view_model.subscribe('is_uninstalling_extensions', self._on_extension_uninstalling_changed)
         logger.debug("ExtensionsView.__init__: initialization complete, %d extension rows created", len(self.extension_rows))
 
     def destroy(self):
@@ -61,6 +65,8 @@ class ExtensionsView(ctk.CTkFrame):
         logger.debug("ExtensionsView.destroy: unsubscribing from ViewModel events")
         self.view_model.unsubscribe('extension_install_success', self._on_extension_install_complete)
         self.view_model.unsubscribe('is_installing_extensions', self._on_extension_installing_changed)
+        self.view_model.unsubscribe('extension_uninstall_success', self._on_extension_uninstall_complete)
+        self.view_model.unsubscribe('is_uninstalling_extensions', self._on_extension_uninstalling_changed)
         super().destroy()
 
     def _build_header(self):
@@ -156,17 +162,35 @@ class ExtensionsView(ctk.CTkFrame):
         else:
             logger.debug("_build_extensions_section: ViewModel already has %d selections, skipping seed", len(self.view_model.selected_extensions))
 
+        # Action buttons frame
+        action_frame = ctk.CTkFrame(section, fg_color="transparent")
+        action_frame.grid(row=2, column=0, padx=20, pady=(10, 10))
+
         # Install button
         self.install_extensions_btn = ctk.CTkButton(
-            section,
-            text="Install Extensions",
+            action_frame,
+            text="Install Selected",
             command=self._on_install_extensions_clicked,
             fg_color=Theme.get_color('accent'),
             hover_color=Theme.get_color('accent_hover'),
             font=ctk.CTkFont(size=14, weight="bold"),
-            height=40
+            height=40,
+            width=180
         )
-        self.install_extensions_btn.grid(row=2, column=0, padx=20, pady=(10, 10))
+        self.install_extensions_btn.pack(side="left", padx=(0, 10))
+
+        # Uninstall button
+        self.uninstall_extensions_btn = ctk.CTkButton(
+            action_frame,
+            text="Uninstall Selected",
+            command=self._on_uninstall_extensions_clicked,
+            fg_color=Theme.get_color('error'),
+            hover_color=Theme.get_color('error_hover'),
+            font=ctk.CTkFont(size=14, weight="bold"),
+            height=40,
+            width=180
+        )
+        self.uninstall_extensions_btn.pack(side="left")
 
         # Status label
         self.extension_status_label = ctk.CTkLabel(
@@ -235,51 +259,77 @@ class ExtensionsView(ctk.CTkFrame):
 
         if not self.on_install_extensions:
             logger.warning("_on_install_extensions_clicked: no callback configured, aborting")
-            messagebox.showerror("Error", "Extension installation not configured")
             return
 
         if not self.view_model.firefox_path:
             logger.warning("_on_install_extensions_clicked: no firefox_path set, aborting")
-            messagebox.showerror(
-                "Error",
-                "Please select a Firefox profile first (in Setup & Presets tab)"
-            )
             return
 
         if not self.view_model.selected_extensions:
             logger.warning("_on_install_extensions_clicked: no extensions selected, aborting")
-            messagebox.showerror(
-                "Error",
-                "Please select at least one extension to install"
-            )
             return
 
-        if not messagebox.askyesno(
-            "Confirm Installation",
-            f"This will install {len(self.view_model.selected_extensions)} extension(s) "
-            f"to your Firefox installation.\n\n"
-            f"Extensions will be auto-installed on next Firefox start.\n\n"
-            f"Continue?",
-            icon='question'
-        ):
-            logger.debug("_on_install_extensions_clicked: user cancelled installation")
-            return
-
-        logger.info("_on_install_extensions_clicked: user confirmed, calling on_install_extensions callback")
+        logger.info("_on_install_extensions_clicked: calling on_install_extensions callback")
         self.on_install_extensions()
+
+    def _on_uninstall_extensions_clicked(self):
+        """Handle uninstall extensions button click."""
+        logger.debug("_on_uninstall_extensions_clicked: button pressed")
+
+        if not self.on_uninstall_extensions:
+            logger.warning("_on_uninstall_extensions_clicked: no callback configured, aborting")
+            return
+
+        if not self.view_model.firefox_path:
+            logger.warning("_on_uninstall_extensions_clicked: no firefox_path set, aborting")
+            return
+
+        if not self.view_model.selected_extensions:
+            logger.warning("_on_uninstall_extensions_clicked: no extensions selected, aborting")
+            return
+
+        count = len(self.view_model.selected_extensions)
+        confirmed = messagebox.askyesno(
+            "Confirm Uninstall",
+            f"Are you sure you want to uninstall {count} extension(s)?\n\n"
+            "This will remove them from Firefox Enterprise Policies."
+        )
+        if not confirmed:
+            logger.debug("_on_uninstall_extensions_clicked: user cancelled uninstall")
+            return
+
+        logger.info("_on_uninstall_extensions_clicked: calling on_uninstall_extensions callback")
+        self.on_uninstall_extensions()
 
     def _on_extension_installing_changed(self, is_installing: bool):
         """Handle extension installation state change."""
         logger.debug("_on_extension_installing_changed: is_installing=%s", is_installing)
         if is_installing:
             self.install_extensions_btn.configure(state="disabled", text="Installing...")
+            self.uninstall_extensions_btn.configure(state="disabled")
             self.extension_status_label.configure(
                 text="Installing extensions...",
                 text_color=Theme.get_color('info')
             )
         else:
-            logger.debug("_on_extension_installing_changed: re-enabling install button")
-            self.install_extensions_btn.configure(state="normal", text="Install Extensions")
+            logger.debug("_on_extension_installing_changed: re-enabling buttons")
+            self.install_extensions_btn.configure(state="normal", text="Install Selected")
+            self.uninstall_extensions_btn.configure(state="normal")
+
+    def _on_extension_uninstalling_changed(self, is_uninstalling: bool):
+        """Handle extension uninstallation state change."""
+        logger.debug("_on_extension_uninstalling_changed: is_uninstalling=%s", is_uninstalling)
+        if is_uninstalling:
+            self.uninstall_extensions_btn.configure(state="disabled", text="Uninstalling...")
+            self.install_extensions_btn.configure(state="disabled")
+            self.extension_status_label.configure(
+                text="Uninstalling extensions...",
+                text_color=Theme.get_color('info')
+            )
+        else:
+            logger.debug("_on_extension_uninstalling_changed: re-enabling buttons")
+            self.uninstall_extensions_btn.configure(state="normal", text="Uninstall Selected")
+            self.install_extensions_btn.configure(state="normal")
 
     def _on_extension_install_complete(self, success: bool):
         """Handle extension installation completion."""
@@ -288,10 +338,9 @@ class ExtensionsView(ctk.CTkFrame):
             error_msg = self.view_model.extension_error_message or "Unknown error occurred"
             logger.error("_on_extension_install_complete: installation failed - %s", error_msg)
             self.extension_status_label.configure(
-                text="\u2717 Extension installation failed",
+                text=f"\u2717 {error_msg}",
                 text_color=Theme.get_color('error')
             )
-            messagebox.showerror("Extension Installation Failed", error_msg)
             return
 
         results = self.view_model.extension_install_results
@@ -305,19 +354,41 @@ class ExtensionsView(ctk.CTkFrame):
         if failed:
             logger.warning("_on_extension_install_complete: failed extensions: %s", failed)
 
-        message = f"\u2713 Installed {len(installed)} of {total} extension(s)\n\n"
-
         if failed:
-            message += "Failed:\n"
-            for name, err in failed.items():
-                message += f"  \u2022 {name}: {err}\n"
-            message += "\n"
-
-        message += "\u26a0 Restart Firefox to activate extensions."
+            status_text = f"\u2713 Installed {len(installed)}/{total} extensions (some failed)"
+        else:
+            status_text = f"\u2713 Installed {len(installed)}/{total} extensions"
 
         self.extension_status_label.configure(
-            text=f"\u2713 Installed {len(installed)}/{total} extensions",
+            text=status_text,
             text_color=Theme.get_color('success')
         )
 
-        messagebox.showinfo("Extensions Installed", message)
+    def _on_extension_uninstall_complete(self, success: bool):
+        """Handle extension uninstallation completion."""
+        logger.debug("_on_extension_uninstall_complete: success=%s", success)
+        if not success:
+            error_msg = self.view_model.extension_uninstall_error_message or "Unknown error occurred"
+            logger.error("_on_extension_uninstall_complete: uninstallation failed - %s", error_msg)
+            self.extension_status_label.configure(
+                text=f"\u2717 {error_msg}",
+                text_color=Theme.get_color('error')
+            )
+            return
+
+        results = self.view_model.extension_uninstall_results
+        uninstalled = results.get('uninstalled', [])
+        failed = results.get('failed', {})
+        total = results.get('total', 0)
+
+        logger.info("_on_extension_uninstall_complete: uninstalled %d/%d extensions", len(uninstalled), total)
+
+        if failed:
+            status_text = f"\u2713 Uninstalled {len(uninstalled)}/{total} extensions (some failed)"
+        else:
+            status_text = f"\u2713 Uninstalled {len(uninstalled)}/{total} extensions"
+
+        self.extension_status_label.configure(
+            text=status_text,
+            text_color=Theme.get_color('success')
+        )

@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 class FirefoxExtensionRepository(IExtensionRepository):
-    """Installs Firefox extensions using Enterprise Policies (policies.json)."""
+    """Manages Firefox extensions using Enterprise Policies (policies.json)."""
 
     def install_extensions(
         self,
@@ -321,3 +321,128 @@ class FirefoxExtensionRepository(IExtensionRepository):
                     logger.info(f"Configured uBlock Origin with defaults + {len(filter_lists)} custom filter lists")
 
         return config
+
+    def uninstall_extensions(
+        self,
+        profile_path: Path,
+        extension_ids: List[str]
+    ) -> Dict[str, InstallationStatus]:
+        """
+        Uninstall extensions from Firefox by removing them from policies.json.
+
+        Removes extension entries from ExtensionSettings and 3rdparty.Extensions.
+
+        Args:
+            profile_path: Path to Firefox profile directory
+            extension_ids: List of extension IDs to uninstall
+
+        Returns:
+            Dictionary mapping extension IDs to uninstallation status
+        """
+        try:
+            if not profile_path.exists():
+                logger.error(f"Profile path does not exist: {profile_path}")
+                return {ext_id: InstallationStatus.FAILED for ext_id in extension_ids}
+
+            firefox_dir = self._get_firefox_installation_dir(profile_path)
+            if not firefox_dir:
+                logger.error("Could not locate Firefox installation directory")
+                return {ext_id: InstallationStatus.FAILED for ext_id in extension_ids}
+
+            dist_dir = firefox_dir / "distribution"
+            policies_file = dist_dir / "policies.json"
+
+            if not policies_file.exists():
+                logger.warning("No policies.json found, nothing to uninstall")
+                return {ext_id: InstallationStatus.FAILED for ext_id in extension_ids}
+
+            if not self._check_write_permission(dist_dir):
+                raise PermissionError(
+                    "Administrator privileges required to modify extensions via Enterprise Policies. "
+                    "Please run Hardzilla as Administrator."
+                )
+
+            existing_policies = self._read_existing_policies(policies_file)
+            self._backup_policies(policies_file)
+
+            ext_settings = existing_policies.get("policies", {}).get("ExtensionSettings", {})
+            third_party_exts = (
+                existing_policies.get("policies", {})
+                .get("3rdparty", {})
+                .get("Extensions", {})
+            )
+
+            results = {}
+            for ext_id in extension_ids:
+                removed = False
+                if ext_id in ext_settings:
+                    del ext_settings[ext_id]
+                    removed = True
+                if ext_id in third_party_exts:
+                    del third_party_exts[ext_id]
+                    removed = True
+
+                results[ext_id] = InstallationStatus.UNINSTALLED
+                if removed:
+                    logger.info(f"Removed extension from policies: {ext_id}")
+                else:
+                    logger.info(f"Extension not in policies (already absent): {ext_id}")
+
+            # Clean up empty structures
+            if not ext_settings:
+                existing_policies["policies"].pop("ExtensionSettings", None)
+            if not third_party_exts:
+                if "3rdparty" in existing_policies.get("policies", {}):
+                    existing_policies["policies"]["3rdparty"].pop("Extensions", None)
+                    if not existing_policies["policies"]["3rdparty"]:
+                        existing_policies["policies"].pop("3rdparty", None)
+
+            with open(policies_file, 'w', encoding='utf-8') as f:
+                json.dump(existing_policies, f, indent=2)
+
+            logger.info(f"Successfully updated policies.json, removed {sum(1 for s in results.values() if s == InstallationStatus.UNINSTALLED)} extensions")
+            return results
+
+        except Exception as e:
+            logger.error(f"Failed to uninstall extensions: {e}")
+            return {ext_id: InstallationStatus.FAILED for ext_id in extension_ids}
+
+    def get_installed_extensions(
+        self,
+        profile_path: Path
+    ) -> List[str]:
+        """
+        Get list of known extension IDs currently in policies.json.
+
+        Only returns IDs that are also present in EXTENSIONS_METADATA.
+
+        Args:
+            profile_path: Path to Firefox profile directory
+
+        Returns:
+            List of extension IDs installed via policies.json
+        """
+        try:
+            if not profile_path.exists():
+                logger.error(f"Profile path does not exist: {profile_path}")
+                return []
+
+            firefox_dir = self._get_firefox_installation_dir(profile_path)
+            if not firefox_dir:
+                logger.warning("Could not locate Firefox installation directory")
+                return []
+
+            policies_file = firefox_dir / "distribution" / "policies.json"
+            existing_policies = self._read_existing_policies(policies_file)
+
+            ext_settings = existing_policies.get("policies", {}).get("ExtensionSettings", {})
+            installed = [
+                ext_id for ext_id in ext_settings
+                if ext_id in EXTENSIONS_METADATA
+            ]
+            logger.info(f"Found {len(installed)} known extensions in policies.json")
+            return installed
+
+        except Exception as e:
+            logger.error(f"Failed to read installed extensions: {e}")
+            return []

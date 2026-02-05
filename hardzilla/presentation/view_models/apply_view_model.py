@@ -49,7 +49,13 @@ class ApplyViewModel(BaseViewModel):
             'is_installing_extensions': False,
             'extension_install_success': False,
             'extension_install_results': {},
-            'extension_error_message': ''
+            'extension_error_message': '',
+            # Extension uninstall properties
+            'installed_extensions': [],
+            'is_uninstalling_extensions': False,
+            'extension_uninstall_success': False,
+            'extension_uninstall_results': {},
+            'extension_uninstall_error_message': ''
         }
 
     # Profile
@@ -206,3 +212,44 @@ class ApplyViewModel(BaseViewModel):
     @extension_install_results.setter
     def extension_install_results(self, value: dict):
         self.set_property('extension_install_results', value)
+
+    # Extension uninstall properties
+    @property
+    def installed_extensions(self) -> list:
+        return self.get_property('installed_extensions', [])
+
+    @installed_extensions.setter
+    def installed_extensions(self, value: list):
+        self.set_property('installed_extensions', value)
+
+    @property
+    def is_uninstalling_extensions(self) -> bool:
+        return self.get_property('is_uninstalling_extensions', False)
+
+    @is_uninstalling_extensions.setter
+    def is_uninstalling_extensions(self, value: bool):
+        self.set_property('is_uninstalling_extensions', value)
+
+    @property
+    def extension_uninstall_success(self) -> bool:
+        return self.get_property('extension_uninstall_success', False)
+
+    @extension_uninstall_success.setter
+    def extension_uninstall_success(self, value: bool):
+        self.set_property('extension_uninstall_success', value)
+
+    @property
+    def extension_uninstall_results(self) -> dict:
+        return self.get_property('extension_uninstall_results', {})
+
+    @extension_uninstall_results.setter
+    def extension_uninstall_results(self, value: dict):
+        self.set_property('extension_uninstall_results', value)
+
+    @property
+    def extension_uninstall_error_message(self) -> str:
+        return self.get_property('extension_uninstall_error_message', '')
+
+    @extension_uninstall_error_message.setter
+    def extension_uninstall_error_message(self, value: str):
+        self.set_property('extension_uninstall_error_message', value)

@@ -47,7 +47,7 @@ class InstallExtensionsUseCase:
                 "total": 0
             }
 
-        if not profile_path or not Path(profile_path).exists():
+        if not profile_path or not profile_path.exists():
             logger.error(f"Invalid profile path: {profile_path}")
             return {
                 "installed": [],
@@ -58,7 +58,7 @@ class InstallExtensionsUseCase:
         # Install extensions
         logger.info(f"Installing {len(extension_ids)} extensions to {profile_path}")
         status_map = self.extension_repo.install_extensions(
-            profile_path=Path(profile_path),
+            profile_path=profile_path,
             extension_ids=extension_ids
         )
 

@@ -9,4 +9,5 @@ class InstallationStatus(Enum):
     PENDING = "pending"
     INSTALLING = "installing"
     INSTALLED = "installed"
+    UNINSTALLED = "uninstalled"
     FAILED = "failed"
