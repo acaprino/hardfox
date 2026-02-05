@@ -29,6 +29,7 @@ from hardzilla.application.use_cases import (
 from hardzilla.application.use_cases.install_extensions_use_case import InstallExtensionsUseCase
 from hardzilla.application.use_cases.convert_to_portable_use_case import ConvertToPortableUseCase
 from hardzilla.application.use_cases.update_portable_firefox_use_case import UpdatePortableFirefoxUseCase
+from hardzilla.application.use_cases.create_portable_from_download_use_case import CreatePortableFromDownloadUseCase
 
 
 class CompositionRoot:
@@ -77,4 +78,7 @@ class CompositionRoot:
         self.convert_to_portable = ConvertToPortableUseCase(self.portable_repo)
         self.update_portable_firefox = UpdatePortableFirefoxUseCase(
             self.portable_metadata_repo, self.mozilla_download_repo
+        )
+        self.create_portable_from_download = CreatePortableFromDownloadUseCase(
+            self.mozilla_download_repo, self.portable_repo
         )

@@ -33,6 +33,14 @@ class UtilitiesViewModel(BaseViewModel):
     - update_progress: Float 0.0-1.0
     - update_status: Current update step description
     - update_result: Dict with success/old_version/new_version/error
+
+    Properties (Create Portable from Download):
+    - create_channel: Selected download channel (stable/beta/devedition)
+    - create_destination_dir: Destination directory for new portable
+    - is_creating: Whether creation is in progress
+    - create_progress: Float 0.0-1.0
+    - create_status: Current creation step description
+    - create_result: Dict with success/version/channel/size_mb/error
     """
 
     def __init__(self):
@@ -59,6 +67,13 @@ class UtilitiesViewModel(BaseViewModel):
             'update_progress': 0.0,
             'update_status': '',
             'update_result': None,
+            # Create Portable from Download
+            'create_channel': 'stable',
+            'create_destination_dir': '',
+            'is_creating': False,
+            'create_progress': 0.0,
+            'create_status': '',
+            'create_result': None,
         }
 
     # Firefox install directory
@@ -220,3 +235,55 @@ class UtilitiesViewModel(BaseViewModel):
         # Always notify (same pattern as conversion_result)
         self._properties['update_result'] = value
         self._notify('update_result', value)
+
+    # --- Create Portable from Download properties ---
+
+    @property
+    def create_channel(self) -> str:
+        return self.get_property('create_channel', 'stable')
+
+    @create_channel.setter
+    def create_channel(self, value: str):
+        self.set_property('create_channel', value)
+
+    @property
+    def create_destination_dir(self) -> str:
+        return self.get_property('create_destination_dir', '')
+
+    @create_destination_dir.setter
+    def create_destination_dir(self, value: str):
+        self.set_property('create_destination_dir', value)
+
+    @property
+    def is_creating(self) -> bool:
+        return self.get_property('is_creating', False)
+
+    @is_creating.setter
+    def is_creating(self, value: bool):
+        self.set_property('is_creating', value)
+
+    @property
+    def create_progress(self) -> float:
+        return self.get_property('create_progress', 0.0)
+
+    @create_progress.setter
+    def create_progress(self, value: float):
+        self.set_property('create_progress', value)
+
+    @property
+    def create_status(self) -> str:
+        return self.get_property('create_status', '')
+
+    @create_status.setter
+    def create_status(self, value: str):
+        self.set_property('create_status', value)
+
+    @property
+    def create_result(self) -> Optional[Dict]:
+        return self.get_property('create_result', None)
+
+    @create_result.setter
+    def create_result(self, value: Optional[Dict]):
+        # Always notify (same pattern as conversion_result)
+        self._properties['create_result'] = value
+        self._notify('create_result', value)

@@ -34,8 +34,26 @@ SHA512_URL_TEMPLATE = (
     "https://download-installer.cdn.mozilla.net/pub/firefox/releases/"
     "{version}/SHA512SUMS"
 )
-# Strict version format: digits.digits with optional .digits patch
-VERSION_RE = re.compile(r'^\d+\.\d+(\.\d+)?$')
+
+# Channel-specific URL templates
+DEVEDITION_DOWNLOAD_URL_TEMPLATE = (
+    "https://download-installer.cdn.mozilla.net/pub/devedition/releases/"
+    "{version}/win64/en-US/Firefox%20Setup%20{version}.exe"
+)
+DEVEDITION_SHA512_URL_TEMPLATE = (
+    "https://download-installer.cdn.mozilla.net/pub/devedition/releases/"
+    "{version}/SHA512SUMS"
+)
+
+# Mapping from channel name to Mozilla API version key
+CHANNEL_VERSION_KEYS = {
+    "stable": "LATEST_FIREFOX_VERSION",
+    "beta": "LATEST_FIREFOX_DEVEL_VERSION",
+    "devedition": "FIREFOX_DEVEDITION",
+}
+
+# Strict version format: digits.digits with optional .digits patch and optional beta suffix
+VERSION_RE = re.compile(r'^\d+\.\d+(\.\d+)?(b\d+)?$')
 
 
 def validate_version(version: str) -> None:
@@ -86,9 +104,217 @@ class MozillaDownloadRepository:
         except (json.JSONDecodeError, ValueError) as e:
             raise ConnectionError(f"Invalid API response: {e}") from e
 
+    def get_latest_version_for_channel(self, channel: str) -> Dict[str, str]:
+        """
+        Fetch the latest Firefox version for a specific channel.
+
+        Args:
+            channel: One of "stable", "beta", "devedition"
+
+        Returns:
+            Dict with 'version' and 'channel' keys.
+
+        Raises:
+            ValueError: If channel is not recognized
+            ConnectionError: If the API is unreachable or returns bad data
+        """
+        version_key = CHANNEL_VERSION_KEYS.get(channel)
+        if not version_key:
+            raise ValueError(f"Unknown channel: {channel!r}. Must be one of: {list(CHANNEL_VERSION_KEYS.keys())}")
+
+        try:
+            req = urllib.request.Request(
+                VERSIONS_URL,
+                headers={"User-Agent": "Hardzilla/1.0"}
+            )
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+
+            version = data.get(version_key, "")
+            if not version:
+                raise ValueError(f"{version_key} not found in API response")
+
+            validate_version(version)
+
+            logger.info(f"Latest Firefox version for {channel}: {version}")
+            return {"version": version, "channel": channel}
+
+        except urllib.error.URLError as e:
+            raise ConnectionError(f"Failed to reach Mozilla API: {e}") from e
+        except (json.JSONDecodeError, ValueError) as e:
+            raise ConnectionError(f"Invalid API response: {e}") from e
+
+    def _get_urls_for_channel(self, version: str, channel: str) -> tuple:
+        """
+        Get download and SHA-512 URLs for a given channel.
+
+        Args:
+            version: Firefox version string
+            channel: One of "stable", "beta", "devedition"
+
+        Returns:
+            Tuple of (download_url, sha512_url, installer_filename_in_sums)
+        """
+        if channel == "devedition":
+            download_url = DEVEDITION_DOWNLOAD_URL_TEMPLATE.format(version=version)
+            sha512_url = DEVEDITION_SHA512_URL_TEMPLATE.format(version=version)
+        else:
+            # Both stable and beta use the same /pub/firefox/releases/ path
+            download_url = DOWNLOAD_URL_TEMPLATE.format(version=version)
+            sha512_url = SHA512_URL_TEMPLATE.format(version=version)
+
+        installer_filename = f"win64/en-US/Firefox Setup {version}.exe"
+        return download_url, sha512_url, installer_filename
+
+    def download_installer_for_channel(
+        self,
+        version: str,
+        channel: str,
+        dest_path: Path,
+        progress_cb: Optional[Callable[[str, float], None]] = None,
+        cancel_event: Optional[threading.Event] = None
+    ) -> Path:
+        """
+        Download the Firefox installer for a specific channel.
+
+        Reports raw progress in [0.0, 1.0] range:
+        - 0.0-0.90: Download progress
+        - 0.95: Hash verification
+        - 1.0: Complete
+
+        Args:
+            version: Firefox version string
+            channel: One of "stable", "beta", "devedition"
+            dest_path: Directory to save the installer in
+            progress_cb: Progress callback(status, progress_0_to_1)
+            cancel_event: Threading event to signal cancellation
+
+        Returns:
+            Path to the downloaded and verified installer exe
+
+        Raises:
+            ConnectionError: If download fails
+            RuntimeError: If cancelled or hash verification fails
+        """
+        validate_version(version)
+
+        download_url, sha512_url, installer_filename = self._get_urls_for_channel(version, channel)
+        dest_path.mkdir(parents=True, exist_ok=True)
+        installer_path = dest_path / f"Firefox_Setup_{version}.exe"
+
+        logger.info(f"Downloading Firefox {version} ({channel}) from: {download_url}")
+
+        # Fetch expected hash
+        expected_hash = self._fetch_expected_hash_from_url(sha512_url, installer_filename)
+
+        if progress_cb:
+            progress_cb(f"Downloading Firefox {version} ({channel})...", 0.0)
+
+        max_retries = 2
+        for attempt in range(1, max_retries + 1):
+            try:
+                req = urllib.request.Request(
+                    download_url,
+                    headers={"User-Agent": "Hardzilla/1.0"}
+                )
+                with urllib.request.urlopen(req, timeout=60) as resp:
+                    total_size = int(resp.headers.get("Content-Length", 0))
+                    downloaded = 0
+                    chunk_size = 64 * 1024
+
+                    with open(installer_path, "wb") as f:
+                        while True:
+                            if cancel_event and cancel_event.is_set():
+                                installer_path.unlink(missing_ok=True)
+                                raise RuntimeError("Download cancelled by user")
+
+                            chunk = resp.read(chunk_size)
+                            if not chunk:
+                                break
+
+                            f.write(chunk)
+                            downloaded += len(chunk)
+
+                            if progress_cb and total_size > 0:
+                                pct = downloaded / total_size
+                                size_mb = downloaded / (1024 * 1024)
+                                total_mb = total_size / (1024 * 1024)
+                                progress_cb(
+                                    f"Downloading: {size_mb:.1f} / {total_mb:.1f} MB",
+                                    pct * 0.90
+                                )
+
+                logger.info(f"Downloaded installer: {installer_path} ({downloaded} bytes)")
+                break
+
+            except urllib.error.URLError as e:
+                installer_path.unlink(missing_ok=True)
+                if attempt < max_retries:
+                    logger.warning(f"Download attempt {attempt} failed: {e}, retrying...")
+                    if progress_cb:
+                        progress_cb(f"Retrying download (attempt {attempt + 1})...", 0.0)
+                    continue
+                raise ConnectionError(f"Download failed after {max_retries} attempts: {e}") from e
+
+        # Verify SHA-512 hash
+        if expected_hash:
+            if progress_cb:
+                progress_cb("Verifying download integrity...", 0.95)
+
+            if not self._verify_hash(installer_path, expected_hash):
+                installer_path.unlink(missing_ok=True)
+                raise RuntimeError(
+                    "Download integrity check failed: SHA-512 hash mismatch.\n"
+                    "The downloaded file may be corrupted or tampered with.\n"
+                    "Please try again."
+                )
+        else:
+            logger.warning(
+                "SHA-512 checksum not available from Mozilla. "
+                "Proceeding without integrity verification."
+            )
+
+        return installer_path
+
+    def _fetch_expected_hash_from_url(self, sha512_url: str, installer_filename: str) -> Optional[str]:
+        """
+        Fetch the expected SHA-512 hash from a specific URL.
+
+        Args:
+            sha512_url: URL to SHA512SUMS file
+            installer_filename: Relative path of installer in the sums file
+
+        Returns:
+            Hex-encoded SHA-512 hash, or None if not available
+        """
+        try:
+            req = urllib.request.Request(
+                sha512_url,
+                headers={"User-Agent": "Hardzilla/1.0"}
+            )
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                content = resp.read().decode("utf-8")
+
+            for line in content.splitlines():
+                parts = line.split("  ", 1)
+                if len(parts) == 2 and parts[1].strip() == installer_filename:
+                    expected_hash = parts[0].strip().lower()
+                    if len(expected_hash) == 128:
+                        logger.info(f"Found SHA-512 hash for {installer_filename}")
+                        return expected_hash
+
+            logger.warning(f"SHA-512 hash not found for {installer_filename}")
+            return None
+
+        except (urllib.error.URLError, OSError) as e:
+            logger.warning(f"Could not fetch SHA512SUMS: {e}")
+            return None
+
     def _fetch_expected_hash(self, version: str) -> Optional[str]:
         """
-        Fetch the expected SHA-512 hash for the win64 en-US installer.
+        Fetch the expected SHA-512 hash for the win64 en-US stable installer.
+
+        Delegates to _fetch_expected_hash_from_url with the stable release URL.
 
         Args:
             version: Firefox version string
@@ -98,30 +324,7 @@ class MozillaDownloadRepository:
         """
         url = SHA512_URL_TEMPLATE.format(version=version)
         installer_filename = f"win64/en-US/Firefox Setup {version}.exe"
-
-        try:
-            req = urllib.request.Request(
-                url,
-                headers={"User-Agent": "Hardzilla/1.0"}
-            )
-            with urllib.request.urlopen(req, timeout=15) as resp:
-                content = resp.read().decode("utf-8")
-
-            for line in content.splitlines():
-                # Format: "<sha512_hash>  <relative_path>"
-                parts = line.split("  ", 1)
-                if len(parts) == 2 and parts[1].strip() == installer_filename:
-                    expected_hash = parts[0].strip().lower()
-                    if len(expected_hash) == 128:  # SHA-512 is 128 hex chars
-                        logger.info(f"Found SHA-512 hash for {installer_filename}")
-                        return expected_hash
-
-            logger.warning(f"SHA-512 hash not found for {installer_filename} in SHA512SUMS")
-            return None
-
-        except (urllib.error.URLError, OSError) as e:
-            logger.warning(f"Could not fetch SHA512SUMS: {e}")
-            return None
+        return self._fetch_expected_hash_from_url(url, installer_filename)
 
     def _verify_hash(self, file_path: Path, expected_hash: str) -> bool:
         """
@@ -162,10 +365,11 @@ class MozillaDownloadRepository:
         cancel_event: Optional[threading.Event] = None
     ) -> Path:
         """
-        Download the Firefox installer for the given version.
+        Download the Firefox stable installer for the given version.
 
-        Downloads the installer and verifies its SHA-512 hash against
-        Mozilla's published checksums.
+        Delegates to download_installer_for_channel with a progress wrapper
+        that scales raw [0, 1] progress to [0, 0.6] for backward compatibility
+        with the update use case (download is 60% of overall update progress).
 
         Args:
             version: Firefox version string (e.g. "133.0")
@@ -180,85 +384,19 @@ class MozillaDownloadRepository:
             ConnectionError: If download fails
             RuntimeError: If cancelled or hash verification fails
         """
-        validate_version(version)
-
-        url = DOWNLOAD_URL_TEMPLATE.format(version=version)
-        dest_path.mkdir(parents=True, exist_ok=True)
-        installer_path = dest_path / f"Firefox_Setup_{version}.exe"
-
-        logger.info(f"Downloading Firefox {version} from: {url}")
-
-        # Fetch expected hash before downloading
-        expected_hash = self._fetch_expected_hash(version)
-
+        # Wrap progress to scale raw [0, 1] -> [0, 0.6] for update use case compat
+        wrapped_cb = None
         if progress_cb:
-            progress_cb(f"Downloading Firefox {version}...", 0.0)
+            def wrapped_cb(status, progress):
+                progress_cb(status, progress * 0.6)
 
-        max_retries = 2
-        for attempt in range(1, max_retries + 1):
-            try:
-                req = urllib.request.Request(
-                    url,
-                    headers={"User-Agent": "Hardzilla/1.0"}
-                )
-                with urllib.request.urlopen(req, timeout=60) as resp:
-                    total_size = int(resp.headers.get("Content-Length", 0))
-                    downloaded = 0
-                    chunk_size = 64 * 1024  # 64 KB chunks
-
-                    with open(installer_path, "wb") as f:
-                        while True:
-                            if cancel_event and cancel_event.is_set():
-                                installer_path.unlink(missing_ok=True)
-                                raise RuntimeError("Download cancelled by user")
-
-                            chunk = resp.read(chunk_size)
-                            if not chunk:
-                                break
-
-                            f.write(chunk)
-                            downloaded += len(chunk)
-
-                            if progress_cb and total_size > 0:
-                                pct = downloaded / total_size
-                                size_mb = downloaded / (1024 * 1024)
-                                total_mb = total_size / (1024 * 1024)
-                                progress_cb(
-                                    f"Downloading: {size_mb:.1f} / {total_mb:.1f} MB",
-                                    pct * 0.6  # Download is 60% of total update progress
-                                )
-
-                logger.info(f"Downloaded installer: {installer_path} ({downloaded} bytes)")
-                break  # Success, exit retry loop
-
-            except urllib.error.URLError as e:
-                installer_path.unlink(missing_ok=True)
-                if attempt < max_retries:
-                    logger.warning(f"Download attempt {attempt} failed: {e}, retrying...")
-                    if progress_cb:
-                        progress_cb(f"Retrying download (attempt {attempt + 1})...", 0.0)
-                    continue
-                raise ConnectionError(f"Download failed after {max_retries} attempts: {e}") from e
-
-        # Verify SHA-512 hash
-        if expected_hash:
-            if progress_cb:
-                progress_cb("Verifying download integrity...", 0.62)
-
-            if not self._verify_hash(installer_path, expected_hash):
-                installer_path.unlink(missing_ok=True)
-                raise RuntimeError(
-                    "Download integrity check failed: SHA-512 hash mismatch.\n"
-                    "The downloaded file may be corrupted or tampered with.\n"
-                    "Please try again."
-                )
-        else:
-            logger.warning(
-                "SHA-512 checksum not available from Mozilla. "
-                "Proceeding without integrity verification."
-            )
-
-        return installer_path
+        return self.download_installer_for_channel(
+            version=version,
+            channel="stable",
+            dest_path=dest_path,
+            progress_cb=wrapped_cb,
+            cancel_event=cancel_event
+        )
 
     def extract_installer(
         self,

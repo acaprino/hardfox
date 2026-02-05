@@ -177,6 +177,100 @@ class PortableConversionRepository:
                 "error": str(e)
             }
 
+    def create_portable_structure(
+        self,
+        dest_dir: Path,
+        firefox_source_dir: Path,
+        progress_cb: Optional[Callable[[str, float], None]] = None,
+        cancel_event: Optional[threading.Event] = None
+    ) -> Dict:
+        """
+        Create a portable Firefox structure from extracted Firefox files.
+
+        Used by the "Create Portable from Download" feature. Moves extracted
+        Firefox files into the portable directory structure and creates launcher.
+
+        Args:
+            dest_dir: Destination directory for portable installation
+            firefox_source_dir: Directory containing extracted Firefox files (with firefox.exe)
+            progress_cb: Progress callback(status_text, progress_float_0_to_1)
+            cancel_event: Threading event to signal cancellation
+
+        Returns:
+            Dict with keys: success, size_mb, error
+        """
+        try:
+            if progress_cb:
+                progress_cb("Creating directory structure...", 0.0)
+
+            if cancel_event and cancel_event.is_set():
+                return {"success": False, "size_mb": 0, "error": "Cancelled by user."}
+
+            self._create_directory_structure(dest_dir)
+
+            if progress_cb:
+                progress_cb("Moving Firefox files...", 0.1)
+
+            # Move extracted Firefox files into App/Firefox64
+            firefox_dest = dest_dir / "App" / "Firefox64"
+
+            # If firefox_dest already has files from _create_directory_structure, remove them
+            if firefox_dest.exists():
+                shutil.rmtree(str(firefox_dest))
+
+            # Move the source directory to the destination
+            shutil.move(str(firefox_source_dir), str(firefox_dest))
+
+            if cancel_event and cancel_event.is_set():
+                # Clean up partially created structure
+                logger.info(f"Cleaning up cancelled portable creation at: {dest_dir}")
+                shutil.rmtree(str(dest_dir), ignore_errors=True)
+                return {"success": False, "size_mb": 0, "error": "Cancelled by user."}
+
+            if progress_cb:
+                progress_cb("Creating launcher...", 0.7)
+
+            self._create_launcher(dest_dir)
+
+            # Ensure Data/profile directory exists
+            profile_dir = dest_dir / "Data" / "profile"
+            profile_dir.mkdir(parents=True, exist_ok=True)
+
+            if progress_cb:
+                progress_cb("Writing metadata...", 0.85)
+
+            self._write_portable_metadata(dest_dir, firefox_dest)
+
+            # Calculate size
+            total_size = self._get_dir_size(firefox_dest)
+            size_mb = round(total_size / (1024 * 1024), 1)
+
+            if progress_cb:
+                progress_cb("Portable structure created!", 1.0)
+
+            # Verify firefox.exe exists
+            firefox_exe = firefox_dest / "firefox.exe"
+            if not firefox_exe.exists():
+                return {
+                    "success": False,
+                    "size_mb": size_mb,
+                    "error": "Critical: firefox.exe not found after creating portable structure."
+                }
+
+            return {
+                "success": True,
+                "size_mb": size_mb,
+                "error": None
+            }
+
+        except Exception as e:
+            logger.error(f"Failed to create portable structure: {e}", exc_info=True)
+            return {
+                "success": False,
+                "size_mb": 0,
+                "error": str(e)
+            }
+
     def estimate_size(
         self,
         firefox_dir: Path,

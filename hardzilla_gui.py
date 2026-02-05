@@ -117,6 +117,7 @@ class HardzillaGUI(ctk.CTk):
         self.install_extensions = self.composition_root.install_extensions
         self.convert_to_portable = self.composition_root.convert_to_portable
         self.update_portable_firefox = self.composition_root.update_portable_firefox
+        self.create_portable_from_download = self.composition_root.create_portable_from_download
 
     def _init_view_models(self):
         """Initialize view models"""
@@ -149,6 +150,7 @@ class HardzillaGUI(ctk.CTk):
             convert_to_portable=self.convert_to_portable,
             portable_repo=self.composition_root.portable_repo,
             update_portable_firefox=self.update_portable_firefox,
+            create_portable_from_download=self.create_portable_from_download,
             ui_callback=self._schedule_ui_update
         )
 
@@ -272,7 +274,9 @@ class HardzillaGUI(ctk.CTk):
             on_back=self._on_utilities_back,
             on_check_update=self._on_check_portable_update,
             on_update=self._on_update_portable_firefox,
-            on_cancel_update=self._on_cancel_portable_update
+            on_cancel_update=self._on_cancel_portable_update,
+            on_create_portable=self._on_create_portable_from_download,
+            on_cancel_create=self._on_cancel_create_portable
         )
         self.utilities_view.pack(fill="both", expand=True)
 
@@ -595,6 +599,20 @@ class HardzillaGUI(ctk.CTk):
         """Handle Cancel button during portable update."""
         logger.debug("_on_cancel_portable_update: cancelling")
         self.utilities_controller.cancel_update()
+
+    def _on_create_portable_from_download(self):
+        """Handle Create Portable Firefox button click."""
+        logger.debug("_on_create_portable_from_download: starting creation")
+        try:
+            self.utilities_controller.handle_create_portable()
+        except Exception as e:
+            logger.error(f"Failed to start create portable: {e}", exc_info=True)
+            self._show_error("Create Portable Failed", str(e))
+
+    def _on_cancel_create_portable(self):
+        """Handle Cancel button during create portable."""
+        logger.debug("_on_cancel_create_portable: cancelling")
+        self.utilities_controller.cancel_create_portable()
 
     def _show_error(self, title: str, message: str):
         """Show error dialog"""

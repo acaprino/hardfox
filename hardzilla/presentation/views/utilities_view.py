@@ -12,6 +12,7 @@ from typing import Callable, Optional
 
 from hardzilla.presentation.view_models.utilities_view_model import UtilitiesViewModel
 from hardzilla.presentation.theme import Theme
+from hardzilla.application.use_cases.create_portable_from_download_use_case import CHANNEL_DISPLAY_NAMES
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +33,9 @@ class UtilitiesView(ctk.CTkFrame):
         on_back: Callable,
         on_check_update: Optional[Callable] = None,
         on_update: Optional[Callable] = None,
-        on_cancel_update: Optional[Callable] = None
+        on_cancel_update: Optional[Callable] = None,
+        on_create_portable: Optional[Callable] = None,
+        on_cancel_create: Optional[Callable] = None
     ):
         super().__init__(parent)
         self.view_model = view_model
@@ -43,6 +46,8 @@ class UtilitiesView(ctk.CTkFrame):
         self.on_check_update = on_check_update
         self.on_update = on_update
         self.on_cancel_update = on_cancel_update
+        self.on_create_portable = on_create_portable
+        self.on_cancel_create = on_cancel_create
 
         # Configure grid
         self.grid_columnconfigure(0, weight=1)
@@ -73,6 +78,12 @@ class UtilitiesView(ctk.CTkFrame):
         self.view_model.subscribe('update_status', self._on_update_status_changed)
         self.view_model.subscribe('update_result', self._on_update_result_changed)
 
+        # Subscribe to ViewModel changes (Create Portable)
+        self.view_model.subscribe('is_creating', self._on_creating_changed)
+        self.view_model.subscribe('create_progress', self._on_create_progress_changed)
+        self.view_model.subscribe('create_status', self._on_create_status_changed)
+        self.view_model.subscribe('create_result', self._on_create_result_changed)
+
     def destroy(self):
         """Clean up ViewModel subscriptions."""
         self.view_model.unsubscribe('firefox_install_dir', self._on_firefox_dir_changed)
@@ -92,6 +103,11 @@ class UtilitiesView(ctk.CTkFrame):
         self.view_model.unsubscribe('update_progress', self._on_update_progress_changed)
         self.view_model.unsubscribe('update_status', self._on_update_status_changed)
         self.view_model.unsubscribe('update_result', self._on_update_result_changed)
+
+        self.view_model.unsubscribe('is_creating', self._on_creating_changed)
+        self.view_model.unsubscribe('create_progress', self._on_create_progress_changed)
+        self.view_model.unsubscribe('create_status', self._on_create_status_changed)
+        self.view_model.unsubscribe('create_result', self._on_create_result_changed)
         super().destroy()
 
     def _build_header(self):
@@ -114,6 +130,9 @@ class UtilitiesView(ctk.CTkFrame):
 
         # Card 2: Update Portable Firefox
         self._build_update_card(content, row=1)
+
+        # Card 3: Create Portable Firefox from Download
+        self._build_create_card(content, row=2)
 
     # ===================================================================
     # Card 1: Convert to Portable Firefox
@@ -421,6 +440,145 @@ class UtilitiesView(ctk.CTkFrame):
         )
         self.update_result_label.grid(row=r, column=0, columnspan=3, sticky="w", padx=20, pady=(5, 15))
         self.update_result_label.grid_remove()
+
+    # ===================================================================
+    # Card 3: Create Portable Firefox from Download
+    # ===================================================================
+
+    def _build_create_card(self, parent, row):
+        """Build the Create Portable Firefox from Download card."""
+        card = ctk.CTkFrame(parent, corner_radius=8)
+        card.grid(row=row, column=0, sticky="ew", padx=10, pady=10)
+        card.grid_columnconfigure(1, weight=1)
+
+        # Card title
+        ctk.CTkLabel(
+            card,
+            text="Create Portable Firefox",
+            font=ctk.CTkFont(size=16, weight="bold")
+        ).grid(row=0, column=0, columnspan=3, sticky="w", padx=20, pady=(15, 5))
+
+        ctk.CTkLabel(
+            card,
+            text="Download Firefox directly from Mozilla and create a fresh portable installation. "
+                 "Choose a channel (Stable, Beta, or Developer Edition) and a destination folder.",
+            font=ctk.CTkFont(size=12),
+            text_color=Theme.get_color('text_tertiary'),
+            wraplength=700,
+            justify="left"
+        ).grid(row=1, column=0, columnspan=3, sticky="w", padx=20, pady=(0, 15))
+
+        # --- Channel Selector ---
+        r = 2
+        ctk.CTkLabel(
+            card,
+            text="Channel:",
+            font=ctk.CTkFont(size=13, weight="bold")
+        ).grid(row=r, column=0, sticky="w", padx=20, pady=(5, 2))
+
+        self.create_channel_var = ctk.StringVar(value="Stable")
+        self.create_channel_dropdown = ctk.CTkOptionMenu(
+            card,
+            variable=self.create_channel_var,
+            values=["Stable", "Beta", "Developer Edition"],
+            command=self._on_create_channel_changed,
+            width=200,
+            height=32,
+            fg_color=Theme.get_color('primary'),
+            button_color=Theme.get_color('primary'),
+            button_hover_color=Theme.get_color('primary_hover')
+        )
+        self.create_channel_dropdown.grid(row=r, column=1, sticky="w", padx=10, pady=(5, 2))
+
+        # --- Destination Folder ---
+        r = 3
+        ctk.CTkLabel(
+            card,
+            text="Destination Folder:",
+            font=ctk.CTkFont(size=13, weight="bold")
+        ).grid(row=r, column=0, sticky="w", padx=20, pady=(10, 2))
+
+        create_dest_frame = ctk.CTkFrame(card, fg_color="transparent")
+        create_dest_frame.grid(row=r, column=1, columnspan=2, sticky="ew", padx=10, pady=(10, 2))
+        create_dest_frame.grid_columnconfigure(0, weight=1)
+
+        self.create_dest_entry = ctk.CTkEntry(
+            create_dest_frame,
+            placeholder_text="Select a folder for the new portable installation...",
+            height=32
+        )
+        self.create_dest_entry.grid(row=0, column=0, sticky="ew", padx=(0, 10))
+        self.create_dest_entry.bind('<KeyRelease>', self._on_create_dest_entry_changed)
+
+        ctk.CTkButton(
+            create_dest_frame,
+            text="Browse...",
+            command=self._on_browse_create_dest_clicked,
+            width=80,
+            height=32,
+            fg_color=Theme.get_color('primary'),
+            hover_color=Theme.get_color('primary_hover')
+        ).grid(row=0, column=1)
+
+        # --- Button Frame (Create + Cancel) ---
+        r = 4
+        create_btn_frame = ctk.CTkFrame(card, fg_color="transparent")
+        create_btn_frame.grid(row=r, column=0, columnspan=3, padx=20, pady=(10, 5))
+
+        self.create_btn = ctk.CTkButton(
+            create_btn_frame,
+            text="Create Portable Firefox",
+            command=self._on_create_clicked,
+            fg_color=Theme.get_color('secondary'),
+            hover_color=Theme.get_color('secondary_hover'),
+            font=ctk.CTkFont(size=14, weight="bold"),
+            height=40,
+            state="disabled"
+        )
+        self.create_btn.pack(side="left", padx=(0, 10))
+
+        self.cancel_create_btn = ctk.CTkButton(
+            create_btn_frame,
+            text="Cancel",
+            command=self._on_cancel_create_clicked,
+            fg_color=Theme.get_color('error'),
+            hover_color="#CC3333",
+            font=ctk.CTkFont(size=14),
+            height=40,
+            width=100
+        )
+        # Cancel button hidden initially
+
+        # --- Progress Section (hidden initially) ---
+        r = 5
+        self.create_progress_frame = ctk.CTkFrame(card, fg_color="transparent")
+        self.create_progress_frame.grid(row=r, column=0, columnspan=3, sticky="ew", padx=20, pady=(5, 5))
+        self.create_progress_frame.grid_columnconfigure(0, weight=1)
+        self.create_progress_frame.grid_remove()
+
+        self.create_progress_bar = ctk.CTkProgressBar(self.create_progress_frame)
+        self.create_progress_bar.grid(row=0, column=0, sticky="ew", pady=(5, 2))
+        self.create_progress_bar.set(0)
+
+        self.create_status_label = ctk.CTkLabel(
+            self.create_progress_frame,
+            text="",
+            font=ctk.CTkFont(size=11),
+            text_color=Theme.get_color('text_secondary')
+        )
+        self.create_status_label.grid(row=1, column=0, sticky="w", pady=(0, 5))
+
+        # --- Result Section (hidden initially) ---
+        r = 6
+        self.create_result_label = ctk.CTkLabel(
+            card,
+            text="",
+            font=ctk.CTkFont(size=12),
+            wraplength=700,
+            justify="left"
+        )
+        self.create_result_label.grid(row=r, column=0, columnspan=3, sticky="w", padx=20, pady=(5, 15))
+        self.create_result_label.grid_remove()
 
     def _build_navigation(self):
         """Build navigation buttons (back only)."""
@@ -790,5 +948,127 @@ class UtilitiesView(ctk.CTkFrame):
             error_msg = result.get('error', 'Unknown error')
             self.update_result_label.configure(
                 text=f"\u2717 Update failed: {error_msg}",
+                text_color=Theme.get_color('error')
+            )
+
+    # ===================================================================
+    # Create Portable from Download - UI Event Handlers
+    # ===================================================================
+
+    # Reverse of CHANNEL_DISPLAY_NAMES: display name -> internal key
+    _CHANNEL_MAP = {v: k for k, v in CHANNEL_DISPLAY_NAMES.items()}
+
+    def _on_create_channel_changed(self, choice: str):
+        """Handle channel dropdown selection."""
+        channel_key = self._CHANNEL_MAP.get(choice, "stable")
+        self.view_model.create_channel = channel_key
+
+    def _on_browse_create_dest_clicked(self):
+        """Handle Browse button click for create destination."""
+        folder = filedialog.askdirectory(
+            title="Select Destination for New Portable Firefox"
+        )
+        if folder:
+            self.create_dest_entry.delete(0, "end")
+            self.create_dest_entry.insert(0, folder)
+            self.view_model.create_destination_dir = folder
+            self._update_create_button_state()
+
+    def _on_create_dest_entry_changed(self, event=None):
+        """Handle manual entry in create destination field."""
+        self.view_model.create_destination_dir = self.create_dest_entry.get()
+        self._update_create_button_state()
+
+    def _on_create_clicked(self):
+        """Handle Create Portable Firefox button click."""
+        if not self.view_model.create_destination_dir:
+            messagebox.showerror("Error", "Please select a destination folder.")
+            return
+
+        dest = Path(self.view_model.create_destination_dir)
+        if dest.exists() and any(dest.iterdir()):
+            if not messagebox.askyesno(
+                "Destination Not Empty",
+                f"The folder '{dest}' already contains files.\n\n"
+                "Existing files may be overwritten. Continue?",
+                icon='warning'
+            ):
+                return
+
+        if self.on_create_portable:
+            self.on_create_portable()
+
+    def _on_cancel_create_clicked(self):
+        """Handle Cancel button click during creation."""
+        if messagebox.askyesno(
+            "Cancel Download",
+            "Are you sure you want to cancel?\n\n"
+            "The download and any partially created files will be cleaned up.",
+            icon='warning'
+        ):
+            if self.on_cancel_create:
+                self.on_cancel_create()
+
+    def _update_create_button_state(self):
+        """Enable/disable create button based on state."""
+        has_dest = bool(self.view_model.create_destination_dir)
+        is_creating = self.view_model.is_creating
+
+        if has_dest and not is_creating:
+            self.create_btn.configure(state="normal")
+        else:
+            self.create_btn.configure(state="disabled")
+
+    # ===================================================================
+    # Create Portable from Download - ViewModel Subscription Handlers
+    # ===================================================================
+
+    def _on_creating_changed(self, is_creating: bool):
+        """Handle creation state change."""
+        if is_creating:
+            self.create_btn.configure(state="disabled", text="Creating...")
+            self.cancel_create_btn.pack(side="left")
+            self.create_progress_frame.grid()
+            self.create_result_label.grid_remove()
+            self.create_progress_bar.set(0)
+        else:
+            self.create_btn.configure(text="Create Portable Firefox")
+            self.cancel_create_btn.pack_forget()
+            self._update_create_button_state()
+
+    def _on_create_progress_changed(self, value: float):
+        """Update the create progress bar."""
+        self.create_progress_bar.set(value)
+
+    def _on_create_status_changed(self, value: str):
+        """Update the create status text."""
+        self.create_status_label.configure(text=value)
+
+    def _on_create_result_changed(self, result: dict):
+        """Handle create portable result."""
+        if result is None:
+            return
+
+        self.create_result_label.grid()
+
+        if result.get('success'):
+            version = result.get('version', '')
+            size_mb = result.get('size_mb', 0)
+            channel = result.get('channel', '')
+            channel_name = CHANNEL_DISPLAY_NAMES.get(channel, channel)
+
+            self.create_result_label.configure(
+                text=(
+                    f"\u2713 Portable Firefox created successfully!\n"
+                    f"Version: {version} ({channel_name}) | Size: {size_mb} MB\n"
+                    f"Run MyFox.exe or FirefoxPortable.bat to launch."
+                ),
+                text_color=Theme.get_color('success')
+            )
+            self.create_progress_frame.grid_remove()
+        else:
+            error_msg = result.get('error', 'Unknown error')
+            self.create_result_label.configure(
+                text=f"\u2717 Creation failed: {error_msg}",
                 text_color=Theme.get_color('error')
             )

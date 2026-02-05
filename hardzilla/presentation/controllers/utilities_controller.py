@@ -12,6 +12,7 @@ from typing import Callable, Optional
 from hardzilla.presentation.view_models.utilities_view_model import UtilitiesViewModel
 from hardzilla.application.use_cases.convert_to_portable_use_case import ConvertToPortableUseCase
 from hardzilla.application.use_cases.update_portable_firefox_use_case import UpdatePortableFirefoxUseCase
+from hardzilla.application.use_cases.create_portable_from_download_use_case import CreatePortableFromDownloadUseCase
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +31,7 @@ class UtilitiesController:
         convert_to_portable: ConvertToPortableUseCase,
         portable_repo,
         update_portable_firefox: Optional[UpdatePortableFirefoxUseCase] = None,
+        create_portable_from_download: Optional[CreatePortableFromDownloadUseCase] = None,
         ui_callback: Optional[Callable[[Callable], None]] = None
     ):
         """
@@ -38,20 +40,24 @@ class UtilitiesController:
             convert_to_portable: Use case for portable conversion
             portable_repo: PortableConversionRepository for detection/estimation
             update_portable_firefox: Use case for portable Firefox updates
+            create_portable_from_download: Use case for creating portable from download
             ui_callback: Callback for scheduling UI updates from background thread
         """
         self.view_model = view_model
         self.convert_to_portable = convert_to_portable
         self.portable_repo = portable_repo
         self.update_portable_firefox = update_portable_firefox
+        self.create_portable_from_download = create_portable_from_download
         self.ui_callback = ui_callback
         self._convert_thread: Optional[threading.Thread] = None
         self._detect_thread: Optional[threading.Thread] = None
         self._estimate_thread: Optional[threading.Thread] = None
         self._update_check_thread: Optional[threading.Thread] = None
         self._update_thread: Optional[threading.Thread] = None
+        self._create_thread: Optional[threading.Thread] = None
         self._cancel_event = threading.Event()
         self._update_cancel_event = threading.Event()
+        self._create_cancel_event = threading.Event()
 
     # ---------------------------------------------------------------
     # Convert to Portable
@@ -426,3 +432,125 @@ class UtilitiesController:
             self.ui_callback(callback)
         else:
             callback()
+
+    # ---------------------------------------------------------------
+    # Create Portable from Download
+    # ---------------------------------------------------------------
+
+    def handle_create_portable(self) -> None:
+        """
+        Handle Create Portable Firefox button click.
+
+        Validates inputs and starts background creation thread.
+        """
+        if not self.create_portable_from_download:
+            logger.warning("Create portable use case not configured")
+            return
+
+        if self._create_thread and self._create_thread.is_alive():
+            logger.warning("Creation already in progress")
+            return
+
+        if not self.view_model.create_destination_dir:
+            self._update_create_ui_state(error="No destination folder selected")
+            return
+
+        # Snapshot values for thread safety
+        channel = self.view_model.create_channel
+        dest_dir = self.view_model.create_destination_dir
+
+        # Reset cancellation and set creating state
+        self._create_cancel_event.clear()
+        self.view_model.is_creating = True
+        self.view_model.create_progress = 0.0
+        self.view_model.create_status = "Starting..."
+        self.view_model.create_result = None
+
+        self._create_thread = threading.Thread(
+            target=self._create_worker,
+            args=(channel, dest_dir),
+            daemon=True,
+            name="CreatePortableThread"
+        )
+        self._create_thread.start()
+
+    def cancel_create_portable(self) -> None:
+        """Signal the background creation thread to stop."""
+        self._create_cancel_event.set()
+        logger.info("Cancellation requested for create portable")
+
+    def _create_worker(self, channel: str, dest_dir: str) -> None:
+        """
+        Worker thread for create portable from download.
+
+        Args:
+            channel: Download channel (stable/beta/devedition)
+            dest_dir: Destination directory
+        """
+        try:
+            result = self.create_portable_from_download.execute(
+                channel=channel,
+                destination_dir=dest_dir,
+                progress_cb=self._create_progress_callback,
+                cancel_event=self._create_cancel_event
+            )
+
+            def set_result():
+                self.view_model.is_creating = False
+                self.view_model.create_result = result
+
+            self._run_on_ui(set_result)
+
+        except Exception as e:
+            logger.error(f"Create portable failed: {e}", exc_info=True)
+
+            def set_error():
+                self.view_model.is_creating = False
+                self.view_model.create_result = {
+                    "success": False,
+                    "version": "",
+                    "channel": channel,
+                    "size_mb": 0,
+                    "error": str(e)
+                }
+
+            self._run_on_ui(set_error)
+
+    def _create_progress_callback(self, status: str, progress: float) -> None:
+        """Thread-safe progress callback for create portable operations."""
+        def update():
+            self.view_model.create_progress = progress
+            self.view_model.create_status = status
+
+        self._run_on_ui(update)
+
+    def _update_create_ui_state(
+        self,
+        is_creating: Optional[bool] = None,
+        result: Optional[dict] = None,
+        error: Optional[str] = None
+    ) -> None:
+        """
+        Update ViewModel state for create portable safely from any thread.
+
+        Args:
+            is_creating: Whether creation is in progress
+            result: Creation result dictionary
+            error: Error message (creates error result)
+        """
+        def update():
+            if is_creating is not None:
+                self.view_model.is_creating = is_creating
+
+            if error is not None:
+                self.view_model.create_result = {
+                    "success": False,
+                    "version": "",
+                    "channel": "",
+                    "size_mb": 0,
+                    "error": error
+                }
+            elif result is not None:
+                self.view_model.create_result = result
+
+        self._run_on_ui(update)
