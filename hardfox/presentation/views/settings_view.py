@@ -60,6 +60,7 @@ class SettingsView(ctk.CTkFrame):
         self.preset_cards: dict = {}
         self.selected_card = None
         self._preset_expanded = False
+        self._restore_warning_id = None
 
         # Configure grid
         self.grid_columnconfigure(0, weight=1)
@@ -669,14 +670,37 @@ class SettingsView(ctk.CTkFrame):
         self.apply_btn.configure(state="normal", text="Apply Settings")
 
         if success:
-            logger.info(
-                "_on_apply_complete: base=%s, advanced=%s",
-                self.view_model.applied_base_count,
-                self.view_model.applied_advanced_count
+            base = self.view_model.applied_base_count
+            adv = self.view_model.applied_advanced_count
+            logger.info("_on_apply_complete: base=%s, advanced=%s", base, adv)
+            self.firefox_warning_label.configure(
+                text=f"Applied {base} BASE + {adv} ADVANCED settings",
+                text_color="#4CAF50"
             )
+            self._schedule_restore_warning()
 
     def _on_apply_error(self, error_msg: str):
         """Handle apply error."""
         self.apply_btn.configure(state="normal", text="Apply Settings")
         if error_msg:
             logger.error("_on_apply_error: %s", error_msg)
+            short_msg = error_msg.split('\n')[0][:60]
+            self.firefox_warning_label.configure(
+                text=f"Error: {short_msg}",
+                text_color="#F44336"
+            )
+            self._schedule_restore_warning()
+
+    def _schedule_restore_warning(self):
+        """Restore the default warning label after a delay."""
+        if hasattr(self, '_restore_warning_id') and self._restore_warning_id:
+            self.after_cancel(self._restore_warning_id)
+        self._restore_warning_id = self.after(5000, self._restore_warning_label)
+
+    def _restore_warning_label(self):
+        """Reset warning label to default text."""
+        self._restore_warning_id = None
+        self.firefox_warning_label.configure(
+            text="Close Firefox before applying!",
+            text_color="#FFB900"
+        )
