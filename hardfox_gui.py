@@ -417,28 +417,17 @@ class HardfoxGUI(ctk.CTk):
 
             self.settings_view.show_json_import_success(profile.name, len(profile.settings))
 
-            self._show_info(
-                "Profile Imported",
-                f"Successfully loaded '{profile.name}' with {len(profile.settings)} settings.\n\n"
-                f"BASE: {profile.get_base_settings_count()} | "
-                f"ADVANCED: {profile.get_advanced_settings_count()}\n\n"
-                f"Review and modify settings below, then click 'Apply Settings'."
-            )
-
         except FileNotFoundError:
             logger.error(f"JSON file not found: {json_path}")
             self.settings_view.show_json_import_error("File not found")
-            self._show_error("Import Failed", "Could not find the selected JSON file.")
 
         except json.JSONDecodeError as e:
             logger.error(f"Invalid JSON format: {e}")
             self.settings_view.show_json_import_error("Invalid JSON format")
-            self._show_error("Import Failed", "The selected file is not valid JSON.")
 
         except Exception as e:
             logger.error(f"Failed to import JSON profile: {e}")
             self.settings_view.show_json_import_error(str(e))
-            self._show_error("Import Failed", f"Failed to import profile:\n\n{str(e)}")
 
     def _on_apply(self):
         """Handle apply button."""
