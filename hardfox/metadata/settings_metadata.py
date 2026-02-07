@@ -5827,6 +5827,37 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
             'paranoid': False,
             'open': False
         }
+    },
+
+    'translations': {
+        'name': 'Built-in Page Translation',
+        'category': 'features',
+        'subcategory': 'ui',
+        'level': 'base',
+        'mechanism': 'prefs',
+        'short': 'Disable the built-in Firefox Translations popup and feature.',
+        'full': (
+            'Firefox includes a built-in translation feature that can automatically offer to '
+            'translate web pages in foreign languages. While translations are performed locally '
+            'on your device (not sent to a cloud service), the feature adds UI popups and uses '
+            'CPU/memory to load translation models. Disabling this removes the translation bar '
+            'and popup entirely. Useful if you never need page translation or prefer a dedicated '
+            'extension for this purpose.'
+        ),
+        'pref': 'browser.translations.enable',
+        'type': 'toggle',
+        'impact': 'low',
+        'compatibility': 'none',
+        'values': [True, False],
+        'labels': ['Enabled', 'Disabled'],
+        'default': True,
+        'recommended': {
+            'max_power': True,
+            'balanced': True,
+            'battery': False,
+            'paranoid': False,
+            'open': True
+        }
     }
 }
 
