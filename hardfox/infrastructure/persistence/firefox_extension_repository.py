@@ -272,14 +272,16 @@ class FirefoxExtensionRepository(IExtensionRepository):
         Build 3rdparty extension configuration for extensions that support it.
 
         Currently supports:
-        - uBlock Origin: custom filter lists via adminSettings.selectedFilterLists
+        - uBlock Origin: custom filter lists via toOverwrite.filterLists
 
-        Uses adminSettings because Firefox bug #1762253 returns managed storage
-        properties from policies.json as strings instead of objects. uBlock Origin
-        only JSON.parse()s the adminSettings property — toAdd and toOverwrite are
-        silently ignored on Firefox.
+        Uses toOverwrite instead of adminSettings because uBlock Origin's
+        restoreAdminSettings handles them differently:
+        - toOverwrite.filterLists: sets selectedFilterLists AND extracts URLs
+          into importedLists/externalLists (required for URL-based filter lists)
+        - adminSettings.selectedFilterLists: only sets selectedFilterLists,
+          so URL-based lists (e.g. Hagezi) silently fail to load
 
-        selectedFilterLists replaces the entire list, so UBO_DEFAULT_FILTER_LISTS
+        filterLists replaces the entire list, so UBO_DEFAULT_FILTER_LISTS
         must be included alongside any custom lists.
 
         Args:
@@ -296,20 +298,20 @@ class FirefoxExtensionRepository(IExtensionRepository):
 
             ext_data = EXTENSIONS_METADATA[ext_id]
 
-            # uBlock Origin filter lists via adminSettings (Firefox-compatible)
+            # uBlock Origin filter lists via toOverwrite (Firefox policies.json)
             if ext_id == "uBlock0@raymondhill.net" and "custom_filter_lists" in ext_data:
                 custom_lists = ext_data["custom_filter_lists"]
                 if custom_lists:
                     all_lists = list(UBO_DEFAULT_FILTER_LISTS) + list(custom_lists)
                     config[ext_id] = {
-                        "adminSettings": json.dumps({
-                            "selectedFilterLists": all_lists
-                        })
+                        "toOverwrite": {
+                            "filterLists": all_lists
+                        }
                     }
                     logger.info(
                         f"Configured uBlock Origin with {len(all_lists)} filter lists "
                         f"({len(UBO_DEFAULT_FILTER_LISTS)} defaults + {len(custom_lists)} custom) "
-                        f"via adminSettings.selectedFilterLists"
+                        f"via toOverwrite.filterLists"
                     )
 
         return config
