@@ -69,6 +69,7 @@ class ApplyController:
         extension_ids = list(self.view_model.selected_extensions)
         firefox_path = self.view_model.firefox_path
 
+        self.view_model.extension_install_success = False
         self.view_model.is_installing_extensions = True
 
         self._extension_thread = threading.Thread(
@@ -157,6 +158,7 @@ class ApplyController:
         extension_ids = list(self.view_model.selected_extensions)
         firefox_path = self.view_model.firefox_path
 
+        self.view_model.extension_uninstall_success = False
         self.view_model.is_uninstalling_extensions = True
 
         self._uninstall_thread = threading.Thread(

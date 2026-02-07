@@ -302,9 +302,9 @@ class FirefoxExtensionRepository(IExtensionRepository):
                 if custom_lists:
                     all_lists = list(UBO_DEFAULT_FILTER_LISTS) + list(custom_lists)
                     config[ext_id] = {
-                        "adminSettings": {
+                        "adminSettings": json.dumps({
                             "selectedFilterLists": all_lists
-                        }
+                        })
                     }
                     logger.info(
                         f"Configured uBlock Origin with {len(all_lists)} filter lists "
