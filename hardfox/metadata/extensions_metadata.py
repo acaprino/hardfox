@@ -15,7 +15,17 @@ EXTENSIONS_METADATA = {
         "icon": "🛡️",
         "breakage_risk": 2,
         "size_mb": 3.2,
-        # Hagezi filter lists REPLACE uBO defaults (EasyList, EasyPrivacy, etc. deselected).
+        # uBO built-in filters for cosmetic filtering, script blocking, privacy & site fixes.
+        # These are lightweight native uBO lists that complement Hagezi's DNS-level blocking.
+        "builtin_filter_lists": [
+            "ublock-filters",       # uBO cosmetic + script filters (main list)
+            "ublock-badware",       # uBO badware/malware risk blocking
+            "ublock-privacy",       # uBO privacy-specific filters
+            "ublock-quick-fixes",   # uBO temporary site compatibility fixes
+            "ublock-unbreak",       # fixes for sites broken by other filters
+            "adguard-url-tracking-protection",  # strips tracking params from URLs (removeparam)
+        ],
+        # Hagezi external filter lists for DNS-level domain blocking.
         # Mini variants use top-traffic domains (Umbrella/Cloudflare/Tranco) for ~281k total rules:
         #   pro.mini (~71k) ads/tracking | tif.mini (~138k) threats | popupads (~58k) | fake (~14k)
         "custom_filter_lists": [

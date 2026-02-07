@@ -177,6 +177,15 @@ launch_hardfox.bat      - Dependency checker & launcher
 3. Implement reusable component with consistent styling
 4. Import and use in `hardfox.py`
 
+## Firefox Privacy Notes
+
+**Strict ETP implicit settings**: When `browser.contentblocking.category` = `"strict"`, Firefox automatically enables:
+- `network.cookie.cookieBehavior` = 5 (Dynamic First-Party Isolation / dFPI)
+- `privacy.partition.network_state` = true (network state partitioning — isolates HTTP cache, connections, ETags per first-party domain)
+- `privacy.partition.serviceWorkers` = true
+
+These do not need explicit `user.js` entries unless belt-and-suspenders redundancy is desired. ETag tracking is mitigated by cache partitioning under dFPI.
+
 ## External References
 
 - **arkenfox user.js**: https://github.com/arkenfox/user.js (Privacy settings reference)
