@@ -4650,6 +4650,1183 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
             'paranoid': False,
             'open': False
         }
+    },
+
+    # =========================================================================
+    # NEW SETTINGS - Privacy, Security, Performance additions
+    # =========================================================================
+
+    # --- Privacy: Tracking ---
+
+    'global_privacy_control': {
+        'name': 'Global Privacy Control (GPC)',
+        'category': 'privacy',
+        'subcategory': 'tracking',
+        'level': 'base',
+        'mechanism': 'prefs',
+        'short': 'Send Global Privacy Control signal to websites.',
+        'full': (
+            'Global Privacy Control (GPC) is the modern, legally-backed successor to Do Not Track. '
+            'When enabled, Firefox sends the Sec-GPC: 1 header with every request, telling websites '
+            'not to sell or share your personal data. Unlike DNT, GPC is recognized by laws like '
+            'CCPA (California) and GDPR (Europe), meaning websites are legally obligated to honor it '
+            'in those jurisdictions. There is no downside to enabling this — it does not break any '
+            'websites and provides a legal basis for your privacy preferences.'
+        ),
+        'pref': 'privacy.globalprivacycontrol.enabled',
+        'type': 'toggle',
+        'impact': 'low',
+        'compatibility': 'none',
+        'values': [True, False],
+        'labels': ['Enabled', 'Disabled'],
+        'default': False,
+        'recommended': {
+            'max_power': True,
+            'balanced': True,
+            'battery': True,
+            'paranoid': True,
+            'open': True
+        }
+    },
+
+    'tracking_protection_private': {
+        'name': 'Tracking Protection (Private Browsing)',
+        'category': 'privacy',
+        'subcategory': 'tracking',
+        'level': 'base',
+        'mechanism': 'prefs',
+        'short': 'Enable tracking protection in private browsing mode.',
+        'full': (
+            'Controls whether Firefox Enhanced Tracking Protection is active in private browsing '
+            'windows. This is separate from the normal-mode tracking protection setting. When '
+            'enabled, private browsing windows block known trackers, cryptominers, and fingerprinters. '
+            'This should almost always be enabled — private browsing is specifically for enhanced '
+            'privacy and disabling tracking protection in that mode defeats its purpose.'
+        ),
+        'pref': 'privacy.trackingprotection.pbmode.enabled',
+        'type': 'toggle',
+        'impact': 'medium',
+        'compatibility': 'minor',
+        'values': [True, False],
+        'labels': ['Enabled', 'Disabled'],
+        'default': True,
+        'recommended': {
+            'max_power': True,
+            'balanced': True,
+            'battery': True,
+            'paranoid': True,
+            'open': True
+        }
+    },
+
+    # --- Privacy: Data & History ---
+
+    'browsing_history': {
+        'name': 'Browsing History',
+        'category': 'privacy',
+        'subcategory': 'data',
+        'level': 'base',
+        'mechanism': 'prefs',
+        'short': 'Record visited websites in browsing history.',
+        'full': (
+            'Controls whether Firefox records the URLs of websites you visit. When enabled, sites '
+            'appear in the address bar suggestions, History menu, and can be searched. Disabling '
+            'this is equivalent to a permanent "no history" mode — Firefox will never record what '
+            'you visit. This is useful for shared or public computers, or for users who want '
+            'maximum privacy. Note that this does not affect bookmarks or downloads history. '
+            'For a less extreme approach, consider using the "Clear on Shutdown" settings instead.'
+        ),
+        'pref': 'places.history.enabled',
+        'type': 'toggle',
+        'impact': 'high',
+        'compatibility': 'none',
+        'values': [True, False],
+        'labels': ['Record History', 'Never Record'],
+        'default': True,
+        'recommended': {
+            'max_power': True,
+            'balanced': True,
+            'battery': True,
+            'paranoid': False,
+            'open': True
+        }
+    },
+
+    'session_privacy_level': {
+        'name': 'Session Data Privacy',
+        'category': 'privacy',
+        'subcategory': 'session',
+        'level': 'advanced',
+        'mechanism': 'userjs',
+        'short': 'Control what extra session data Firefox stores (form fields, scroll position).',
+        'full': (
+            'Firefox stores session data for crash recovery and tab restore, including form field '
+            'contents, scroll positions, and cookies. This setting controls how much extra data is '
+            'saved. 0 = Store everything for all sites. 1 = Store only for non-HTTPS sites (more '
+            'private — sensitive HTTPS data is not persisted to disk). 2 = Never store extra session '
+            'data (most private — only basic tab URLs are saved). Higher values mean less data is '
+            'available for crash recovery but less sensitive information is written to disk.'
+        ),
+        'pref': 'browser.sessionstore.privacy_level',
+        'type': 'choice',
+        'impact': 'medium',
+        'compatibility': 'none',
+        'values': [0, 1, 2],
+        'labels': ['Store All', 'Skip HTTPS Data', 'Never Store Extra'],
+        'default': 0,
+        'recommended': {
+            'max_power': 0,
+            'balanced': 1,
+            'battery': 0,
+            'paranoid': 2,
+            'open': 0
+        }
+    },
+
+    # --- Privacy: Cookies ---
+
+    'third_party_cookies_session': {
+        'name': 'Third-Party Cookies Session Only',
+        'category': 'privacy',
+        'subcategory': 'cookies',
+        'level': 'advanced',
+        'mechanism': 'userjs',
+        'short': 'Force third-party cookies to expire when the browser closes.',
+        'full': (
+            'When enabled, any cookies set by third-party domains (domains different from the site '
+            'you are visiting) will be automatically deleted when you close Firefox. This prevents '
+            'third-party trackers from maintaining persistent identifiers across browsing sessions '
+            'while still allowing them to function during a session. This is less aggressive than '
+            'blocking all third-party cookies (which can break login flows) but still significantly '
+            'reduces long-term cross-site tracking.'
+        ),
+        'pref': 'network.cookie.thirdparty.sessionOnly',
+        'type': 'toggle',
+        'impact': 'medium',
+        'compatibility': 'minor',
+        'values': [True, False],
+        'labels': ['Session Only', 'Persistent'],
+        'default': False,
+        'recommended': {
+            'max_power': False,
+            'balanced': True,
+            'battery': False,
+            'paranoid': True,
+            'open': False
+        }
+    },
+
+    # --- Security: Network ---
+
+    'webrtc_no_host_ip': {
+        'name': 'WebRTC Host IP Protection',
+        'category': 'security',
+        'subcategory': 'network',
+        'level': 'advanced',
+        'mechanism': 'userjs',
+        'short': 'Prevent WebRTC from disclosing your host IP address.',
+        'full': (
+            'WebRTC uses ICE (Interactive Connectivity Establishment) to discover network paths '
+            'for peer-to-peer connections. By default, this process can reveal your host (local) '
+            'IP address to websites, even behind a VPN. This setting prevents WebRTC from including '
+            'host IP candidates entirely. It is more aggressive than the "Default Address Only" '
+            'setting — that setting limits to the default interface, while this one blocks host IPs '
+            'completely. May break some WebRTC connections, especially in local network scenarios. '
+            'Recommended for VPN users who want maximum IP leak prevention.'
+        ),
+        'pref': 'media.peerconnection.ice.no_host',
+        'type': 'toggle',
+        'impact': 'medium',
+        'compatibility': 'moderate',
+        'values': [True, False],
+        'labels': ['Block Host IP', 'Allow'],
+        'default': False,
+        'recommended': {
+            'max_power': False,
+            'balanced': False,
+            'battery': False,
+            'paranoid': True,
+            'open': False
+        }
+    },
+
+    'encrypted_client_hello': {
+        'name': 'Encrypted Client Hello (ECH)',
+        'category': 'security',
+        'subcategory': 'network',
+        'level': 'advanced',
+        'mechanism': 'userjs',
+        'short': 'Encrypt the SNI (server name) in TLS handshakes.',
+        'full': (
+            'Encrypted Client Hello (ECH) encrypts the Server Name Indication (SNI) field during '
+            'the TLS handshake. Without ECH, even with HTTPS, network observers (ISPs, firewalls) '
+            'can see which website you are connecting to from the plaintext SNI. ECH hides this '
+            'information, making it much harder to monitor or filter your browsing by domain name. '
+            'Requires DNS-over-HTTPS (DoH) and server support. When the server does not support ECH, '
+            'Firefox falls back to standard TLS. Keep this enabled for privacy — there is no downside '
+            'when it falls back gracefully.'
+        ),
+        'pref': 'network.dns.echconfig.enabled',
+        'type': 'toggle',
+        'impact': 'medium',
+        'compatibility': 'none',
+        'values': [True, False],
+        'labels': ['Enabled', 'Disabled'],
+        'default': True,
+        'recommended': {
+            'max_power': True,
+            'balanced': True,
+            'battery': True,
+            'paranoid': True,
+            'open': True
+        }
+    },
+
+    'tls_version_max': {
+        'name': 'Maximum TLS Version',
+        'category': 'security',
+        'subcategory': 'network',
+        'level': 'advanced',
+        'mechanism': 'userjs',
+        'short': 'Set the maximum TLS protocol version allowed.',
+        'full': (
+            'Sets the highest TLS version Firefox will negotiate. TLS 1.3 is the latest and most '
+            'secure, with improved performance and privacy (encrypted handshake, fewer round-trips). '
+            'Setting this to 4 (TLS 1.3) ensures Firefox always uses the best available protocol. '
+            'In rare cases, broken servers may not support TLS 1.3, but this is increasingly rare. '
+            'Keep at the maximum value unless you have a specific compatibility issue.'
+        ),
+        'pref': 'security.tls.version.max',
+        'type': 'choice',
+        'impact': 'medium',
+        'compatibility': 'none',
+        'values': [3, 4],
+        'labels': ['TLS 1.2', 'TLS 1.3'],
+        'default': 4,
+        'recommended': {
+            'max_power': 4,
+            'balanced': 4,
+            'battery': 4,
+            'paranoid': 4,
+            'open': 4
+        }
+    },
+
+    'disable_ipv6_dns': {
+        'name': 'Disable IPv6 DNS',
+        'category': 'security',
+        'subcategory': 'network',
+        'level': 'advanced',
+        'mechanism': 'userjs',
+        'short': 'Disable DNS lookups over IPv6.',
+        'full': (
+            'When enabled, Firefox skips IPv6 (AAAA) DNS lookups, using only IPv4. This is useful '
+            'if your network does not fully support IPv6, which can cause slow DNS resolution or '
+            'connectivity issues. It also prevents potential IPv6 address leakage when using a VPN '
+            'that only tunnels IPv4 traffic — a common scenario. If your VPN or network fully '
+            'supports IPv6, you can leave this disabled. Note: this pref is inverted — True means '
+            'IPv6 DNS is disabled.'
+        ),
+        'pref': 'network.dns.disableIPv6',
+        'type': 'toggle',
+        'impact': 'low',
+        'compatibility': 'minor',
+        'values': [True, False],
+        'labels': ['Disabled (IPv4 Only)', 'Enabled'],
+        'default': False,
+        'recommended': {
+            'max_power': False,
+            'balanced': False,
+            'battery': False,
+            'paranoid': True,
+            'open': False
+        }
+    },
+
+    'referer_header_policy': {
+        'name': 'Referrer Header Sending',
+        'category': 'security',
+        'subcategory': 'network',
+        'level': 'advanced',
+        'mechanism': 'userjs',
+        'short': 'Control when Firefox sends the Referer header.',
+        'full': (
+            'The Referer header tells websites which page you came from. This is useful for '
+            'analytics and navigation (e.g., "back to search results") but is a privacy concern. '
+            '0 = Never send Referer (most private, may break some sites). '
+            '1 = Send only on link clicks (hides referer for images, scripts, and other embedded '
+            'resources). 2 = Always send (default, least private). '
+            'Setting to 1 is a good balance — it keeps navigation working while stopping passive '
+            'referer leakage from resource loading.'
+        ),
+        'pref': 'network.http.sendRefererHeader',
+        'type': 'choice',
+        'impact': 'medium',
+        'compatibility': 'minor',
+        'values': [0, 1, 2],
+        'labels': ['Never Send', 'Clicks Only', 'Always Send'],
+        'default': 2,
+        'recommended': {
+            'max_power': 2,
+            'balanced': 2,
+            'battery': 2,
+            'paranoid': 1,
+            'open': 2
+        }
+    },
+
+    'referer_same_origin_trimming': {
+        'name': 'Same-Origin Referrer Trimming',
+        'category': 'security',
+        'subcategory': 'network',
+        'level': 'advanced',
+        'mechanism': 'userjs',
+        'short': 'Control how much referrer detail is sent for same-origin requests.',
+        'full': (
+            'Controls how much of the URL is included in the Referer header for same-origin '
+            'requests (navigating within the same site). 0 = Send the full URL including path and '
+            'query string. 1 = Send URL without the query string (removes sensitive parameters). '
+            '2 = Send only the origin (scheme + host + port). For same-origin requests, trimming '
+            'is less critical than cross-origin, but removing query strings prevents sensitive data '
+            'in URL parameters from leaking via Referer.'
+        ),
+        'pref': 'network.http.referer.trimmingPolicy',
+        'type': 'choice',
+        'impact': 'low',
+        'compatibility': 'none',
+        'values': [0, 1, 2],
+        'labels': ['Full URL', 'No Query String', 'Origin Only'],
+        'default': 0,
+        'recommended': {
+            'max_power': 0,
+            'balanced': 1,
+            'battery': 0,
+            'paranoid': 2,
+            'open': 0
+        }
+    },
+
+    'http2_protocol': {
+        'name': 'HTTP/2 Protocol',
+        'category': 'security',
+        'subcategory': 'network',
+        'level': 'advanced',
+        'mechanism': 'userjs',
+        'short': 'Enable HTTP/2 protocol for faster and more efficient connections.',
+        'full': (
+            'HTTP/2 is a major revision of the HTTP protocol that enables multiplexed streams '
+            '(multiple requests over a single connection), header compression, and server push. '
+            'This significantly improves page load times and reduces latency. HTTP/2 also requires '
+            'HTTPS, so all HTTP/2 connections are encrypted. There is generally no reason to disable '
+            'this. The only edge case is fingerprinting — HTTP/2 connection parameters can be used '
+            'for passive fingerprinting, but disabling it would be a significant performance regression.'
+        ),
+        'pref': 'network.http.http2.enabled',
+        'type': 'toggle',
+        'impact': 'high',
+        'compatibility': 'none',
+        'values': [True, False],
+        'labels': ['Enabled', 'Disabled'],
+        'default': True,
+        'recommended': {
+            'max_power': True,
+            'balanced': True,
+            'battery': True,
+            'paranoid': True,
+            'open': True
+        }
+    },
+
+    'safebrowsing_data_sharing': {
+        'name': 'Safe Browsing Data Sharing',
+        'category': 'security',
+        'subcategory': 'network',
+        'level': 'advanced',
+        'mechanism': 'userjs',
+        'short': 'Share additional data with Google Safe Browsing.',
+        'full': (
+            'Google Safe Browsing protects against malware and phishing. This setting controls '
+            'whether Firefox sends additional data to Google beyond the baseline lookups. When '
+            'enabled, extra telemetry and browsing data is shared with Google for threat detection. '
+            'When disabled, Firefox still performs basic safe browsing checks using local lists '
+            'and hash-prefix lookups, but does not share additional data. Disable to reduce data '
+            'sent to Google while still maintaining core safe browsing protection.'
+        ),
+        'pref': 'browser.safebrowsing.provider.google4.dataSharing.enabled',
+        'type': 'toggle',
+        'impact': 'low',
+        'compatibility': 'none',
+        'values': [True, False],
+        'labels': ['Share Data', 'Minimal Only'],
+        'default': False,
+        'recommended': {
+            'max_power': False,
+            'balanced': False,
+            'battery': False,
+            'paranoid': False,
+            'open': False
+        }
+    },
+
+    # --- Security: Permissions ---
+
+    'geolocation_default': {
+        'name': 'Default Geolocation Permission',
+        'category': 'security',
+        'subcategory': 'permissions',
+        'level': 'base',
+        'mechanism': 'prefs',
+        'short': 'Default behavior when a site requests your location.',
+        'full': (
+            'Controls what happens when a website requests access to your geographic location. '
+            '0 = Always ask (you decide per-site). 1 = Always allow (dangerous — any site can '
+            'read your location without asking). 2 = Always block (no site can request location). '
+            'This complements the geo.enabled setting — geo.enabled disables the API entirely, '
+            'while this setting controls the default permission when the API is available. '
+            'Setting to 2 blocks all geolocation requests silently without the popup prompt.'
+        ),
+        'pref': 'permissions.default.geo',
+        'type': 'choice',
+        'impact': 'medium',
+        'compatibility': 'minor',
+        'values': [0, 2],
+        'labels': ['Ask Every Time', 'Always Block'],
+        'default': 0,
+        'recommended': {
+            'max_power': 0,
+            'balanced': 0,
+            'battery': 0,
+            'paranoid': 2,
+            'open': 0
+        }
+    },
+
+    'autoplay_blocking_policy': {
+        'name': 'Autoplay Blocking Scope',
+        'category': 'security',
+        'subcategory': 'permissions',
+        'level': 'advanced',
+        'mechanism': 'userjs',
+        'short': 'Control how broadly autoplay is blocked.',
+        'full': (
+            'Provides granular control over how aggressively Firefox blocks media autoplay. '
+            '0 = Honor user choice (use the Autoplay Default setting). '
+            '1 = Block autoplay globally on all sites regardless of per-site exceptions. '
+            '2 = Block only when the user has not interacted with the site. '
+            'Setting to 1 enforces autoplay blocking everywhere, even for sites you may have '
+            'allowed. Setting to 2 is more nuanced — it allows autoplay only after you have '
+            'interacted with a page (clicked, scrolled, etc.).'
+        ),
+        'pref': 'media.autoplay.blocking_policy',
+        'type': 'choice',
+        'impact': 'low',
+        'compatibility': 'minor',
+        'values': [0, 1, 2],
+        'labels': ['User Choice', 'Block All Sites', 'Block Until Interaction'],
+        'default': 0,
+        'recommended': {
+            'max_power': 0,
+            'balanced': 0,
+            'battery': 1,
+            'paranoid': 1,
+            'open': 0
+        }
+    },
+
+    'block_right_click_override': {
+        'name': 'Prevent Right-Click Blocking',
+        'category': 'security',
+        'subcategory': 'permissions',
+        'level': 'advanced',
+        'mechanism': 'userjs',
+        'short': 'Prevent websites from blocking the right-click context menu.',
+        'full': (
+            'Some websites intercept or disable the right-click context menu using JavaScript, '
+            'preventing you from using browser features like "Open in New Tab", "Save Image", '
+            'or "View Page Source". When set to false, Firefox ignores these scripts and always '
+            'shows the native context menu on right-click. This is useful for usability and also '
+            'prevents sites from blocking access to security features like "Inspect Element". '
+            'Note: this pref is inverted — False means the site CANNOT override the context menu.'
+        ),
+        'pref': 'dom.event.contextmenu.enabled',
+        'type': 'toggle',
+        'impact': 'low',
+        'compatibility': 'minor',
+        'values': [True, False],
+        'labels': ['Allow Sites to Block', 'Always Show Menu'],
+        'default': True,
+        'recommended': {
+            'max_power': True,
+            'balanced': True,
+            'battery': True,
+            'paranoid': False,
+            'open': True
+        }
+    },
+
+    # --- Security: DOM & Fingerprinting ---
+
+    'block_window_move_resize': {
+        'name': 'Block Window Move/Resize',
+        'category': 'security',
+        'subcategory': 'permissions',
+        'level': 'advanced',
+        'mechanism': 'userjs',
+        'short': 'Prevent scripts from moving or resizing the browser window.',
+        'full': (
+            'Some websites use JavaScript to move or resize the browser window, which can be '
+            'annoying and is also used as a fingerprinting vector — by resizing the window and '
+            'reading back the dimensions, sites can infer your screen resolution and available '
+            'desktop area. Enabling this prevents all scripts from calling window.moveTo(), '
+            'window.resizeTo(), and related methods. This has no impact on normal browsing and '
+            'improves both usability and fingerprinting resistance.'
+        ),
+        'pref': 'dom.disable_window_move_resize',
+        'type': 'toggle',
+        'impact': 'low',
+        'compatibility': 'none',
+        'values': [True, False],
+        'labels': ['Block', 'Allow'],
+        'default': False,
+        'recommended': {
+            'max_power': False,
+            'balanced': True,
+            'battery': False,
+            'paranoid': True,
+            'open': False
+        }
+    },
+
+    'force_popup_url_bar': {
+        'name': 'Force URL Bar in Popups',
+        'category': 'security',
+        'subcategory': 'permissions',
+        'level': 'advanced',
+        'mechanism': 'userjs',
+        'short': 'Force the address bar to appear in popup windows.',
+        'full': (
+            'Popup windows opened by JavaScript can hide the address bar, which is a common '
+            'phishing technique — a fake site opens a popup without a URL bar, making it impossible '
+            'to verify which site you are on. Enabling this forces Firefox to always show the '
+            'address bar in popup windows, letting you verify the URL. This is a security best '
+            'practice with no downside for legitimate websites.'
+        ),
+        'pref': 'dom.disable_window_open_feature.location',
+        'type': 'toggle',
+        'impact': 'low',
+        'compatibility': 'none',
+        'values': [True, False],
+        'labels': ['Always Show URL Bar', 'Allow Hiding'],
+        'default': False,
+        'recommended': {
+            'max_power': False,
+            'balanced': True,
+            'battery': False,
+            'paranoid': True,
+            'open': False
+        }
+    },
+
+    'disable_beforeunload': {
+        'name': 'Disable "Leave Page?" Dialogs',
+        'category': 'security',
+        'subcategory': 'permissions',
+        'level': 'advanced',
+        'mechanism': 'userjs',
+        'short': 'Block "Are you sure you want to leave?" confirmation dialogs.',
+        'full': (
+            'The beforeunload event allows websites to show a confirmation dialog when you try to '
+            'navigate away or close the tab. While useful for warning about unsaved form data, it '
+            'is frequently abused by ad-heavy and scam sites to prevent you from leaving the page. '
+            'Some tracking scripts also use it to fire a last-moment tracking beacon. Disabling '
+            'this lets you navigate away from any page instantly. The downside is that you will not '
+            'be warned about unsaved data in forms or web applications.'
+        ),
+        'pref': 'dom.disable_beforeunload',
+        'type': 'toggle',
+        'impact': 'low',
+        'compatibility': 'minor',
+        'values': [True, False],
+        'labels': ['Block Dialogs', 'Allow Dialogs'],
+        'default': False,
+        'recommended': {
+            'max_power': False,
+            'balanced': False,
+            'battery': False,
+            'paranoid': True,
+            'open': False
+        }
+    },
+
+    # --- Features: Pocket & DRM ---
+
+    'pocket_integration': {
+        'name': 'Pocket Integration',
+        'category': 'features',
+        'subcategory': 'ui',
+        'level': 'base',
+        'mechanism': 'prefs',
+        'short': 'Enable the built-in Pocket save-for-later service.',
+        'full': (
+            'Pocket is a read-it-later service owned by Mozilla, integrated into Firefox. It adds '
+            'a save button to the toolbar and shows Pocket recommendations on the new tab page. '
+            'Some users find it useful for saving articles, while privacy-conscious users prefer '
+            'to disable it since it is a third-party service that tracks your reading habits. '
+            'Disabling removes the Pocket button and recommendations. You can always use Pocket '
+            'as a standalone extension if you want it back.'
+        ),
+        'pref': 'extensions.pocket.enabled',
+        'type': 'toggle',
+        'impact': 'low',
+        'compatibility': 'none',
+        'values': [True, False],
+        'labels': ['Enabled', 'Disabled'],
+        'default': True,
+        'recommended': {
+            'max_power': True,
+            'balanced': False,
+            'battery': False,
+            'paranoid': False,
+            'open': True
+        }
+    },
+
+    'widevine_drm_module': {
+        'name': 'Widevine DRM Module',
+        'category': 'features',
+        'subcategory': 'media',
+        'level': 'base',
+        'mechanism': 'prefs',
+        'short': 'Enable the Google Widevine content decryption module for DRM video.',
+        'full': (
+            'Widevine is Google\'s Content Decryption Module (CDM) for playing DRM-protected '
+            'video from services like Netflix, Disney+, Amazon Prime Video, and Spotify. The '
+            'module runs in a sandbox but is a closed-source binary from Google. Disabling this '
+            'prevents playback of DRM content on most streaming services. This setting works '
+            'alongside the Encrypted Media Extensions (EME) toggle — both must be enabled for DRM '
+            'playback. Disable if you do not use streaming services and want to reduce the attack '
+            'surface from running closed-source code.'
+        ),
+        'pref': 'media.gmp-widevinecdm.enabled',
+        'type': 'toggle',
+        'impact': 'high',
+        'compatibility': 'moderate',
+        'values': [True, False],
+        'labels': ['Enabled', 'Disabled'],
+        'default': True,
+        'recommended': {
+            'max_power': True,
+            'balanced': True,
+            'battery': True,
+            'paranoid': False,
+            'open': True
+        }
+    },
+
+    # --- Fingerprinting Resistance ---
+
+    'use_document_fonts': {
+        'name': 'Web Fonts',
+        'category': 'privacy',
+        'subcategory': 'tracking',
+        'level': 'advanced',
+        'mechanism': 'userjs',
+        'short': 'Allow websites to use custom fonts.',
+        'full': (
+            'Controls whether websites can load and display custom fonts (web fonts via @font-face). '
+            'When set to 0 (system fonts only), Firefox ignores all web fonts and uses only your '
+            'system fonts. This significantly reduces the fingerprinting surface since the list of '
+            'installed fonts is one of the strongest fingerprinting signals. However, many websites '
+            'rely on web fonts for icons (Font Awesome, Material Icons), so disabling web fonts '
+            'causes visual breakage — icons appear as blank squares or text. This is an aggressive '
+            'anti-fingerprinting measure used by arkenfox. For most users, keeping web fonts enabled '
+            'and using other anti-fingerprinting measures is a better balance.'
+        ),
+        'pref': 'browser.display.use_document_fonts',
+        'type': 'choice',
+        'impact': 'high',
+        'compatibility': 'high',
+        'values': [1, 0],
+        'labels': ['Allow Web Fonts', 'System Fonts Only'],
+        'default': 1,
+        'recommended': {
+            'max_power': 1,
+            'balanced': 1,
+            'battery': 1,
+            'paranoid': 0,
+            'open': 1
+        }
+    },
+
+    'use_document_colors': {
+        'name': 'Website Colors',
+        'category': 'privacy',
+        'subcategory': 'tracking',
+        'level': 'advanced',
+        'mechanism': 'userjs',
+        'short': 'Allow websites to specify their own colors.',
+        'full': (
+            'Controls whether websites can override your system colors with their own. When '
+            'disabled, Firefox ignores all CSS colors specified by websites and uses your system '
+            'or browser colors instead. This reduces CSS-based fingerprinting (websites can probe '
+            'which colors your system uses) and improves accessibility for users who need specific '
+            'color schemes. However, disabling this makes most websites look broken since their '
+            'design relies on custom colors. Only recommended for users who prioritize '
+            'anti-fingerprinting or have specific accessibility needs.'
+        ),
+        'pref': 'browser.display.use_document_colors',
+        'type': 'toggle',
+        'impact': 'high',
+        'compatibility': 'high',
+        'values': [True, False],
+        'labels': ['Allow', 'Force System Colors'],
+        'default': True,
+        'recommended': {
+            'max_power': True,
+            'balanced': True,
+            'battery': True,
+            'paranoid': False,
+            'open': True
+        }
+    },
+
+    'webassembly': {
+        'name': 'WebAssembly (WASM)',
+        'category': 'features',
+        'subcategory': 'dom',
+        'level': 'advanced',
+        'mechanism': 'userjs',
+        'short': 'Enable WebAssembly for high-performance web applications.',
+        'full': (
+            'WebAssembly (WASM) allows running compiled code in the browser at near-native speed. '
+            'It is used for computationally intensive applications like video editing, 3D games, '
+            'image processing, and scientific simulations. Disabling WASM breaks these applications '
+            'but reduces the attack surface — WASM code runs in a sandbox but has been a target for '
+            'exploits due to its low-level nature. It can also be used for cryptomining without '
+            'consent. For most users, keep enabled. Disable only in high-security environments where '
+            'web applications are not needed.'
+        ),
+        'pref': 'javascript.options.wasm',
+        'type': 'toggle',
+        'impact': 'high',
+        'compatibility': 'high',
+        'values': [True, False],
+        'labels': ['Enabled', 'Disabled'],
+        'default': True,
+        'recommended': {
+            'max_power': True,
+            'balanced': True,
+            'battery': True,
+            'paranoid': False,
+            'open': True
+        }
+    },
+
+    # --- Performance: Network ---
+
+    'dns_cache_entries': {
+        'name': 'DNS Cache Size',
+        'category': 'performance',
+        'subcategory': 'network_perf',
+        'level': 'advanced',
+        'mechanism': 'userjs',
+        'short': 'Number of DNS entries to cache in memory.',
+        'full': (
+            'Controls how many DNS lookup results Firefox keeps in memory. A larger cache reduces '
+            'the number of DNS queries for frequently visited domains, improving page load times. '
+            'A smaller cache (or 0) forces more frequent DNS lookups, which is slightly more '
+            'private since cached entries can reveal browsing history if the system is inspected. '
+            'The default of 400 entries is sufficient for most users. Increase for heavy browsing '
+            'with many different sites, or set to 0 for maximum privacy at a performance cost.'
+        ),
+        'pref': 'network.dnsCacheEntries',
+        'type': 'choice',
+        'impact': 'low',
+        'compatibility': 'none',
+        'values': [0, 100, 400, 1000],
+        'labels': ['Disabled (0)', 'Small (100)', 'Default (400)', 'Large (1000)'],
+        'default': 400,
+        'recommended': {
+            'max_power': 1000,
+            'balanced': 400,
+            'battery': 400,
+            'paranoid': 0,
+            'open': 400
+        }
+    },
+
+    'dns_cache_expiration': {
+        'name': 'DNS Cache Lifetime',
+        'category': 'performance',
+        'subcategory': 'network_perf',
+        'level': 'advanced',
+        'mechanism': 'userjs',
+        'short': 'How long DNS entries are cached before re-resolving.',
+        'full': (
+            'Sets the time-to-live (TTL) for entries in Firefox\'s internal DNS cache, in seconds. '
+            'Shorter values mean DNS entries expire faster, requiring more frequent lookups but '
+            'ensuring you always get up-to-date DNS results. Longer values reduce DNS traffic and '
+            'improve performance for frequently visited sites. For privacy, a shorter TTL means '
+            'less browsing information is retained in the cache. The default of 60 seconds is a '
+            'reasonable balance.'
+        ),
+        'pref': 'network.dnsCacheExpiration',
+        'type': 'choice',
+        'impact': 'low',
+        'compatibility': 'none',
+        'values': [0, 30, 60, 120],
+        'labels': ['No Cache (0s)', 'Short (30s)', 'Default (60s)', 'Long (120s)'],
+        'default': 60,
+        'recommended': {
+            'max_power': 120,
+            'balanced': 60,
+            'battery': 120,
+            'paranoid': 0,
+            'open': 60
+        }
+    },
+
+    'proxy_connections_per_proxy': {
+        'name': 'Max Connections Per Proxy',
+        'category': 'performance',
+        'subcategory': 'network_perf',
+        'level': 'advanced',
+        'mechanism': 'userjs',
+        'short': 'Maximum number of persistent connections per proxy server.',
+        'full': (
+            'Sets the maximum number of persistent HTTP connections maintained per proxy server. '
+            'When browsing through a proxy or VPN, all connections are funneled through the proxy, '
+            'so this limit affects overall browsing speed. Higher values allow more parallel '
+            'connections, improving page load times but using more proxy resources. Lower values '
+            'reduce resource usage. The default of 32 is generous for most proxy setups. Increase '
+            'if you experience slow loading through a proxy with many tabs open.'
+        ),
+        'pref': 'network.http.max-persistent-connections-per-proxy',
+        'type': 'choice',
+        'impact': 'low',
+        'compatibility': 'none',
+        'values': [8, 16, 32, 64],
+        'labels': ['8', '16', '32', '64'],
+        'default': 32,
+        'recommended': {
+            'max_power': 64,
+            'balanced': 32,
+            'battery': 16,
+            'paranoid': 32,
+            'open': 32
+        }
+    },
+
+    'offline_cache': {
+        'name': 'Offline Application Cache',
+        'category': 'performance',
+        'subcategory': 'cache',
+        'level': 'advanced',
+        'mechanism': 'userjs',
+        'short': 'Allow websites to store data for offline use.',
+        'full': (
+            'The offline application cache (AppCache) allows websites to store resources locally '
+            'so they can work without an internet connection. While useful for progressive web apps, '
+            'AppCache has been deprecated in favor of Service Workers and can be used as a tracking '
+            'vector — websites can store unique identifiers in the offline cache that persist even '
+            'after clearing cookies. Disabling this prevents offline storage abuse and reduces '
+            'persistent tracking. Most modern websites use Service Workers instead.'
+        ),
+        'pref': 'browser.cache.offline.enable',
+        'type': 'toggle',
+        'impact': 'low',
+        'compatibility': 'minor',
+        'values': [True, False],
+        'labels': ['Enabled', 'Disabled'],
+        'default': True,
+        'recommended': {
+            'max_power': True,
+            'balanced': True,
+            'battery': True,
+            'paranoid': False,
+            'open': True
+        }
+    },
+
+    # --- Security: Misc ---
+
+    'ssl_disk_cache': {
+        'name': 'Cache SSL Content to Disk',
+        'category': 'security',
+        'subcategory': 'network',
+        'level': 'advanced',
+        'mechanism': 'userjs',
+        'short': 'Save HTTPS content in the disk cache.',
+        'full': (
+            'Controls whether content received over HTTPS is stored in Firefox\'s disk cache. '
+            'When enabled, HTTPS page resources (images, scripts, stylesheets) are cached to disk '
+            'like HTTP content. This improves performance for HTTPS sites but means encrypted '
+            'content is stored unencrypted on disk, where it could be read by other programs or '
+            'users with physical access to the computer. The default (false) is the secure choice — '
+            'HTTPS content stays in memory cache only. Enable only if performance on HTTPS sites '
+            'is critical and you trust your disk security.'
+        ),
+        'pref': 'browser.cache.disk_cache_ssl',
+        'type': 'toggle',
+        'impact': 'medium',
+        'compatibility': 'none',
+        'values': [True, False],
+        'labels': ['Cache to Disk', 'Memory Only'],
+        'default': False,
+        'recommended': {
+            'max_power': False,
+            'balanced': False,
+            'battery': False,
+            'paranoid': False,
+            'open': False
+        }
+    },
+
+    'insecure_connection_text': {
+        'name': 'Show "Not Secure" for HTTP',
+        'category': 'security',
+        'subcategory': 'network',
+        'level': 'base',
+        'mechanism': 'prefs',
+        'short': 'Display "Not Secure" warning text for HTTP pages.',
+        'full': (
+            'When enabled, Firefox displays a "Not Secure" label in the address bar for any page '
+            'loaded over plain HTTP (not HTTPS). This serves as a visual reminder that the '
+            'connection is not encrypted and data can be intercepted. Helps users identify '
+            'insecure connections at a glance, which is important for avoiding entering passwords '
+            'or personal information on unencrypted pages.'
+        ),
+        'pref': 'security.insecure_connection_text.enabled',
+        'type': 'toggle',
+        'impact': 'low',
+        'compatibility': 'none',
+        'values': [True, False],
+        'labels': ['Show Warning', 'Hide'],
+        'default': True,
+        'recommended': {
+            'max_power': True,
+            'balanced': True,
+            'battery': True,
+            'paranoid': True,
+            'open': True
+        }
+    },
+
+    'insecure_connection_text_private': {
+        'name': 'Show "Not Secure" (Private Browsing)',
+        'category': 'security',
+        'subcategory': 'network',
+        'level': 'base',
+        'mechanism': 'prefs',
+        'short': 'Display "Not Secure" warning for HTTP pages in private browsing.',
+        'full': (
+            'Same as the "Not Secure" HTTP warning but specifically for private browsing windows. '
+            'Private browsing is intended for enhanced privacy, so making insecure connections '
+            'clearly visible is especially important in this mode. Keep enabled to ensure you '
+            'always notice when a page in private browsing is not using HTTPS.'
+        ),
+        'pref': 'security.insecure_connection_text.pbmode.enabled',
+        'type': 'toggle',
+        'impact': 'low',
+        'compatibility': 'none',
+        'values': [True, False],
+        'labels': ['Show Warning', 'Hide'],
+        'default': True,
+        'recommended': {
+            'max_power': True,
+            'balanced': True,
+            'battery': True,
+            'paranoid': True,
+            'open': True
+        }
+    },
+
+    # --- Privacy: URL Bar ---
+
+    'urlbar_autofill': {
+        'name': 'URL Bar Autofill',
+        'category': 'privacy',
+        'subcategory': 'session',
+        'level': 'base',
+        'mechanism': 'prefs',
+        'short': 'Autocomplete URLs as you type in the address bar.',
+        'full': (
+            'When enabled, Firefox automatically completes the URL you are typing based on your '
+            'bookmarks and browsing history. For example, typing "git" might autocomplete to '
+            '"github.com". This is convenient but can reveal browsing history to anyone watching '
+            'your screen or looking over your shoulder. On shared or public computers, disabling '
+            'this prevents history-based suggestions from appearing while you type. Most users '
+            'keep this enabled for the productivity benefit.'
+        ),
+        'pref': 'browser.urlbar.autoFill',
+        'type': 'toggle',
+        'impact': 'low',
+        'compatibility': 'none',
+        'values': [True, False],
+        'labels': ['Enabled', 'Disabled'],
+        'default': True,
+        'recommended': {
+            'max_power': True,
+            'balanced': True,
+            'battery': True,
+            'paranoid': False,
+            'open': True
+        }
+    },
+
+    'urlbar_suggest_bookmarks': {
+        'name': 'Bookmark Suggestions in URL Bar',
+        'category': 'privacy',
+        'subcategory': 'session',
+        'level': 'base',
+        'mechanism': 'prefs',
+        'short': 'Show bookmark matches when typing in the address bar.',
+        'full': (
+            'Controls whether bookmarked pages appear as suggestions when you type in the URL bar. '
+            'This is useful for quickly accessing saved pages but reveals your bookmarks to anyone '
+            'who can see your screen. On shared or public computers, disabling this hides your '
+            'saved pages from the URL bar dropdown. Your bookmarks remain accessible from the '
+            'Bookmarks menu — this only hides them from the URL bar suggestions.'
+        ),
+        'pref': 'browser.urlbar.suggest.bookmark',
+        'type': 'toggle',
+        'impact': 'low',
+        'compatibility': 'none',
+        'values': [True, False],
+        'labels': ['Show', 'Hide'],
+        'default': True,
+        'recommended': {
+            'max_power': True,
+            'balanced': True,
+            'battery': True,
+            'paranoid': False,
+            'open': True
+        }
+    },
+
+    'urlbar_suggest_openpage': {
+        'name': 'Open Tab Suggestions in URL Bar',
+        'category': 'privacy',
+        'subcategory': 'session',
+        'level': 'base',
+        'mechanism': 'prefs',
+        'short': 'Show currently open tabs when typing in the address bar.',
+        'full': (
+            'Controls whether titles and URLs of your currently open tabs appear as suggestions '
+            'in the URL bar. This is useful for quickly switching to an open tab by typing part '
+            'of its title or URL. However, if you are screen sharing or someone is watching, this '
+            'can reveal what other tabs you have open. Disabling this hides open tab suggestions '
+            'from the URL bar dropdown. You can still switch tabs using the tab bar or Ctrl+Tab.'
+        ),
+        'pref': 'browser.urlbar.suggest.openpage',
+        'type': 'toggle',
+        'impact': 'low',
+        'compatibility': 'none',
+        'values': [True, False],
+        'labels': ['Show', 'Hide'],
+        'default': True,
+        'recommended': {
+            'max_power': True,
+            'balanced': True,
+            'battery': True,
+            'paranoid': False,
+            'open': True
+        }
+    },
+
+    # --- Features: Downloads & Misc ---
+
+    'download_ask_location': {
+        'name': 'Ask Download Location',
+        'category': 'features',
+        'subcategory': 'ui',
+        'level': 'base',
+        'mechanism': 'prefs',
+        'short': 'Ask where to save each file before downloading.',
+        'full': (
+            'Controls whether Firefox automatically saves downloads to the default folder or asks '
+            'you each time. When set to false (Always Ask), a file picker dialog appears for every '
+            'download, letting you choose the destination and review the filename. This prevents '
+            'accidental downloads to unexpected locations and gives you a chance to review what '
+            'you are downloading. When set to true, files download silently to the configured '
+            'folder. Setting to Always Ask is recommended for security-conscious users.'
+        ),
+        'pref': 'browser.download.useDownloadDir',
+        'type': 'toggle',
+        'impact': 'low',
+        'compatibility': 'none',
+        'values': [True, False],
+        'labels': ['Auto-Save', 'Always Ask'],
+        'default': True,
+        'recommended': {
+            'max_power': True,
+            'balanced': True,
+            'battery': True,
+            'paranoid': False,
+            'open': True
+        }
+    },
+
+    'url_fixup': {
+        'name': 'URL Auto-Correction',
+        'category': 'features',
+        'subcategory': 'ui',
+        'level': 'advanced',
+        'mechanism': 'userjs',
+        'short': 'Automatically correct incomplete URLs by adding www. and .com.',
+        'full': (
+            'When enabled and you type an incomplete URL (e.g., "example" instead of '
+            '"www.example.com"), Firefox automatically tries adding common prefixes (www.) and '
+            'suffixes (.com, .net, .org) to find a working site. While convenient, this causes '
+            'Firefox to make DNS queries for domains you did not explicitly type, potentially '
+            'leaking your intended search terms to DNS servers. Disabling this makes Firefox treat '
+            'unknown entries strictly as search queries instead of guessing URLs.'
+        ),
+        'pref': 'browser.fixup.alternate.enabled',
+        'type': 'toggle',
+        'impact': 'low',
+        'compatibility': 'none',
+        'values': [True, False],
+        'labels': ['Auto-Correct', 'Strict'],
+        'default': True,
+        'recommended': {
+            'max_power': True,
+            'balanced': True,
+            'battery': True,
+            'paranoid': False,
+            'open': True
+        }
+    },
+
+    'custom_stylesheets': {
+        'name': 'Custom CSS (userChrome.css)',
+        'category': 'features',
+        'subcategory': 'ui',
+        'level': 'advanced',
+        'mechanism': 'userjs',
+        'short': 'Enable loading of custom CSS files for Firefox interface customization.',
+        'full': (
+            'When enabled, Firefox loads userChrome.css (for browser UI) and userContent.css '
+            '(for web content) from your profile\'s chrome folder. This allows advanced users to '
+            'customize the Firefox interface — hide elements, change colors, modify tab appearance, '
+            'and more. This is required for popular customization projects like Firefox CSS hacks. '
+            'Disabled by default since Firefox 69. Enable if you use or plan to use custom CSS '
+            'themes for Firefox. No security impact — the CSS files are local to your profile.'
+        ),
+        'pref': 'toolkit.legacyUserProfileCustomizations.stylesheets',
+        'type': 'toggle',
+        'impact': 'low',
+        'compatibility': 'none',
+        'values': [True, False],
+        'labels': ['Enabled', 'Disabled'],
+        'default': False,
+        'recommended': {
+            'max_power': False,
+            'balanced': False,
+            'battery': False,
+            'paranoid': False,
+            'open': False
+        }
     }
 }
 
