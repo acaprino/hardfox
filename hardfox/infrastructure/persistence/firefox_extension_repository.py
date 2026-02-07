@@ -10,7 +10,7 @@ from datetime import datetime
 
 from hardfox.domain.repositories.i_extension_repository import IExtensionRepository
 from hardfox.domain.enums.extension_status import InstallationStatus
-from hardfox.metadata.extensions_metadata import EXTENSIONS_METADATA, UBO_DEFAULT_FILTER_LISTS
+from hardfox.metadata.extensions_metadata import EXTENSIONS_METADATA
 from hardfox.infrastructure.persistence.firefox_detection import get_firefox_installation_dir
 
 logger = logging.getLogger(__name__)
@@ -277,17 +277,17 @@ class FirefoxExtensionRepository(IExtensionRepository):
         Uses a dual approach for maximum Firefox compatibility:
 
         1. adminSettings (JSON string) — reliable on Firefox because uBlock
-           explicitly JSON.parse()s it. Sets selectedFilterLists to enable
-           all lists AND userSettings.importedLists to register URL-based
-           lists as downloadable assets (without importedLists, URLs in
-           selectedFilterLists are enabled but never fetched).
+           explicitly JSON.parse()s it. Sets selectedFilterLists to ONLY
+           custom lists (defaults deselected) AND userSettings.importedLists
+           to register URL-based lists as downloadable assets.
 
         2. toOverwrite (JSON object) — takes priority in uBlock's code and
            properly handles URL-based lists. Works on Chromium and may work
            on Firefox if managed storage types are preserved from policies.json.
 
-        Both replace the entire list, so UBO_DEFAULT_FILTER_LISTS must be
-        included alongside any custom lists.
+        selectedFilterLists replaces the entire list, so omitting uBO's
+        built-in defaults (EasyList, EasyPrivacy, etc.) deselects them.
+        Only custom filter lists (e.g. Hagezi) are kept.
 
         Args:
             extension_settings: Dictionary of extension IDs being installed
@@ -304,15 +304,17 @@ class FirefoxExtensionRepository(IExtensionRepository):
             ext_data = EXTENSIONS_METADATA[ext_id]
 
             # uBlock Origin filter lists (dual adminSettings + toOverwrite)
+            # Only custom lists — uBO defaults are deselected
             if ext_id == "uBlock0@raymondhill.net" and "custom_filter_lists" in ext_data:
                 custom_lists = ext_data["custom_filter_lists"]
                 if custom_lists:
-                    all_lists = list(UBO_DEFAULT_FILTER_LISTS) + list(custom_lists)
+                    # user-filters kept so users can still add their own rules
+                    selected_lists = ["user-filters"] + list(custom_lists)
                     url_lists = [u for u in custom_lists if u.startswith("http")]
                     config[ext_id] = {
                         # Primary: adminSettings (Firefox-reliable, JSON string)
                         "adminSettings": json.dumps({
-                            "selectedFilterLists": all_lists,
+                            "selectedFilterLists": selected_lists,
                             "userSettings": {
                                 "importedLists": url_lists,
                                 "externalLists": "\n".join(url_lists),
@@ -320,12 +322,12 @@ class FirefoxExtensionRepository(IExtensionRepository):
                         }),
                         # Secondary: toOverwrite (Chromium, newer Firefox)
                         "toOverwrite": {
-                            "filterLists": all_lists
+                            "filterLists": selected_lists
                         }
                     }
                     logger.info(
-                        f"Configured uBlock Origin with {len(all_lists)} filter lists "
-                        f"({len(UBO_DEFAULT_FILTER_LISTS)} defaults + {len(custom_lists)} custom)"
+                        f"Configured uBlock Origin with {len(selected_lists)} filter lists "
+                        f"(defaults deselected, {len(custom_lists)} custom only)"
                     )
 
         return config
