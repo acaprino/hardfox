@@ -358,8 +358,9 @@ class HardfoxGUI(ctk.CTk):
         # Update settings_vm
         self.settings_vm.firefox_path = path
 
-        # Sync to apply_vm (Extensions tab)
+        # Sync to apply_vm (Extensions tab) and load installed extensions
         self.apply_vm.firefox_path = path
+        self.apply_controller.handle_refresh_installed_extensions()
 
         # Sync to utilities_vm
         self.utilities_vm.profile_path = path

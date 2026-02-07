@@ -105,6 +105,8 @@ class ApplyController:
                 success=False,
                 error=str(e)
             )
+        finally:
+            self._extension_thread = None
 
     def _update_extension_ui_state(
         self,
@@ -194,6 +196,8 @@ class ApplyController:
                 success=False,
                 error=str(e)
             )
+        finally:
+            self._uninstall_thread = None
 
     def _update_uninstall_ui_state(
         self,
@@ -231,6 +235,7 @@ class ApplyController:
                 profile_path=Path(self.view_model.firefox_path)
             )
             self.view_model.installed_extensions = installed
+            self.view_model.selected_extensions = list(installed)
             logger.info(f"Refreshed installed extensions: {len(installed)} found")
         except Exception as e:
             logger.error(f"Failed to refresh installed extensions: {e}")

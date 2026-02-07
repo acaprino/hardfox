@@ -6,7 +6,7 @@ Extensions View - Dedicated tab for privacy extension management.
 import logging
 import tkinter.messagebox as messagebox
 import customtkinter as ctk
-from typing import Callable
+from typing import Callable, List
 
 from hardfox.presentation.view_models import ApplyViewModel, SettingsViewModel
 from hardfox.presentation.theme import Theme
@@ -38,6 +38,7 @@ class ExtensionsView(ctk.CTkFrame):
         self.on_install_extensions = on_install_extensions
         self.on_uninstall_extensions = on_uninstall_extensions
         self.extension_rows = []
+        self._rows_by_id = {}  # ext_id -> ExtensionRow
 
         # Configure grid
         self.grid_columnconfigure(0, weight=1)
@@ -52,6 +53,7 @@ class ExtensionsView(ctk.CTkFrame):
         self.view_model.subscribe('is_installing_extensions', self._on_extension_installing_changed)
         self.view_model.subscribe('extension_uninstall_success', self._on_extension_uninstall_complete)
         self.view_model.subscribe('is_uninstalling_extensions', self._on_extension_uninstalling_changed)
+        self.view_model.subscribe('installed_extensions', self._on_installed_extensions_changed)
         logger.debug("ExtensionsView.__init__: initialization complete, %d extension rows created", len(self.extension_rows))
 
     def destroy(self):
@@ -61,6 +63,7 @@ class ExtensionsView(ctk.CTkFrame):
         self.view_model.unsubscribe('is_installing_extensions', self._on_extension_installing_changed)
         self.view_model.unsubscribe('extension_uninstall_success', self._on_extension_uninstall_complete)
         self.view_model.unsubscribe('is_uninstalling_extensions', self._on_extension_uninstalling_changed)
+        self.view_model.unsubscribe('installed_extensions', self._on_installed_extensions_changed)
         super().destroy()
 
     def _build_header(self):
@@ -156,9 +159,14 @@ class ExtensionsView(ctk.CTkFrame):
             )
             row.pack(fill="x", pady=2)
             self.extension_rows.append(row)
+            self._rows_by_id[ext_id] = row
 
-        # Seed ViewModel if it has no selections yet (first construction)
-        if not self.view_model.selected_extensions:
+        # Seed ViewModel selections from already-installed extensions, or all if unknown
+        installed = self.view_model.installed_extensions
+        if installed:
+            self._sync_checkboxes_to(installed)
+            self.view_model.selected_extensions = list(installed)
+        elif not self.view_model.selected_extensions:
             self.view_model.selected_extensions = all_ext_ids
 
         # Action buttons frame
@@ -344,3 +352,22 @@ class ExtensionsView(ctk.CTkFrame):
             text=status_text,
             text_color=Theme.get_color('success')
         )
+
+    def _on_installed_extensions_changed(self, installed: List[str]):
+        """Sync checkboxes to match extensions installed in the current profile.
+
+        Only updates the UI checkboxes. The controller is responsible for
+        setting selected_extensions on the ViewModel to avoid mutation
+        inside an observer callback.
+        """
+        self._sync_checkboxes_to(installed)
+
+    def _sync_checkboxes_to(self, ext_ids: List[str]):
+        """Check/uncheck extension rows to match the given ID list.
+
+        Note: Uses set_checked() which updates the checkbox visually
+        without firing the on_toggle callback.
+        """
+        id_set = set(ext_ids)
+        for ext_id, row in self._rows_by_id.items():
+            row.set_checked(ext_id in id_set)

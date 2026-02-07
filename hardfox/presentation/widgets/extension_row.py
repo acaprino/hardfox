@@ -71,10 +71,6 @@ class ExtensionRow(ctk.CTkFrame):
             )
             warning_label.pack(fill="x", pady=(0, 5))
 
-        # Trigger initial state callback
-        if initial_checked:
-            self.on_toggle(self.extension.extension_id, True)
-
     def _handle_toggle(self):
         """Handle checkbox toggle event."""
         is_checked = self.checkbox_var.get()

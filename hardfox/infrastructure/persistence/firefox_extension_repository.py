@@ -430,8 +430,9 @@ class FirefoxExtensionRepository(IExtensionRepository):
 
             ext_settings = existing_policies.get("policies", {}).get("ExtensionSettings", {})
             installed = [
-                ext_id for ext_id in ext_settings
+                ext_id for ext_id, cfg in ext_settings.items()
                 if ext_id in EXTENSIONS_METADATA
+                and cfg.get("installation_mode") != "blocked"
             ]
             logger.info(f"Found {len(installed)} known extensions in policies.json")
             return installed
