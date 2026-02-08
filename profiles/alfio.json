@@ -234,7 +234,7 @@
       "level": "BASE"
     },
     "network.cookie.lifetimePolicy": {
-      "value": "Session Only",
+      "value": "Normal",
       "level": "BASE"
     },
     "network.cookie.lifetime.days": {
@@ -486,7 +486,7 @@
       "level": "ADVANCED"
     },
     "network.http.referer.XOriginPolicy": {
-      "value": "Same Base Domain Only",
+      "value": "Always Send",
       "level": "ADVANCED"
     },
     "network.http.referer.XOriginTrimmingPolicy": {

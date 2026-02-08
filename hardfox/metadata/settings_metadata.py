@@ -4058,18 +4058,20 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
             '1 = Send referrer only for same base domain (e.g., sub.example.com to example.com). '
             '2 = Send referrer only for exact same host. '
             'Restricting cross-origin referrers prevents sites from knowing which page you came '
-            'from, improving privacy. Setting to 1 is a good balance of privacy and compatibility.'
+            'from, improving privacy. WARNING: Values 1 and 2 break Instagram, Threads, and other '
+            'Meta properties that load images from fbcdn.net CDN (different base domain), causing '
+            'CORP (Cross-Origin-Resource-Policy) blocks on all images.'
         ),
         'pref': 'network.http.referer.XOriginPolicy',
         'type': 'choice',
         'impact': 'medium',
-        'compatibility': 'minor',
+        'compatibility': 'major',
         'values': [0, 1, 2],
         'labels': ['Always Send', 'Same Base Domain Only', 'Same Host Only'],
         'default': 0,
         'recommended': {
             'max_power': 0,
-            'balanced': 1,
+            'balanced': 0,
             'battery': 0,
             'paranoid': 2,
             'open': 0

@@ -235,15 +235,17 @@ class FirefoxExtensionRepository(IExtensionRepository):
         new_extension_settings: dict
     ) -> dict:
         """
-        Reconcile extension settings with existing policies.
+        Merge new extension install settings into existing policies.
 
-        Installs selected extensions and blocks any previously-installed
-        known extensions that were deselected. Unknown extensions (not in
-        EXTENSIONS_METADATA) are left untouched.
+        Only installs the requested extensions — does NOT block or modify
+        extensions that are not in new_extension_settings.  Uninstalling
+        is handled separately by uninstall_extensions().
+
+        Unknown extensions (not in EXTENSIONS_METADATA) are left untouched.
 
         Args:
             existing_policies: Existing policies dictionary
-            new_extension_settings: Extension settings for selected extensions
+            new_extension_settings: Extension settings for extensions to install
 
         Returns:
             Updated policies dictionary
@@ -256,19 +258,6 @@ class FirefoxExtensionRepository(IExtensionRepository):
             existing_policies["policies"]["ExtensionSettings"] = {}
 
         ext_settings = existing_policies["policies"]["ExtensionSettings"]
-
-        # Block known extensions that were deselected and clean up their 3rdparty config
-        third_party_exts = (
-            existing_policies.get("policies", {})
-            .get("3rdparty", {})
-            .get("Extensions", {})
-        )
-        for ext_id in EXTENSIONS_METADATA:
-            if ext_id not in new_extension_settings and ext_id in ext_settings:
-                ext_settings[ext_id] = {"installation_mode": "blocked"}
-                if ext_id in third_party_exts:
-                    del third_party_exts[ext_id]
-                logger.info(f"Blocked deselected extension: {ext_id}")
 
         # Install selected extensions (overrides any previous blocked state)
         ext_settings.update(new_extension_settings)
