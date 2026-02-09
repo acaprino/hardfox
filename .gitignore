@@ -48,6 +48,7 @@ desktop.ini
 # Hardfox specific
 profiles/
 !profiles/alfio.json
+!profiles/myfox.json
 *.xpi
 
 # Claude Code temp files

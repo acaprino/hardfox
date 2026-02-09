@@ -1,0 +1,736 @@
+{
+  "name": "MyFox",
+  "settings": {
+    "app.normandy.enabled": {
+      "value": false,
+      "level": "ADVANCED"
+    },
+    "app.shield.optoutstudies.enabled": {
+      "value": false,
+      "level": "BASE"
+    },
+    "beacon.enabled": {
+      "value": false,
+      "level": "ADVANCED"
+    },
+    "browser.aboutConfig.showWarning": {
+      "value": false,
+      "level": "BASE"
+    },
+    "browser.cache.disk.capacity": {
+      "value": "512 MB",
+      "level": "ADVANCED"
+    },
+    "browser.cache.disk.enable": {
+      "value": true,
+      "level": "ADVANCED"
+    },
+    "browser.cache.disk_cache_ssl": {
+      "value": false,
+      "level": "ADVANCED"
+    },
+    "browser.cache.memory.capacity": {
+      "value": "512 MB",
+      "level": "ADVANCED"
+    },
+    "browser.cache.memory.enable": {
+      "value": true,
+      "level": "ADVANCED"
+    },
+    "browser.cache.offline.enable": {
+      "value": true,
+      "level": "ADVANCED"
+    },
+    "browser.contentblocking.category": {
+      "value": "Strict",
+      "level": "BASE"
+    },
+    "browser.discovery.enabled": {
+      "value": false,
+      "level": "BASE"
+    },
+    "browser.display.use_document_colors": {
+      "value": true,
+      "level": "ADVANCED"
+    },
+    "browser.display.use_document_fonts": {
+      "value": "Allow Web Fonts",
+      "level": "ADVANCED"
+    },
+    "browser.download.useDownloadDir": {
+      "value": true,
+      "level": "BASE"
+    },
+    "browser.fixup.alternate.enabled": {
+      "value": true,
+      "level": "ADVANCED"
+    },
+    "browser.formfill.enable": {
+      "value": false,
+      "level": "BASE"
+    },
+    "browser.ml.chat.enabled": {
+      "value": false,
+      "level": "ADVANCED"
+    },
+    "browser.ml.chat.sidebar": {
+      "value": false,
+      "level": "ADVANCED"
+    },
+    "browser.ml.enable": {
+      "value": false,
+      "level": "ADVANCED"
+    },
+    "browser.ml.linkPreview.enabled": {
+      "value": false,
+      "level": "ADVANCED"
+    },
+    "browser.newtabpage.activity-stream.feeds.section.highlights": {
+      "value": false,
+      "level": "BASE"
+    },
+    "browser.newtabpage.activity-stream.feeds.section.topstories": {
+      "value": false,
+      "level": "BASE"
+    },
+    "browser.newtabpage.activity-stream.feeds.topsites": {
+      "value": false,
+      "level": "BASE"
+    },
+    "browser.newtabpage.activity-stream.showSearch": {
+      "value": true,
+      "level": "BASE"
+    },
+    "browser.newtabpage.activity-stream.showSponsored": {
+      "value": false,
+      "level": "BASE"
+    },
+    "browser.newtabpage.activity-stream.showSponsoredTopSites": {
+      "value": false,
+      "level": "BASE"
+    },
+    "browser.newtabpage.activity-stream.showWeather": {
+      "value": false,
+      "level": "BASE"
+    },
+    "browser.ping-centre.telemetry": {
+      "value": false,
+      "level": "ADVANCED"
+    },
+    "browser.safebrowsing.downloads.enabled": {
+      "value": true,
+      "level": "BASE"
+    },
+    "browser.safebrowsing.downloads.remote.enabled": {
+      "value": true,
+      "level": "ADVANCED"
+    },
+    "browser.safebrowsing.malware.enabled": {
+      "value": true,
+      "level": "BASE"
+    },
+    "browser.safebrowsing.phishing.enabled": {
+      "value": true,
+      "level": "BASE"
+    },
+    "browser.safebrowsing.provider.google4.dataSharing.enabled": {
+      "value": false,
+      "level": "ADVANCED"
+    },
+    "browser.search.suggest.enabled": {
+      "value": true,
+      "level": "BASE"
+    },
+    "browser.search.visualSearch.featureGate": {
+      "value": true,
+      "level": "ADVANCED"
+    },
+    "browser.send_pings": {
+      "value": false,
+      "level": "ADVANCED"
+    },
+    "browser.sessionhistory.max_entries": {
+      "value": "50 entries",
+      "level": "ADVANCED"
+    },
+    "browser.sessionhistory.max_total_viewers": {
+      "value": "4 pages",
+      "level": "ADVANCED"
+    },
+    "browser.sessionstore.interval": {
+      "value": "1 minute",
+      "level": "ADVANCED"
+    },
+    "browser.sessionstore.privacy_level": {
+      "value": "Skip HTTPS Data",
+      "level": "ADVANCED"
+    },
+    "browser.sessionstore.restore_on_demand": {
+      "value": true,
+      "level": "BASE"
+    },
+    "browser.sessionstore.restore_pinned_tabs_on_demand": {
+      "value": true,
+      "level": "BASE"
+    },
+    "browser.sessionstore.resume_from_crash": {
+      "value": true,
+      "level": "BASE"
+    },
+    "browser.shell.checkDefaultBrowser": {
+      "value": false,
+      "level": "BASE"
+    },
+    "browser.startup.page": {
+      "value": 3,
+      "level": "BASE"
+    },
+    "browser.tabs.crashReporting.sendReport": {
+      "value": false,
+      "level": "BASE"
+    },
+    "browser.tabs.groups.enabled": {
+      "value": true,
+      "level": "ADVANCED"
+    },
+    "browser.tabs.groups.smart.enabled": {
+      "value": true,
+      "level": "ADVANCED"
+    },
+    "browser.translations.enable": {
+      "value": false,
+      "level": "BASE"
+    },
+    "browser.urlbar.autoFill": {
+      "value": true,
+      "level": "BASE"
+    },
+    "browser.urlbar.speculativeConnect.enabled": {
+      "value": true,
+      "level": "ADVANCED"
+    },
+    "browser.urlbar.suggest.bookmark": {
+      "value": true,
+      "level": "BASE"
+    },
+    "browser.urlbar.suggest.history": {
+      "value": true,
+      "level": "BASE"
+    },
+    "browser.urlbar.suggest.openpage": {
+      "value": true,
+      "level": "BASE"
+    },
+    "browser.urlbar.suggest.searches": {
+      "value": true,
+      "level": "BASE"
+    },
+    "datareporting.healthreport.uploadEnabled": {
+      "value": false,
+      "level": "BASE"
+    },
+    "datareporting.policy.dataSubmissionEnabled": {
+      "value": false,
+      "level": "BASE"
+    },
+    "device.sensors.enabled": {
+      "value": true,
+      "level": "ADVANCED"
+    },
+    "dom.battery.enabled": {
+      "value": false,
+      "level": "ADVANCED"
+    },
+    "dom.disable_beforeunload": {
+      "value": false,
+      "level": "ADVANCED"
+    },
+    "dom.disable_open_during_load": {
+      "value": true,
+      "level": "ADVANCED"
+    },
+    "dom.disable_window_move_resize": {
+      "value": true,
+      "level": "ADVANCED"
+    },
+    "dom.disable_window_open_feature.location": {
+      "value": true,
+      "level": "ADVANCED"
+    },
+    "dom.event.clipboardevents.enabled": {
+      "value": false,
+      "level": "ADVANCED"
+    },
+    "dom.event.contextmenu.enabled": {
+      "value": true,
+      "level": "ADVANCED"
+    },
+    "dom.ipc.processCount": {
+      "value": "8 processes",
+      "level": "ADVANCED"
+    },
+    "dom.ipc.processCount.webIsolated": {
+      "value": "4 processes",
+      "level": "ADVANCED"
+    },
+    "dom.push.enabled": {
+      "value": true,
+      "level": "ADVANCED"
+    },
+    "dom.security.https_only_mode": {
+      "value": true,
+      "level": "BASE"
+    },
+    "dom.security.https_only_mode_pbm": {
+      "value": true,
+      "level": "BASE"
+    },
+    "dom.security.sanitizer.enabled": {
+      "value": true,
+      "level": "ADVANCED"
+    },
+    "dom.serviceWorkers.enabled": {
+      "value": true,
+      "level": "ADVANCED"
+    },
+    "dom.webgpu.enabled": {
+      "value": true,
+      "level": "ADVANCED"
+    },
+    "dom.webnotifications.enabled": {
+      "value": true,
+      "level": "ADVANCED"
+    },
+    "extensions.formautofill.addresses.enabled": {
+      "value": false,
+      "level": "BASE"
+    },
+    "extensions.formautofill.creditCards.enabled": {
+      "value": false,
+      "level": "BASE"
+    },
+    "extensions.pocket.enabled": {
+      "value": false,
+      "level": "BASE"
+    },
+    "geo.enabled": {
+      "value": "Allow",
+      "level": "BASE"
+    },
+    "gfx.webrender.all": {
+      "value": true,
+      "level": "ADVANCED"
+    },
+    "image.avif.enabled": {
+      "value": true,
+      "level": "ADVANCED"
+    },
+    "image.avif.sequence.enabled": {
+      "value": true,
+      "level": "ADVANCED"
+    },
+    "image.jxl.enabled": {
+      "value": true,
+      "level": "ADVANCED"
+    },
+    "javascript.options.wasm": {
+      "value": true,
+      "level": "ADVANCED"
+    },
+    "layers.acceleration.force-enabled": {
+      "value": false,
+      "level": "ADVANCED"
+    },
+    "layers.gpu-process.enabled": {
+      "value": true,
+      "level": "ADVANCED"
+    },
+    "layout.css.grid-template-masonry-value.enabled": {
+      "value": true,
+      "level": "ADVANCED"
+    },
+    "layout.css.has-selector.enabled": {
+      "value": true,
+      "level": "ADVANCED"
+    },
+    "layout.css.scroll-driven-animations.enabled": {
+      "value": true,
+      "level": "ADVANCED"
+    },
+    "layout.frame_rate": {
+      "value": "60 FPS",
+      "level": "ADVANCED"
+    },
+    "media.autoplay.blocking_policy": {
+      "value": "User Choice",
+      "level": "ADVANCED"
+    },
+    "media.autoplay.default": {
+      "value": "Block",
+      "level": "BASE"
+    },
+    "media.eme.enabled": {
+      "value": true,
+      "level": "BASE"
+    },
+    "media.gmp-widevinecdm.enabled": {
+      "value": true,
+      "level": "BASE"
+    },
+    "media.hardware-video-decoding.enabled": {
+      "value": true,
+      "level": "ADVANCED"
+    },
+    "media.navigator.enabled": {
+      "value": true,
+      "level": "ADVANCED"
+    },
+    "media.peerconnection.enabled": {
+      "value": true,
+      "level": "ADVANCED"
+    },
+    "media.peerconnection.ice.default_address_only": {
+      "value": true,
+      "level": "ADVANCED"
+    },
+    "media.peerconnection.ice.no_host": {
+      "value": false,
+      "level": "ADVANCED"
+    },
+    "network.IDN_show_punycode": {
+      "value": true,
+      "level": "ADVANCED"
+    },
+    "network.cookie.cookieBehavior": {
+      "value": "Block Cross-Site",
+      "level": "BASE"
+    },
+    "network.cookie.lifetime.days": {
+      "value": "30 Days",
+      "level": "BASE"
+    },
+    "network.cookie.lifetimePolicy": {
+      "value": "Normal",
+      "level": "BASE"
+    },
+    "network.cookie.thirdparty.sessionOnly": {
+      "value": true,
+      "level": "ADVANCED"
+    },
+    "network.dns.disableIPv6": {
+      "value": false,
+      "level": "ADVANCED"
+    },
+    "network.dns.disablePrefetch": {
+      "value": false,
+      "level": "ADVANCED"
+    },
+    "network.dns.echconfig.enabled": {
+      "value": true,
+      "level": "ADVANCED"
+    },
+    "network.dnsCacheEntries": {
+      "value": "Large (1000)",
+      "level": "ADVANCED"
+    },
+    "network.dnsCacheExpiration": {
+      "value": "Long (120s)",
+      "level": "ADVANCED"
+    },
+    "network.http.http2.enabled": {
+      "value": true,
+      "level": "ADVANCED"
+    },
+    "network.http.http3.enable": {
+      "value": true,
+      "level": "ADVANCED"
+    },
+    "network.http.max-connections": {
+      "value": "900 (Default)",
+      "level": "ADVANCED"
+    },
+    "network.http.max-persistent-connections-per-proxy": {
+      "value": "32",
+      "level": "ADVANCED"
+    },
+    "network.http.max-persistent-connections-per-server": {
+      "value": "6 connections",
+      "level": "ADVANCED"
+    },
+    "network.http.referer.XOriginPolicy": {
+      "value": "Always Send",
+      "level": "ADVANCED"
+    },
+    "network.http.referer.XOriginTrimmingPolicy": {
+      "value": "Full URL",
+      "level": "ADVANCED"
+    },
+    "network.http.referer.trimmingPolicy": {
+      "value": "Full URL",
+      "level": "ADVANCED"
+    },
+    "network.http.sendRefererHeader": {
+      "value": "Always Send",
+      "level": "ADVANCED"
+    },
+    "network.http.speculative-parallel-limit": {
+      "value": "8 connections",
+      "level": "ADVANCED"
+    },
+    "network.predictor.enabled": {
+      "value": false,
+      "level": "ADVANCED"
+    },
+    "network.prefetch-next": {
+      "value": true,
+      "level": "ADVANCED"
+    },
+    "network.proxy.socks_remote_dns": {
+      "value": false,
+      "level": "ADVANCED"
+    },
+    "network.trr.disable-ECS": {
+      "value": true,
+      "level": "ADVANCED"
+    },
+    "network.trr.mode": {
+      "value": "Max Protection",
+      "level": "ADVANCED"
+    },
+    "network.trr.strict_native_fallback": {
+      "value": false,
+      "level": "ADVANCED"
+    },
+    "network.trr.uri": {
+      "value": "Quad9 (9.9.9.9)",
+      "level": "ADVANCED"
+    },
+    "network.trr.wait-for-portal": {
+      "value": true,
+      "level": "ADVANCED"
+    },
+    "network.webtransport.enabled": {
+      "value": true,
+      "level": "ADVANCED"
+    },
+    "permissions.default.camera": {
+      "value": "Ask",
+      "level": "BASE"
+    },
+    "permissions.default.desktop-notification": {
+      "value": "Ask",
+      "level": "BASE"
+    },
+    "permissions.default.geo": {
+      "value": "Ask Every Time",
+      "level": "BASE"
+    },
+    "permissions.default.microphone": {
+      "value": "Ask",
+      "level": "BASE"
+    },
+    "places.history.enabled": {
+      "value": true,
+      "level": "BASE"
+    },
+    "privacy.clearOnShutdown.cache": {
+      "value": true,
+      "level": "BASE"
+    },
+    "privacy.clearOnShutdown.cookies": {
+      "value": false,
+      "level": "BASE"
+    },
+    "privacy.clearOnShutdown.downloads": {
+      "value": true,
+      "level": "BASE"
+    },
+    "privacy.clearOnShutdown.formdata": {
+      "value": true,
+      "level": "BASE"
+    },
+    "privacy.clearOnShutdown.history": {
+      "value": false,
+      "level": "BASE"
+    },
+    "privacy.clearOnShutdown.offlineApps": {
+      "value": true,
+      "level": "BASE"
+    },
+    "privacy.clearOnShutdown.sessions": {
+      "value": false,
+      "level": "BASE"
+    },
+    "privacy.clearOnShutdown.siteSettings": {
+      "value": true,
+      "level": "BASE"
+    },
+    "privacy.donottrackheader.enabled": {
+      "value": false,
+      "level": "BASE"
+    },
+    "privacy.firstparty.isolate": {
+      "value": false,
+      "level": "ADVANCED"
+    },
+    "privacy.globalprivacycontrol.enabled": {
+      "value": true,
+      "level": "BASE"
+    },
+    "privacy.resistFingerprinting": {
+      "value": false,
+      "level": "ADVANCED"
+    },
+    "privacy.sanitize.sanitizeOnShutdown": {
+      "value": true,
+      "level": "BASE"
+    },
+    "privacy.trackingprotection.allow_list.baseline.enabled": {
+      "value": false,
+      "level": "BASE"
+    },
+    "privacy.trackingprotection.allow_list.convenience.enabled": {
+      "value": false,
+      "level": "BASE"
+    },
+    "privacy.trackingprotection.cryptomining.enabled": {
+      "value": true,
+      "level": "ADVANCED"
+    },
+    "privacy.trackingprotection.enabled": {
+      "value": true,
+      "level": "BASE"
+    },
+    "privacy.trackingprotection.fingerprinting.enabled": {
+      "value": true,
+      "level": "ADVANCED"
+    },
+    "privacy.trackingprotection.pbmode.enabled": {
+      "value": true,
+      "level": "BASE"
+    },
+    "privacy.trackingprotection.socialtracking.enabled": {
+      "value": true,
+      "level": "ADVANCED"
+    },
+    "security.OCSP.enabled": {
+      "value": "Enabled",
+      "level": "ADVANCED"
+    },
+    "security.OCSP.require": {
+      "value": true,
+      "level": "ADVANCED"
+    },
+    "security.cert_pinning.enforcement_level": {
+      "value": "Allow Exceptions",
+      "level": "ADVANCED"
+    },
+    "security.insecure_connection_text.enabled": {
+      "value": true,
+      "level": "BASE"
+    },
+    "security.insecure_connection_text.pbmode.enabled": {
+      "value": true,
+      "level": "BASE"
+    },
+    "security.mixed_content.block_active_content": {
+      "value": true,
+      "level": "ADVANCED"
+    },
+    "security.mixed_content.block_display_content": {
+      "value": true,
+      "level": "ADVANCED"
+    },
+    "security.pki.sha1_enforcement_level": {
+      "value": "Block Public CA",
+      "level": "ADVANCED"
+    },
+    "security.ssl.require_safe_negotiation": {
+      "value": false,
+      "level": "ADVANCED"
+    },
+    "security.ssl.treat_unsafe_negotiation_as_broken": {
+      "value": false,
+      "level": "ADVANCED"
+    },
+    "security.tls.version.max": {
+      "value": "TLS 1.3",
+      "level": "ADVANCED"
+    },
+    "security.tls.version.min": {
+      "value": "TLS 1.2 (Recommended)",
+      "level": "ADVANCED"
+    },
+    "sidebar.revamp": {
+      "value": true,
+      "level": "ADVANCED"
+    },
+    "sidebar.verticalTabs": {
+      "value": true,
+      "level": "ADVANCED"
+    },
+    "signon.autofillForms": {
+      "value": false,
+      "level": "BASE"
+    },
+    "signon.rememberSignons": {
+      "value": false,
+      "level": "BASE"
+    },
+    "toolkit.coverage.opt-out": {
+      "value": false,
+      "level": "ADVANCED"
+    },
+    "toolkit.legacyUserProfileCustomizations.stylesheets": {
+      "value": false,
+      "level": "ADVANCED"
+    },
+    "toolkit.telemetry.archive.enabled": {
+      "value": true,
+      "level": "ADVANCED"
+    },
+    "toolkit.telemetry.bhrPing.enabled": {
+      "value": true,
+      "level": "ADVANCED"
+    },
+    "toolkit.telemetry.enabled": {
+      "value": false,
+      "level": "BASE"
+    },
+    "toolkit.telemetry.firstShutdownPing.enabled": {
+      "value": true,
+      "level": "ADVANCED"
+    },
+    "toolkit.telemetry.newProfilePing.enabled": {
+      "value": true,
+      "level": "ADVANCED"
+    },
+    "toolkit.telemetry.shutdownPingSender.enabled": {
+      "value": true,
+      "level": "ADVANCED"
+    },
+    "toolkit.telemetry.unified": {
+      "value": true,
+      "level": "ADVANCED"
+    },
+    "toolkit.telemetry.updatePing.enabled": {
+      "value": true,
+      "level": "ADVANCED"
+    },
+    "webgl.disabled": {
+      "value": false,
+      "level": "ADVANCED"
+    },
+    "webgl.force-enabled": {
+      "value": false,
+      "level": "ADVANCED"
+    }
+  },
+  "metadata": {
+    "imported_from": "C:\\Users\\alfio\\Desktop\\MyFox\\Data\\profile",
+    "imported_at": "2026-02-08T15:32:39.045380"
+  },
+  "created_at": "2026-02-08T15:32:39.045409",
+  "modified_at": "2026-02-08T15:32:39.045410",
+  "generated_by": "import"
+}
