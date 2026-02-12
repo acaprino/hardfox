@@ -316,28 +316,37 @@ class FirefoxExtensionRepository(IExtensionRepository):
             if ext_id == "uBlock0@raymondhill.net":
                 builtin_lists = ext_data.get("builtin_filter_lists", [])
                 custom_lists = ext_data.get("custom_filter_lists", [])
+                policy_enforced = ext_data.get("policy_enforced", True)
+                
                 if builtin_lists or custom_lists:
                     # user-filters + uBO builtins + external Hagezi lists
                     selected_lists = ["user-filters"] + list(builtin_lists) + list(custom_lists)
                     url_lists = [u for u in custom_lists if u.startswith("http")]
+                    
                     config[ext_id] = {
-                        # Primary: adminSettings (Firefox-reliable, JSON string)
-                        "adminSettings": json.dumps({
+                        # Secondary: toOverwrite (Chromium, newer Firefox) - Less restrictive if supported
+                        "toOverwrite": {
+                            "filterLists": selected_lists
+                        }
+                    }
+                    
+                    # Primary: adminSettings (Firefox-reliable, JSON string) - LOCKS SETTINGS IN UI
+                    # Only apply if policy enforcement is enabled (default=True)
+                    if policy_enforced:
+                        config[ext_id]["adminSettings"] = json.dumps({
                             "selectedFilterLists": selected_lists,
                             "userSettings": {
                                 "importedLists": url_lists,
                                 "externalLists": "\n".join(url_lists),
                             }
-                        }),
-                        # Secondary: toOverwrite (Chromium, newer Firefox)
-                        "toOverwrite": {
-                            "filterLists": selected_lists
-                        }
-                    }
-                    logger.info(
-                        f"Configured uBlock Origin with {len(selected_lists)} filter lists "
-                        f"({len(builtin_lists)} builtin, {len(custom_lists)} custom)"
-                    )
+                        })
+                        logger.info(
+                            f"Configured uBlock Origin (LOCKED) with {len(selected_lists)} filter lists"
+                        )
+                    else:
+                        logger.info(
+                            f"Configured uBlock Origin (UNLOCKED) with {len(selected_lists)} filter lists - adminSettings skipped"
+                        )
 
         return config
 

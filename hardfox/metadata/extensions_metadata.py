@@ -15,6 +15,7 @@ EXTENSIONS_METADATA = {
         "icon": "🛡️",
         "breakage_risk": 2,
         "size_mb": 3.2,
+        "policy_enforced": False,  # Allow user to change settings in UI (no adminSettings lock)
         # uBO default filter lists + AdGuard URL tracking extra.
         # All 9 lists below are uBO's fresh-install defaults.
         # adguard-spyware-url is the only extra (strips tracking params via removeparam).
