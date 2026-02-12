@@ -582,7 +582,7 @@
       "level": "ADVANCED"
     },
     "privacy.sanitize.sanitizeOnShutdown": {
-      "value": true,
+      "value": false,
       "level": "BASE"
     },
     "privacy.trackingprotection.allow_list.baseline.enabled": {
