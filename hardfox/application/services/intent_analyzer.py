@@ -161,18 +161,23 @@ class IntentAnalyzer:
         for key, setting in all_settings.items():
             value = setting.value
             value = self._apply_privacy_rules(setting, value, privacy_score, breakage_tolerance)
-            value = self._apply_use_case_rules(setting, value, use_cases)
+            value = self._apply_use_case_rules(setting, value, use_cases) # Passed current value to chain updates
             configured[key] = setting.clone_with_value(value)
 
-        # Second pass: Sync Protection Cascading (NEW)
-        # If Master Sync Protection is enabled, force all managed sync flags to False
-        sync_prot = configured.get('hardfox.sync_protection.enabled')
-        if sync_prot and sync_prot.value is True:
-            logger.info("Master Sync Protection is ENABLED. Cascading to all sync flags.")
-            for key, setting in configured.items():
-                # If this is a sync-control flag, force it to False (OFF)
+        # Second pass: Sync Protection Cascading (Master Switch Logic)
+        # If 'sync_prefs_master' is explicitly disabled (False), we must force ALL 
+        # specific sync toggles to False to ensure consistency.
+        # This acts as a safety against "split-brain" where the master switch is off
+        # but granular switches remain on (which might be confusing or undefined behavior).
+        master_sync = configured.get('services.sync.engine.prefs')
+        
+        if master_sync and master_sync.value is False:
+            logger.info("Master Sync (services.sync.engine.prefs) is DISABLED. Forcing all sync sub-settings to OFF.")
+            for key in configured:
                 if key.startswith('services.sync.prefs.sync.'):
-                    configured[key] = setting.clone_with_value(False)
+                    configured[key] = configured[key].clone_with_value(False)
+
+
 
         return configured
 
@@ -246,7 +251,7 @@ class IntentAnalyzer:
     def _apply_use_case_rules(
         self,
         setting: Setting,
-        current_value: Any,
+        current_value: Any, # This is the value from _apply_privacy_rules, or default
         use_cases: List[str]
     ) -> Any:
         """

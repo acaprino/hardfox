@@ -5995,6 +5995,84 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
             'paranoid': False,
             'open': True
         }
+    },
+
+    'sync_sanitize_on_shutdown': {
+        'name': 'Sync: Sanitize on Shutdown',
+        'category': 'synchronization',
+        'subcategory': 'sync_control',
+        'level': 'advanced',
+        'mechanism': 'userjs',
+        'short': 'Control if "Clear cookies/history on close" setting is synchronized.',
+        'full': (
+            'When enabled, this setting synchronizes your "Clear history when Firefox closes" preference '
+            'across devices. This can rewrite your local privacy settings if another device has a less '
+            'secure configuration. Disable to keep your shutdown sanitization settings local only.'
+        ),
+        'pref': 'services.sync.prefs.sync.privacy.sanitize.sanitizeOnShutdown',
+        'type': 'toggle',
+        'impact': 'medium',
+        'compatibility': 'none',
+        'values': [True, False],
+        'labels': ['Sync ON', 'Sync OFF (Local Only)'],
+        'default': True,
+        'recommended': {
+            'balanced': False,
+            'paranoid': False,
+            'open': True
+        }
+    },
+
+    'sync_cookie_behavior': {
+        'name': 'Sync: Cookie Behavior',
+        'category': 'synchronization',
+        'subcategory': 'sync_control',
+        'level': 'advanced',
+        'mechanism': 'userjs',
+        'short': 'Control if cookie blocking settings are synchronized.',
+        'full': (
+            'When enabled, synchronizes your cookie blocking preferences (e.g., Block all third-party cookies) '
+            'across devices. Disable this to maintain specific cookie rules on this device without them '
+            'being overwritten by cloud sync.'
+        ),
+        'pref': 'services.sync.prefs.sync.network.cookie.cookieBehavior',
+        'type': 'toggle',
+        'impact': 'medium',
+        'compatibility': 'none',
+        'values': [True, False],
+        'labels': ['Sync ON', 'Sync OFF (Local Only)'],
+        'default': True,
+        'recommended': {
+            'balanced': False,
+            'paranoid': False,
+            'open': True
+        }
+    },
+
+    'sync_passwords': {
+        'name': 'Sync Passwords',
+        'category': 'synchronization',
+        'subcategory': 'sync_engines',
+        'level': 'base',
+        'mechanism': 'prefs',
+        'short': 'Sync saved passwords with Firefox Cloud.',
+        'full': (
+            'Controls whether your saved passwords are synchronized with your Firefox Account. '
+            'For maximum security, avoid syncing passwords to the cloud and use a dedicated '
+            'password manager instead.'
+        ),
+        'pref': 'services.sync.engine.passwords',
+        'type': 'toggle',
+        'impact': 'high',
+        'compatibility': 'none',
+        'values': [True, False],
+        'labels': ['Enabled', 'Disabled'],
+        'default': True,
+        'recommended': {
+            'balanced': True,
+            'paranoid': False,
+            'open': True
+        }
     }
 }
 
