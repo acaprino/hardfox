@@ -153,31 +153,26 @@ class IntentAnalyzer:
         This is where the magic happens - translating user intent into
         concrete setting values.
         """
+        # Step 3: Apply rule-based adjustments
         configured = {}
         privacy_score = self.PRIVACY_LEVELS.get(privacy_level, 1)
 
+        # First pass: configure all settings normally
         for key, setting in all_settings.items():
-            # Start with default value
             value = setting.value
+            value = self._apply_privacy_rules(setting, value, privacy_score, breakage_tolerance)
+            value = self._apply_use_case_rules(setting, value, use_cases)
+            configured[key] = setting.clone_with_value(value)
 
-            # Apply privacy-based rules
-            value = self._apply_privacy_rules(
-                setting,
-                value,
-                privacy_score,
-                breakage_tolerance
-            )
-
-            # Apply use-case-specific rules
-            value = self._apply_use_case_rules(
-                setting,
-                value,
-                use_cases
-            )
-
-            # Create configured setting
-            configured_setting = setting.clone_with_value(value)
-            configured[key] = configured_setting
+        # Second pass: Sync Protection Cascading (NEW)
+        # If Master Sync Protection is enabled, force all managed sync flags to False
+        sync_prot = configured.get('hardfox.sync_protection.enabled')
+        if sync_prot and sync_prot.value is True:
+            logger.info("Master Sync Protection is ENABLED. Cascading to all sync flags.")
+            for key, setting in configured.items():
+                # If this is a sync-control flag, force it to False (OFF)
+                if key.startswith('services.sync.prefs.sync.'):
+                    configured[key] = setting.clone_with_value(False)
 
         return configured
 
