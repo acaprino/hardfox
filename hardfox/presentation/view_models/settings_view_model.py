@@ -45,7 +45,8 @@ class SettingsViewModel(BaseViewModel):
             'modified_settings': set(),
             'search_query': '',
             'selected_category': None,
-            'show_advanced': False,
+            'show_advanced': True,
+            'show_descriptions': True,
             'modification_count': 0,
 
             # --- From ApplyVM (settings-apply portion) ---
@@ -208,6 +209,14 @@ class SettingsViewModel(BaseViewModel):
     @show_advanced.setter
     def show_advanced(self, value: bool):
         self.set_property('show_advanced', value)
+
+    @property
+    def show_descriptions(self) -> bool:
+        return self.get_property('show_descriptions', True)
+
+    @show_descriptions.setter
+    def show_descriptions(self, value: bool):
+        self.set_property('show_descriptions', value)
 
     @property
     def modification_count(self) -> int:

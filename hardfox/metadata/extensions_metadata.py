@@ -26,12 +26,12 @@ EXTENSIONS_METADATA = {
             "ublock-privacy",       # uBO privacy-specific filters
             "ublock-quick-fixes",   # uBO temporary site compatibility fixes
             "ublock-unbreak",       # fixes for sites broken by other filters
-            "easylist",             # EasyList — primary ad-blocking list
-            "easyprivacy",          # EasyPrivacy — tracker blocking
-            "urlhaus-1",            # URLHaus malicious URL blocklist
-            "plowe-0",              # Peter Lowe's ad/tracking server list
-            # --- extra (on top of defaults) ---
-            "adguard-spyware-url",  # AdGuard/uBO URL Tracking Protection (removeparam)
+            # --- lists disabled by user request ---
+            # "easylist",
+            # "easyprivacy",
+            # "urlhaus-1",
+            # "plowe-0",
+            # "adguard-spyware-url",
         ],
         # Hagezi external filter lists for DNS-level domain blocking.
         # Mini variants use top-traffic domains (Umbrella/Cloudflare/Tranco) for ~281k total rules:

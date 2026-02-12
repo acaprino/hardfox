@@ -55,8 +55,8 @@ class SettingsView(ctk.CTkFrame):
         # State
         self._reconciler: Optional[Reconciler] = None
         self.expanded_categories: set = {'privacy', 'security', 'tracking', 'cookies'}
-        self.show_advanced = False
-        self.show_descriptions = False
+        self.show_advanced = self.view_model.show_advanced
+        self.show_descriptions = self.view_model.show_descriptions
         self.preset_cards: dict = {}
         self.selected_card = None
         self._preset_expanded = False
@@ -305,7 +305,7 @@ class SettingsView(ctk.CTkFrame):
         bind_search_focus(self.search_entry, self)
         bind_escape_clear(self.search_entry)
 
-        self.show_descriptions_var = ctk.BooleanVar(value=False)
+        self.show_descriptions_var = ctk.BooleanVar(value=self.show_descriptions)
         ctk.CTkCheckBox(
             filter_frame,
             text="Show descriptions",
@@ -313,7 +313,7 @@ class SettingsView(ctk.CTkFrame):
             command=self._on_show_descriptions_changed
         ).grid(row=0, column=1, padx=5)
 
-        self.show_advanced_var = ctk.BooleanVar(value=False)
+        self.show_advanced_var = ctk.BooleanVar(value=self.show_advanced)
         ctk.CTkCheckBox(
             filter_frame,
             text="Show experimental",
@@ -593,10 +593,12 @@ class SettingsView(ctk.CTkFrame):
 
     def _on_show_descriptions_changed(self):
         self.show_descriptions = self.show_descriptions_var.get()
+        self.view_model.show_descriptions = self.show_descriptions
         self._render_settings()
 
     def _on_show_advanced_changed(self):
         self.show_advanced = self.show_advanced_var.get()
+        self.view_model.show_advanced = self.show_advanced
         self._render_settings()
 
     def _on_reset_clicked(self):
