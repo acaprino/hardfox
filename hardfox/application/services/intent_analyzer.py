@@ -234,6 +234,18 @@ class IntentAnalyzer:
             if "enabled" in setting.key and isinstance(current_value, bool):
                 return True
 
+        # === Synchronization Protection (NEW) ===
+        # If user wants high privacy, we must anchor settings to local machine
+        # to prevent Cloud (Sync) from overwriting our secure configuration.
+
+        # Critical sync controls - disable sync for strong+ privacy
+        if 'services.sync.prefs.sync' in setting.key and privacy_score >= 6:
+            return False  # Force local only
+
+        # Master sync switch - disable for maximum privacy
+        if setting.key == 'services.sync.engine.prefs' and privacy_score >= 9:
+            return False
+
         return current_value
 
     def _apply_use_case_rules(

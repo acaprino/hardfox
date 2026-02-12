@@ -724,6 +724,18 @@
     "webgl.force-enabled": {
       "value": false,
       "level": "ADVANCED"
+    },
+    "services.sync.prefs.sync.privacy.sanitize.sanitizeOnShutdown": {
+      "value": false,
+      "level": "ADVANCED"
+    },
+    "services.sync.prefs.sync.network.cookie.cookieBehavior": {
+      "value": false,
+      "level": "ADVANCED"
+    },
+    "services.sync.prefs.sync.privacy.resistFingerprinting": {
+      "value": false,
+      "level": "ADVANCED"
     }
   },
   "metadata": {

@@ -130,6 +130,23 @@ CATEGORIES: Dict[str, Dict[str, Any]] = {
                 'order': 7
             }
         }
+    },
+    'synchronization': {
+        'name': 'Synchronization',
+        'icon': 'sync',
+        'description': 'Manage how your settings are shared across devices via Firefox Sync',
+        'subcategories': {
+            'sync_control': {
+                'name': 'Sync Control',
+                'description': 'Grant or revoke permission to synchronize specific privacy settings',
+                'order': 1
+            },
+            'sync_engines': {
+                'name': 'Sync Engines',
+                'description': 'Control which types of data are synchronized with the cloud',
+                'order': 2
+            }
+        }
     }
 }
 
@@ -5857,6 +5874,166 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
             'max_power': True,
             'balanced': True,
             'battery': False,
+            'paranoid': False,
+            'open': True
+        }
+    },
+
+    'sync_sanitize_hold': {
+        'name': 'Sync: Shutdown Cleanup',
+        'category': 'synchronization',
+        'subcategory': 'sync_control',
+        'level': 'advanced',
+        'mechanism': 'userjs',
+        'short': 'Control if "Clear on Shutdown" settings are synchronized.',
+        'full': (
+            'When enabled (default), your shutdown cleanup settings are shared across all '
+            'synced devices. Disable this to keep your cleanup preferences local to this '
+            'machine. This is CRITICAL if you want to keep login sessions on this PC while '
+            'clearing them on others. If sync is active for this pref, it can override your '
+            'local "Keep Cookies" settings.'
+        ),
+        'pref': 'services.sync.prefs.sync.privacy.sanitize.sanitizeOnShutdown',
+        'type': 'toggle',
+        'impact': 'medium',
+        'compatibility': 'none',
+        'values': [True, False],
+        'labels': ['Sync ON', 'Sync OFF (Local Only)'],
+        'default': True,
+        'recommended': {
+            'balanced': False, # Keep local
+            'paranoid': False,  # Keep local
+            'open': True
+        }
+    },
+
+    'sync_cookies_hold': {
+        'name': 'Sync: Cookie Behavior',
+        'category': 'synchronization',
+        'subcategory': 'sync_control',
+        'level': 'advanced',
+        'mechanism': 'userjs',
+        'short': 'Control if cookie blocking/lifetime settings are synchronized.',
+        'full': (
+            'Controls whether your cookie behavior settings (blocking third-party, expiration) '
+            'are shared via Firefox Sync. Disabling this prevents other devices from '
+            'changing how this browser handles cookies. Recommended for maintaining '
+            'different login persistency levels on different devices.'
+        ),
+        'pref': 'services.sync.prefs.sync.network.cookie.cookieBehavior',
+        'type': 'toggle',
+        'impact': 'medium',
+        'compatibility': 'none',
+        'values': [True, False],
+        'labels': ['Sync ON', 'Sync OFF (Local Only)'],
+        'default': True,
+        'recommended': {
+            'balanced': False,
+            'paranoid': False,
+            'open': True
+        }
+    },
+
+    'sync_fingerprinting_hold': {
+        'name': 'Sync: Fingerprinting Resistance',
+        'category': 'synchronization',
+        'subcategory': 'sync_control',
+        'level': 'advanced',
+        'mechanism': 'userjs',
+        'short': 'Control if fingerprinting resistance is synchronized.',
+        'full': (
+            'Controls whether your anti-fingerprinting settings are shared via Sync. '
+            'Since anti-fingerprinting can cause site breakage, you may want to enable it '
+            'only on specific machines without affecting your whole Sync account.'
+        ),
+        'pref': 'services.sync.prefs.sync.privacy.resistFingerprinting',
+        'type': 'toggle',
+        'impact': 'medium',
+        'compatibility': 'none',
+        'values': [True, False],
+        'labels': ['Sync ON', 'Sync OFF (Local Only)'],
+        'default': True,
+        'recommended': {
+            'balanced': False,
+            'paranoid': False,
+            'open': True
+        }
+    },
+
+    'sync_passwords_engine': {
+        'name': 'Sync passwords',
+        'category': 'synchronization',
+        'subcategory': 'sync_engines',
+        'level': 'base',
+        'mechanism': 'prefs',
+        'short': 'Allow synchronization of saved passwords to the cloud.',
+        'full': (
+            'Master switch for password synchronization. When enabled, your saved Logins '
+            'and Passwords will be encrypted and stored on Mozilla servers to be '
+            'available on all your devices. Disable to keep all passwords locally '
+            'on this machine only.'
+        ),
+        'pref': 'services.sync.engine.passwords',
+        'type': 'toggle',
+        'impact': 'high',
+        'compatibility': 'none',
+        'values': [True, False],
+        'labels': ['Enabled', 'Disabled'],
+        'default': True,
+        'recommended': {
+            'balanced': True,
+            'paranoid': False,
+            'open': True
+        }
+    },
+
+    'sync_history_engine': {
+        'name': 'Sync browsing history',
+        'category': 'synchronization',
+        'subcategory': 'sync_engines',
+        'level': 'base',
+        'mechanism': 'prefs',
+        'short': 'Allow synchronization of browsing history across devices.',
+        'full': (
+            'When enabled, your browsing history (visited URLs) will be shared across '
+            'all devices signed into your Firefox account. Disable to keep your '
+            'browsing history private to this specific computer.'
+        ),
+        'pref': 'services.sync.engine.history',
+        'type': 'toggle',
+        'impact': 'medium',
+        'compatibility': 'none',
+        'values': [True, False],
+        'labels': ['Enabled', 'Disabled'],
+        'default': True,
+        'recommended': {
+            'balanced': True,
+            'paranoid': False,
+            'open': True
+        }
+    },
+
+    'sync_prefs_master': {
+        'name': 'Sync all preferences',
+        'category': 'synchronization',
+        'subcategory': 'sync_engines',
+        'level': 'base',
+        'mechanism': 'prefs',
+        'short': 'Master switch for syncing ANY browser preference.',
+        'full': (
+            'When disabled, Firefox will stop syncing all browser preferences (about:config entries). '
+            'This is the most secure option to ensure Hardfox settings remain local and '
+            'are never overridden by or leashed to other devices.'
+        ),
+        'pref': 'services.sync.engine.prefs',
+        'type': 'toggle',
+        'impact': 'high',
+        'compatibility': 'none',
+        'values': [True, False],
+        'labels': ['Enabled', 'Disabled'],
+        'default': True,
+        'recommended': {
+            'balanced': True,
             'paranoid': False,
             'open': True
         }
