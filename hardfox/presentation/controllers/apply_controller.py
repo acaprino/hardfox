@@ -13,7 +13,6 @@ from typing import Callable, Optional
 from hardfox.presentation.view_models import ApplyViewModel
 from hardfox.application.use_cases.install_extensions_use_case import InstallExtensionsUseCase
 from hardfox.application.use_cases.uninstall_extensions_use_case import UninstallExtensionsUseCase
-from hardfox.infrastructure.persistence.firefox_detection import is_firefox_running
 
 logger = logging.getLogger(__name__)
 
@@ -39,31 +38,22 @@ class ApplyController:
         self.install_extensions = install_extensions
         self.uninstall_extensions = uninstall_extensions
         self.ui_callback = ui_callback
-        self._extension_thread: Optional[threading.Thread] = None
-        self._uninstall_thread: Optional[threading.Thread] = None
+        self._operation_lock = threading.Lock()
 
     def handle_install_extensions(self) -> None:
         """Handle install extensions button click."""
-        if self._extension_thread and self._extension_thread.is_alive():
-            logger.warning("Extension installation already in progress")
+        if not self._operation_lock.acquire(blocking=False):
+            logger.warning("Extension operation already in progress")
             return
 
         if not self.view_model.selected_extensions:
+            self._operation_lock.release()
             self._update_extension_ui_state(success=False, error="No extensions selected")
             return
 
         if not self.view_model.firefox_path:
+            self._operation_lock.release()
             self._update_extension_ui_state(success=False, error="No Firefox path selected")
-            return
-
-        if is_firefox_running():
-            logger.warning("Cannot install extensions: Firefox is running")
-            self._update_extension_ui_state(
-                success=False,
-                error="Firefox is currently running.\n\n"
-                      "Please close Firefox completely before installing extensions.\n"
-                      "Extension policies are loaded when Firefox starts."
-            )
             return
 
         extension_ids = list(self.view_model.selected_extensions)
@@ -72,13 +62,13 @@ class ApplyController:
         self.view_model.extension_install_success = False
         self.view_model.is_installing_extensions = True
 
-        self._extension_thread = threading.Thread(
+        thread = threading.Thread(
             target=self._install_extensions_worker,
             args=(extension_ids, firefox_path),
             daemon=True,
             name="InstallExtensionsThread"
         )
-        self._extension_thread.start()
+        thread.start()
 
     def _install_extensions_worker(self, extension_ids: list, firefox_path: str) -> None:
         """Worker thread for installing extensions."""
@@ -106,7 +96,7 @@ class ApplyController:
                 error=str(e)
             )
         finally:
-            self._extension_thread = None
+            self._operation_lock.release()
 
     def _update_extension_ui_state(
         self,
@@ -137,26 +127,18 @@ class ApplyController:
 
     def handle_uninstall_extensions(self) -> None:
         """Handle uninstall extensions button click."""
-        if self._uninstall_thread and self._uninstall_thread.is_alive():
-            logger.warning("Extension uninstallation already in progress")
+        if not self._operation_lock.acquire(blocking=False):
+            logger.warning("Extension operation already in progress")
             return
 
         if not self.view_model.selected_extensions:
+            self._operation_lock.release()
             self._update_uninstall_ui_state(success=False, error="No extensions selected")
             return
 
         if not self.view_model.firefox_path:
+            self._operation_lock.release()
             self._update_uninstall_ui_state(success=False, error="No Firefox path selected")
-            return
-
-        if is_firefox_running():
-            logger.warning("Cannot uninstall extensions: Firefox is running")
-            self._update_uninstall_ui_state(
-                success=False,
-                error="Firefox is currently running.\n\n"
-                      "Please close Firefox completely before uninstalling extensions.\n"
-                      "Extension policies are loaded when Firefox starts."
-            )
             return
 
         extension_ids = list(self.view_model.selected_extensions)
@@ -165,13 +147,13 @@ class ApplyController:
         self.view_model.extension_uninstall_success = False
         self.view_model.is_uninstalling_extensions = True
 
-        self._uninstall_thread = threading.Thread(
+        thread = threading.Thread(
             target=self._uninstall_extensions_worker,
             args=(extension_ids, firefox_path),
             daemon=True,
             name="UninstallExtensionsThread"
         )
-        self._uninstall_thread.start()
+        thread.start()
 
     def _uninstall_extensions_worker(self, extension_ids: list, firefox_path: str) -> None:
         """Worker thread for uninstalling extensions."""
@@ -199,7 +181,7 @@ class ApplyController:
                 error=str(e)
             )
         finally:
-            self._uninstall_thread = None
+            self._operation_lock.release()
 
     def _update_uninstall_ui_state(
         self,
@@ -245,7 +227,7 @@ class ApplyController:
             logger.error(f"Failed to refresh installed extensions: {e}")
 
     def handle_refresh_installed_extensions(self) -> None:
-        """Refresh the list of installed extensions from policies.json.
+        """Refresh the list of installed extensions from the profile's extensions/ directory.
 
         Sets selected_extensions BEFORE installed_extensions so that
         the view observer can sync checkboxes to the correct selection.

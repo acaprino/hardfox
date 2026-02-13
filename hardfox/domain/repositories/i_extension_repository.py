@@ -18,7 +18,7 @@ class IExtensionRepository(ABC):
         extension_ids: List[str]
     ) -> Dict[str, InstallationStatus]:
         """
-        Install extensions to Firefox using policies.json.
+        Install extensions into a Firefox profile.
 
         Args:
             profile_path: Path to Firefox profile directory
@@ -36,7 +36,7 @@ class IExtensionRepository(ABC):
         extension_ids: List[str]
     ) -> Dict[str, InstallationStatus]:
         """
-        Uninstall extensions from Firefox by removing them from policies.json.
+        Uninstall extensions from a Firefox profile.
 
         Args:
             profile_path: Path to Firefox profile directory
@@ -53,12 +53,12 @@ class IExtensionRepository(ABC):
         profile_path: Path
     ) -> List[str]:
         """
-        Get list of extension IDs currently installed via policies.json.
+        Get list of extension IDs currently installed in a Firefox profile.
 
         Args:
             profile_path: Path to Firefox profile directory
 
         Returns:
-            List of extension IDs present in policies.json that match known extensions
+            List of installed extension IDs that match known extensions
         """
         pass
