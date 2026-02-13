@@ -24,13 +24,22 @@ class SettingLevel(Enum):
     def filename(self) -> str:
         """Returns the Firefox filename for this level.
 
-        Both BASE and ADVANCED settings are written to user.js because
-        Firefox overwrites prefs.js on every shutdown, reverting changes.
-        user.js is read-only from Firefox's perspective and applied on startup.
+        BASE settings are written to prefs.js (one-time apply, user can
+        change them in about:config and Firefox preserves the changes).
+        ADVANCED settings are written to user.js (re-applied on every
+        Firefox startup, locking the value).
         """
+        if self == SettingLevel.BASE:
+            return "prefs.js"
         return "user.js"
 
     @property
     def prefix(self) -> str:
-        """Returns the JavaScript function prefix for this level"""
+        """Returns the JavaScript function prefix for this level.
+
+        prefs.js uses pref() - standard preference declaration.
+        user.js uses user_pref() - user override that takes precedence.
+        """
+        if self == SettingLevel.BASE:
+            return "pref"
         return "user_pref"

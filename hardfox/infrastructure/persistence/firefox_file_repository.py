@@ -6,6 +6,7 @@ Concrete implementation for reading/writing Firefox preference files
 
 import logging
 import shutil
+import subprocess
 from typing import Dict, Any
 from pathlib import Path
 from datetime import datetime
@@ -47,6 +48,18 @@ class FirefoxFileRepository(IFirefoxRepository):
 
         return self.parser.parse_file(pref_file)
 
+    @staticmethod
+    def is_firefox_running() -> bool:
+        """Check if Firefox is currently running."""
+        try:
+            result = subprocess.run(
+                ['tasklist', '/FI', 'IMAGENAME eq firefox.exe', '/NH'],
+                capture_output=True, text=True, timeout=5
+            )
+            return 'firefox.exe' in result.stdout.lower()
+        except Exception:
+            return False
+
     def write_prefs(
         self,
         profile_path: Path,
@@ -54,7 +67,17 @@ class FirefoxFileRepository(IFirefoxRepository):
         level: SettingLevel,
         merge: bool = False
     ) -> None:
-        """Write preferences to Firefox profile"""
+        """Write preferences to Firefox profile.
+
+        Raises:
+            RuntimeError: If Firefox is running (would overwrite prefs.js on shutdown)
+        """
+        if self.is_firefox_running():
+            raise RuntimeError(
+                "Firefox is running. Close Firefox before applying settings, "
+                "otherwise Firefox will overwrite the changes on shutdown."
+            )
+
         pref_file = profile_path / level.filename
 
         # Validate profile path
@@ -70,22 +93,23 @@ class FirefoxFileRepository(IFirefoxRepository):
             # Create backup from the snapshot we just read
             self.backup(profile_path, level)
 
-        # Handle merge for BASE settings
-        if merge and level == SettingLevel.BASE and existing_prefs:
+        # Use correct JS function prefix based on level
+        use_user_pref = (level == SettingLevel.ADVANCED)
+
+        if merge and existing_prefs:
             # Merge with the snapshot we read earlier (not re-reading file)
             merged_prefs = self.parser.merge_prefs(existing_prefs, prefs)
             self.parser.write_prefs(
                 merged_prefs,
                 pref_file,
-                use_user_pref=True
+                use_user_pref=use_user_pref
             )
             logger.info(f"Merged {len(prefs)} prefs into {pref_file.name}")
         else:
-            # Replace file entirely (typical for ADVANCED/user.js)
             self.parser.write_prefs(
                 prefs,
                 pref_file,
-                use_user_pref=True
+                use_user_pref=use_user_pref
             )
             logger.info(f"Wrote {len(prefs)} prefs to {pref_file.name}")
 

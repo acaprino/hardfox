@@ -1124,6 +1124,92 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         }
     },
 
+    'compact_mode_show': {
+        'name': 'Show Compact Mode Option',
+        'category': 'features',
+        'subcategory': 'ui',
+        'level': 'base',
+        'mechanism': 'prefs',
+        'short': 'Unhide the Compact density option in Customize Toolbar.',
+        'full': (
+            'Firefox hides the Compact density option by default. Enabling this setting '
+            'makes the Compact option visible when you right-click the tab bar → '
+            'Customize Toolbar → Density dropdown. This is a prerequisite for setting '
+            'the UI density to Compact. Hardfox enables this automatically alongside '
+            'the Compact UI Density setting.'
+        ),
+        'pref': 'browser.compactmode.show',
+        'type': 'toggle',
+        'impact': 'low',
+        'compatibility': 'none',
+        'values': [True, False],
+        'labels': ['On', 'Off'],
+        'default': False,
+        'recommended': {
+            'bleeding_edge': True,
+            'balanced': True,
+            'conservative': False
+        }
+    },
+
+    'compact_ui': {
+        'name': 'Compact UI Density',
+        'category': 'features',
+        'subcategory': 'ui',
+        'level': 'base',
+        'mechanism': 'prefs',
+        'short': 'Use compact toolbar and tab density to reclaim vertical screen space.',
+        'full': (
+            'Sets Firefox UI density to Compact mode, reducing the height of tabs, toolbars, '
+            'and other chrome elements. This reclaims significant vertical screen space, '
+            'especially useful on smaller displays or when you want to maximize the content '
+            'area. Value 0 = Normal density, 1 = Compact density, 2 = Touch (larger elements '
+            'for touchscreens). Requires "Show Compact Mode Option" to be enabled for the '
+            'setting to take effect in the Customize Toolbar menu.'
+        ),
+        'pref': 'browser.uidensity',
+        'type': 'choice',
+        'impact': 'low',
+        'compatibility': 'none',
+        'values': [1, 0, 2],
+        'labels': ['Compact', 'Normal', 'Touch'],
+        'default': 0,
+        'recommended': {
+            'bleeding_edge': 1,
+            'balanced': 1,
+            'conservative': 0
+        }
+    },
+
+    'ui_scale': {
+        'name': 'UI Scale Override',
+        'category': 'features',
+        'subcategory': 'ui',
+        'level': 'base',
+        'mechanism': 'prefs',
+        'short': 'Scale the entire Firefox UI independently from page content.',
+        'full': (
+            'Overrides the system DPI scaling for the Firefox interface. Values below 1.0 '
+            'shrink the UI (tabs, toolbar, menus), values above 1.0 enlarge it. The default '
+            '-1.0 means "use system DPI". This is useful combined with Compact UI Density '
+            'to make the chrome as small as possible, then increase the default page zoom in '
+            'Firefox settings to compensate for content readability. For example, set this to '
+            '0.8 to shrink the UI by 20%, then set default zoom to 120% for comfortable reading.'
+        ),
+        'pref': 'layout.css.devPixelsPerPx',
+        'type': 'choice',
+        'impact': 'medium',
+        'compatibility': 'minor',
+        'values': ["-1.0", "0.8", "0.9", "1.0", "1.1", "1.2"],
+        'labels': ['System Default', '80% (Smaller)', '90%', '100%', '110%', '120% (Larger)'],
+        'default': "1.0",
+        'recommended': {
+            'bleeding_edge': "1.0",
+            'balanced': "1.0",
+            'conservative': "-1.0"
+        }
+    },
+
     # =========================================================================
     # EXPERIMENTAL FEATURES - AI FEATURES (subcategory: 'ai')
     # =========================================================================

@@ -197,7 +197,7 @@ class TestSettingValidation:
 
         pref = setting.to_firefox_pref()
 
-        assert 'user_pref("test.bool", true);' in pref
+        assert 'pref("test.bool", true);' in pref
 
     def test_to_firefox_pref_integer(self):
         """Test converting integer to Firefox pref"""
@@ -214,7 +214,7 @@ class TestSettingValidation:
 
         pref = setting.to_firefox_pref()
 
-        assert 'user_pref("test.int", 42);' in pref
+        assert 'pref("test.int", 42);' in pref
 
     def test_to_firefox_pref_string(self):
         """Test converting string to Firefox pref"""
@@ -228,4 +228,4 @@ class TestSettingValidation:
 
         pref = setting.to_firefox_pref()
 
-        assert 'user_pref("test.string", "hello");' in pref
+        assert 'pref("test.string", "hello");' in pref
