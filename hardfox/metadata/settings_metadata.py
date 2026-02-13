@@ -415,7 +415,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Disk Cache',
         'category': 'performance',
         'subcategory': 'cache',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Store cached files on disk for faster page loads on revisits.',
         'full': (
@@ -446,7 +446,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Disk Cache Size',
         'category': 'performance',
         'subcategory': 'cache',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Maximum disk space for cached web content.',
         'full': (
@@ -477,7 +477,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Memory Cache',
         'category': 'performance',
         'subcategory': 'cache',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Store cached content in RAM for fastest possible access.',
         'full': (
@@ -507,7 +507,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Memory Cache Size',
         'category': 'performance',
         'subcategory': 'cache',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Maximum RAM for cached web content.',
         'full': (
@@ -538,7 +538,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Session History Entries',
         'category': 'performance',
         'subcategory': 'cache',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Number of back/forward history entries per tab.',
         'full': (
@@ -569,7 +569,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Cached Pages in Memory',
         'category': 'performance',
         'subcategory': 'cache',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Number of pages kept fully rendered in memory for instant back/forward.',
         'full': (
@@ -600,7 +600,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Session Save Interval',
         'category': 'performance',
         'subcategory': 'cache',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'How often Firefox saves session data to disk.',
         'full': (
@@ -635,7 +635,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Content Processes',
         'category': 'performance',
         'subcategory': 'processes',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Number of separate processes for rendering web content.',
         'full': (
@@ -666,7 +666,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Isolated Web Processes',
         'category': 'performance',
         'subcategory': 'processes',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Number of isolated processes per site for enhanced security.',
         'full': (
@@ -697,7 +697,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'WebRender',
         'category': 'performance',
         'subcategory': 'processes',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Use GPU-accelerated rendering engine for smoother graphics.',
         'full': (
@@ -728,7 +728,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Force GPU Acceleration',
         'category': 'performance',
         'subcategory': 'processes',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Force hardware acceleration even on unsupported configurations.',
         'full': (
@@ -759,7 +759,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'GPU Process',
         'category': 'performance',
         'subcategory': 'processes',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Run GPU operations in a separate process for stability.',
         'full': (
@@ -790,7 +790,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Hardware Video Decoding',
         'category': 'performance',
         'subcategory': 'processes',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Use GPU for video decoding to reduce CPU usage.',
         'full': (
@@ -820,7 +820,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Force WebGL',
         'category': 'performance',
         'subcategory': 'processes',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Force WebGL support for 3D graphics in web pages.',
         'full': (
@@ -851,7 +851,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'WebGPU',
         'category': 'performance',
         'subcategory': 'processes',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Enable next-generation GPU API for advanced graphics and compute.',
         'full': (
@@ -882,7 +882,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Frame Rate Limit',
         'category': 'performance',
         'subcategory': 'processes',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Maximum frame rate for rendering and animations.',
         'full': (
@@ -917,7 +917,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Maximum Connections',
         'category': 'performance',
         'subcategory': 'network_perf',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Maximum total simultaneous network connections.',
         'full': (
@@ -948,7 +948,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Connections Per Server',
         'category': 'performance',
         'subcategory': 'network_perf',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Maximum simultaneous connections to each server.',
         'full': (
@@ -979,7 +979,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Speculative Connections',
         'category': 'performance',
         'subcategory': 'network_perf',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Pre-open connections to links you might click.',
         'full': (
@@ -1014,7 +1014,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Tab Groups',
         'category': 'features',
         'subcategory': 'ui',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Enable tab grouping to organize tabs into collapsible groups.',
         'full': (
@@ -1042,7 +1042,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Smart Tab Groups',
         'category': 'features',
         'subcategory': 'ui',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'AI-powered automatic tab grouping based on content.',
         'full': (
@@ -1071,7 +1071,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'New Sidebar Design',
         'category': 'features',
         'subcategory': 'ui',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Enable the redesigned Firefox sidebar interface.',
         'full': (
@@ -1099,7 +1099,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Vertical Tabs',
         'category': 'features',
         'subcategory': 'ui',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Display tabs vertically in the sidebar instead of horizontally.',
         'full': (
@@ -1202,7 +1202,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'compatibility': 'minor',
         'values': ["-1.0", "0.8", "0.9", "1.0", "1.1", "1.2"],
         'labels': ['System Default', '80% (Smaller)', '90%', '100%', '110%', '120% (Larger)'],
-        'default': "1.0",
+        'default': "0.9",
         'recommended': {
             'bleeding_edge': "1.0",
             'balanced': "1.0",
@@ -1218,7 +1218,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Machine Learning Features',
         'category': 'features',
         'subcategory': 'ai',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Enable Firefox machine learning capabilities.',
         'full': (
@@ -1247,7 +1247,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Built-in AI Assistant',
         'category': 'features',
         'subcategory': 'ai',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Enable the integrated AI chat assistant in Firefox.',
         'full': (
@@ -1276,7 +1276,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'AI Chat in Sidebar',
         'category': 'features',
         'subcategory': 'ai',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Show the AI assistant in the browser sidebar.',
         'full': (
@@ -1305,7 +1305,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'AI Link Previews',
         'category': 'features',
         'subcategory': 'ai',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Show AI-generated previews when hovering over links.',
         'full': (
@@ -1334,7 +1334,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Visual Search',
         'category': 'features',
         'subcategory': 'ai',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Search the web using images instead of text.',
         'full': (
@@ -1367,7 +1367,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'AVIF Image Format',
         'category': 'features',
         'subcategory': 'graphics',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Enable support for AVIF image format.',
         'full': (
@@ -1396,7 +1396,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Animated AVIF',
         'category': 'features',
         'subcategory': 'graphics',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Enable support for animated AVIF images.',
         'full': (
@@ -1425,7 +1425,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'JPEG XL Format',
         'category': 'features',
         'subcategory': 'graphics',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Enable JPEG XL image format support (Nightly only).',
         'full': (
@@ -1458,7 +1458,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Scroll-Driven Animations',
         'category': 'features',
         'subcategory': 'css',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Enable CSS animations triggered by scroll position.',
         'full': (
@@ -1487,7 +1487,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'CSS Masonry Layout',
         'category': 'features',
         'subcategory': 'css',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Enable CSS Grid masonry layout support.',
         'full': (
@@ -1516,7 +1516,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'CSS :has() Selector',
         'category': 'features',
         'subcategory': 'css',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Enable the CSS :has() parent selector.',
         'full': (
@@ -1549,7 +1549,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Sanitizer API',
         'category': 'features',
         'subcategory': 'dom',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Enable the HTML Sanitizer API for safe content injection.',
         'full': (
@@ -1578,7 +1578,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'HTTP/3 Protocol',
         'category': 'features',
         'subcategory': 'dom',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Enable HTTP/3 (QUIC) for faster, more reliable connections.',
         'full': (
@@ -1607,7 +1607,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'WebTransport API',
         'category': 'features',
         'subcategory': 'dom',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Enable WebTransport for low-latency client-server communication.',
         'full': (
@@ -2352,7 +2352,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Fingerprint Resistance',
         'category': 'privacy',
         'subcategory': 'tracking',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Block fingerprinting attempts by websites.',
         'full': (
@@ -2380,7 +2380,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Block Cryptominers',
         'category': 'privacy',
         'subcategory': 'tracking',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Block cryptocurrency mining scripts.',
         'full': (
@@ -2606,7 +2606,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Normandy / Remote Settings',
         'category': 'privacy',
         'subcategory': 'tracking',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Allow Mozilla to remotely modify Firefox settings and run experiments.',
         'full': (
@@ -2634,7 +2634,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Ping Centre Telemetry',
         'category': 'privacy',
         'subcategory': 'tracking',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Send daily usage pings to Mozilla.',
         'full': (
@@ -2748,7 +2748,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'DNS over HTTPS',
         'category': 'security',
         'subcategory': 'network',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Encrypt DNS queries for privacy and security.',
         'full': (
@@ -2779,7 +2779,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'DoH Provider',
         'category': 'security',
         'subcategory': 'network',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Choose your DNS over HTTPS provider.',
         'full': (
@@ -2833,7 +2833,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Disable EDNS Client Subnet (ECS)',
         'category': 'security',
         'subcategory': 'network',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Prevent partial IP address from being sent to DNS servers.',
         'full': (
@@ -2863,7 +2863,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'DoH Fallback to Native DNS',
         'category': 'security',
         'subcategory': 'network',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Allow fallback to system DNS when DoH fails.',
         'full': (
@@ -2894,7 +2894,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Wait for Captive Portal Detection',
         'category': 'security',
         'subcategory': 'network',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Delay DoH until captive portal login completes.',
         'full': (
@@ -2981,7 +2981,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Block Mixed Content',
         'category': 'security',
         'subcategory': 'network',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Block insecure content on HTTPS pages.',
         'full': (
@@ -3009,7 +3009,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'WebRTC',
         'category': 'security',
         'subcategory': 'network',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Enable WebRTC for video calls and P2P communication.',
         'full': (
@@ -3037,7 +3037,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'WebRTC IP Leak Prevention',
         'category': 'security',
         'subcategory': 'network',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Prevent WebRTC from leaking your real IP address.',
         'full': (
@@ -3065,7 +3065,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'DNS Prefetching',
         'category': 'security',
         'subcategory': 'network',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Pre-resolve DNS for links on the page.',
         'full': (
@@ -3093,7 +3093,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Link Prefetching',
         'category': 'security',
         'subcategory': 'network',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Pre-load linked pages in the background.',
         'full': (
@@ -3121,7 +3121,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Network Predictor',
         'category': 'security',
         'subcategory': 'network',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Predict and pre-connect to sites you might visit.',
         'full': (
@@ -3435,7 +3435,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Resist Fingerprinting (RFP)',
         'category': 'privacy',
         'subcategory': 'tracking',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Spoof browser properties to resist fingerprinting.',
         'full': (
@@ -3466,7 +3466,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'First-Party Isolation (FPI)',
         'category': 'privacy',
         'subcategory': 'tracking',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Isolate all browser data per first-party domain.',
         'full': (
@@ -3499,7 +3499,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Block Social Trackers',
         'category': 'privacy',
         'subcategory': 'tracking',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Block tracking by social media platforms.',
         'full': (
@@ -3563,7 +3563,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Unified Telemetry',
         'category': 'privacy',
         'subcategory': 'tracking',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Master switch for the unified telemetry system.',
         'full': (
@@ -3592,7 +3592,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Telemetry Archive',
         'category': 'privacy',
         'subcategory': 'tracking',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Store telemetry data locally before sending.',
         'full': (
@@ -3620,7 +3620,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'New Profile Ping',
         'category': 'privacy',
         'subcategory': 'tracking',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Send ping when a new profile is created.',
         'full': (
@@ -3648,7 +3648,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Shutdown Ping Sender',
         'category': 'privacy',
         'subcategory': 'tracking',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Send telemetry data when Firefox shuts down.',
         'full': (
@@ -3676,7 +3676,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Update Ping',
         'category': 'privacy',
         'subcategory': 'tracking',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Send telemetry when Firefox updates.',
         'full': (
@@ -3704,7 +3704,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Background Hang Reporter',
         'category': 'privacy',
         'subcategory': 'tracking',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Report browser hangs to Mozilla.',
         'full': (
@@ -3733,7 +3733,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'First Shutdown Ping',
         'category': 'privacy',
         'subcategory': 'tracking',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Send telemetry on first browser shutdown.',
         'full': (
@@ -3761,7 +3761,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Coverage Opt-Out',
         'category': 'privacy',
         'subcategory': 'tracking',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Opt out of Mozilla coverage measurement.',
         'full': (
@@ -3794,7 +3794,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Block Passive Mixed Content',
         'category': 'security',
         'subcategory': 'network',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Block insecure images and media on HTTPS pages.',
         'full': (
@@ -3824,7 +3824,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Minimum TLS Version',
         'category': 'security',
         'subcategory': 'network',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Set minimum required TLS protocol version.',
         'full': (
@@ -3854,7 +3854,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Require Safe SSL Negotiation',
         'category': 'security',
         'subcategory': 'network',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Require RFC 5746 safe renegotiation for TLS connections.',
         'full': (
@@ -3883,7 +3883,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Warn on Unsafe SSL Negotiation',
         'category': 'security',
         'subcategory': 'network',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Show warning indicator for connections without safe negotiation.',
         'full': (
@@ -3911,7 +3911,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'OCSP Certificate Checking',
         'category': 'security',
         'subcategory': 'network',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Check if TLS certificates have been revoked.',
         'full': (
@@ -3941,7 +3941,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Require OCSP Response',
         'category': 'security',
         'subcategory': 'network',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Block connections when OCSP check fails.',
         'full': (
@@ -3971,7 +3971,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Certificate Pinning',
         'category': 'security',
         'subcategory': 'network',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Enforce certificate pinning for known sites.',
         'full': (
@@ -4001,7 +4001,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'SHA-1 Certificate Enforcement',
         'category': 'security',
         'subcategory': 'network',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Reject certificates signed with weak SHA-1 algorithm.',
         'full': (
@@ -4119,7 +4119,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Remote Download Scanning',
         'category': 'security',
         'subcategory': 'network',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Send download metadata to Google for advanced malware checking.',
         'full': (
@@ -4152,7 +4152,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Cross-Origin Referrer Policy',
         'category': 'security',
         'subcategory': 'network',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Control what referrer information is sent to other sites.',
         'full': (
@@ -4185,7 +4185,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Cross-Origin Referrer Trimming',
         'category': 'security',
         'subcategory': 'network',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Control how much referrer information is sent cross-origin.',
         'full': (
@@ -4214,7 +4214,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Hyperlink Auditing Pings',
         'category': 'security',
         'subcategory': 'network',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Allow tracking pings when clicking links.',
         'full': (
@@ -4243,7 +4243,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'URL Bar Speculative Connections',
         'category': 'security',
         'subcategory': 'network',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Pre-connect to URLs as you type in the address bar.',
         'full': (
@@ -4272,7 +4272,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Show Punycode for IDN Domains',
         'category': 'security',
         'subcategory': 'network',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Show punycode instead of Unicode in domain names to prevent phishing.',
         'full': (
@@ -4302,7 +4302,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'SOCKS Proxy Remote DNS',
         'category': 'security',
         'subcategory': 'network',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Resolve DNS through SOCKS proxy to prevent DNS leaks.',
         'full': (
@@ -4335,7 +4335,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Beacon API',
         'category': 'features',
         'subcategory': 'dom',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Allow sites to send analytics data when you leave a page.',
         'full': (
@@ -4365,7 +4365,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Device Sensors API',
         'category': 'features',
         'subcategory': 'dom',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Allow websites to access device motion and orientation sensors.',
         'full': (
@@ -4395,7 +4395,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Battery Status API',
         'category': 'features',
         'subcategory': 'dom',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Allow websites to read your battery level.',
         'full': (
@@ -4425,7 +4425,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Clipboard Events',
         'category': 'features',
         'subcategory': 'dom',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Allow sites to detect copy/cut/paste events.',
         'full': (
@@ -4455,7 +4455,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Push API',
         'category': 'features',
         'subcategory': 'dom',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Allow websites to receive push messages from servers.',
         'full': (
@@ -4486,7 +4486,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Service Workers',
         'category': 'features',
         'subcategory': 'dom',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Allow websites to run background scripts.',
         'full': (
@@ -4516,7 +4516,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Web Notifications API',
         'category': 'features',
         'subcategory': 'dom',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Allow websites to display system notifications.',
         'full': (
@@ -4546,7 +4546,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Block Popups During Page Load',
         'category': 'features',
         'subcategory': 'dom',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Block popup windows that open during page loading.',
         'full': (
@@ -4609,7 +4609,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Media Device Enumeration',
         'category': 'features',
         'subcategory': 'media',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Allow websites to list your audio/video devices.',
         'full': (
@@ -4639,7 +4639,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Disable WebGL',
         'category': 'features',
         'subcategory': 'media',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Completely disable WebGL rendering.',
         'full': (
@@ -4861,7 +4861,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Session Data Privacy',
         'category': 'privacy',
         'subcategory': 'session',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Control what extra session data Firefox stores (form fields, scroll position).',
         'full': (
@@ -4894,7 +4894,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Third-Party Cookies Session Only',
         'category': 'privacy',
         'subcategory': 'cookies',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Force third-party cookies to expire when the browser closes.',
         'full': (
@@ -4927,7 +4927,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'WebRTC Host IP Protection',
         'category': 'security',
         'subcategory': 'network',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Prevent WebRTC from disclosing your host IP address.',
         'full': (
@@ -4959,7 +4959,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Encrypted Client Hello (ECH)',
         'category': 'security',
         'subcategory': 'network',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Encrypt the SNI (server name) in TLS handshakes.',
         'full': (
@@ -4991,7 +4991,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Maximum TLS Version',
         'category': 'security',
         'subcategory': 'network',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Set the maximum TLS protocol version allowed.',
         'full': (
@@ -5021,7 +5021,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Disable IPv6 DNS',
         'category': 'security',
         'subcategory': 'network',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Disable DNS lookups over IPv6.',
         'full': (
@@ -5052,7 +5052,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Referrer Header Sending',
         'category': 'security',
         'subcategory': 'network',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Control when Firefox sends the Referer header.',
         'full': (
@@ -5084,7 +5084,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Same-Origin Referrer Trimming',
         'category': 'security',
         'subcategory': 'network',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Control how much referrer detail is sent for same-origin requests.',
         'full': (
@@ -5115,7 +5115,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'HTTP/2 Protocol',
         'category': 'security',
         'subcategory': 'network',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Enable HTTP/2 protocol for faster and more efficient connections.',
         'full': (
@@ -5146,7 +5146,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Safe Browsing Data Sharing',
         'category': 'security',
         'subcategory': 'network',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Share additional data with Google Safe Browsing.',
         'full': (
@@ -5210,7 +5210,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Autoplay Blocking Scope',
         'category': 'security',
         'subcategory': 'permissions',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Control how broadly autoplay is blocked.',
         'full': (
@@ -5242,7 +5242,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Prevent Right-Click Blocking',
         'category': 'security',
         'subcategory': 'permissions',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Prevent websites from blocking the right-click context menu.',
         'full': (
@@ -5275,7 +5275,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Block Window Move/Resize',
         'category': 'security',
         'subcategory': 'permissions',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Prevent scripts from moving or resizing the browser window.',
         'full': (
@@ -5306,7 +5306,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Force URL Bar in Popups',
         'category': 'security',
         'subcategory': 'permissions',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Force the address bar to appear in popup windows.',
         'full': (
@@ -5336,7 +5336,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Disable "Leave Page?" Dialogs',
         'category': 'security',
         'subcategory': 'permissions',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Block "Are you sure you want to leave?" confirmation dialogs.',
         'full': (
@@ -5434,7 +5434,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Web Fonts',
         'category': 'privacy',
         'subcategory': 'tracking',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Allow websites to use custom fonts.',
         'full': (
@@ -5467,7 +5467,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Website Colors',
         'category': 'privacy',
         'subcategory': 'tracking',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Allow websites to specify their own colors.',
         'full': (
@@ -5499,7 +5499,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'WebAssembly (WASM)',
         'category': 'features',
         'subcategory': 'dom',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Enable WebAssembly for high-performance web applications.',
         'full': (
@@ -5533,7 +5533,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'DNS Cache Size',
         'category': 'performance',
         'subcategory': 'network_perf',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Number of DNS entries to cache in memory.',
         'full': (
@@ -5564,7 +5564,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'DNS Cache Lifetime',
         'category': 'performance',
         'subcategory': 'network_perf',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'How long DNS entries are cached before re-resolving.',
         'full': (
@@ -5595,7 +5595,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Max Connections Per Proxy',
         'category': 'performance',
         'subcategory': 'network_perf',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Maximum number of persistent connections per proxy server.',
         'full': (
@@ -5626,7 +5626,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Offline Application Cache',
         'category': 'performance',
         'subcategory': 'cache',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Allow websites to store data for offline use.',
         'full': (
@@ -5659,7 +5659,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Cache SSL Content to Disk',
         'category': 'security',
         'subcategory': 'network',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Save HTTPS content in the disk cache.',
         'full': (
@@ -5876,7 +5876,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'URL Auto-Correction',
         'category': 'features',
         'subcategory': 'ui',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Automatically correct incomplete URLs by adding www. and .com.',
         'full': (
@@ -5907,7 +5907,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Custom CSS (userChrome.css)',
         'category': 'features',
         'subcategory': 'ui',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Enable loading of custom CSS files for Firefox interface customization.',
         'full': (
@@ -5992,60 +5992,11 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         }
     },
 
-    'sync_sanitize_hold': {
-        'name': 'Sync: Shutdown Cleanup',
-        'category': 'synchronization',
-        'subcategory': 'sync_control',
-        'level': 'advanced',
-        'mechanism': 'userjs',
-        'short': 'Control if "Clear on Shutdown" settings are synchronized.',
-        'full': (
-            'When enabled (default), your shutdown cleanup settings are shared across all '
-            'synced devices. Disable this to keep your cleanup preferences local to this '
-            'machine. This is CRITICAL if you want to keep login sessions on this PC while '
-            'clearing them on others.'
-        ),
-        'pref': 'services.sync.prefs.sync.privacy.sanitize.sanitizeOnShutdown',
-        'type': 'toggle',
-        'impact': 'medium',
-        'compatibility': 'none',
-        'values': [True, False],
-        'labels': ['Sync ON', 'Sync OFF (Local Only)'],
-        'default': True,
-        'recommended': {
-            'balanced': False,
-            'paranoid': False,
-            'open': True
-        }
-    },
-
-    'sync_cookies_hold': {
-        'name': 'Sync: Cookie Behavior',
-        'category': 'synchronization',
-        'subcategory': 'sync_control',
-        'level': 'advanced',
-        'mechanism': 'userjs',
-        'short': 'Control if cookie settings are synchronized.',
-        'full': 'Prevents other devices from changing how this browser handles cookies.',
-        'pref': 'services.sync.prefs.sync.network.cookie.cookieBehavior',
-        'type': 'toggle',
-        'impact': 'medium',
-        'compatibility': 'none',
-        'values': [True, False],
-        'labels': ['Sync ON', 'Sync OFF (Local Only)'],
-        'default': True,
-        'recommended': {
-            'balanced': False,
-            'paranoid': False,
-            'open': True
-        }
-    },
-
     'sync_fingerprinting_hold': {
         'name': 'Sync: Fingerprinting Resistance',
         'category': 'synchronization',
         'subcategory': 'sync_control',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Control if fingerprinting resistance is synchronized.',
         'pref': 'services.sync.prefs.sync.privacy.resistFingerprinting',
@@ -6087,7 +6038,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Sync: Sanitize on Shutdown',
         'category': 'synchronization',
         'subcategory': 'sync_control',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Control if "Clear cookies/history on close" setting is synchronized.',
         'full': (
@@ -6113,7 +6064,7 @@ SETTINGS_METADATA: Dict[str, Dict[str, Any]] = {
         'name': 'Sync: Cookie Behavior',
         'category': 'synchronization',
         'subcategory': 'sync_control',
-        'level': 'advanced',
+        'level': 'base',
         'mechanism': 'userjs',
         'short': 'Control if cookie blocking settings are synchronized.',
         'full': (

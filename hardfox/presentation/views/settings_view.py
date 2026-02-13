@@ -55,9 +55,9 @@ class SettingsView(ctk.CTkFrame):
         # State
         self._reconciler: Optional[Reconciler] = None
         self.expanded_categories: set = {'privacy', 'security', 'tracking', 'cookies'}
-        self.show_advanced = self.view_model.show_advanced
         self.show_descriptions = self.view_model.show_descriptions
         self.preset_cards: dict = {}
+
         self.selected_card = None
         self._preset_expanded = False
         self._restore_warning_id = None
@@ -313,13 +313,7 @@ class SettingsView(ctk.CTkFrame):
             command=self._on_show_descriptions_changed
         ).grid(row=0, column=1, padx=5)
 
-        self.show_advanced_var = ctk.BooleanVar(value=self.show_advanced)
-        ctk.CTkCheckBox(
-            filter_frame,
-            text="Show experimental",
-            variable=self.show_advanced_var,
-            command=self._on_show_advanced_changed
-        ).grid(row=0, column=2, padx=5)
+
 
         ctk.CTkButton(
             filter_frame,
@@ -420,20 +414,7 @@ class SettingsView(ctk.CTkFrame):
         )
         self.profile_name_entry.grid(row=0, column=1, padx=(0, 15), pady=10)
 
-        # Apply mode radio buttons
-        mode_frame = ctk.CTkFrame(bar, fg_color="transparent")
-        mode_frame.grid(row=0, column=2, pady=10, sticky="w")
 
-        self.mode_var = ctk.StringVar(value="BOTH")
-        for label, value in [("Both", "BOTH"), ("BASE", "BASE"), ("ADV", "ADVANCED")]:
-            ctk.CTkRadioButton(
-                mode_frame,
-                text=label,
-                variable=self.mode_var,
-                value=value,
-                command=lambda v=value: self._on_mode_changed(v),
-                font=ctk.CTkFont(size=12)
-            ).pack(side="left", padx=5)
 
         # Load JSON button
         ctk.CTkButton(
@@ -542,8 +523,7 @@ class SettingsView(ctk.CTkFrame):
         categories = {}
 
         for setting in settings.values():
-            if setting.visibility == "advanced" and not self.show_advanced:
-                continue
+
 
             category = setting.category or "other"
             if category not in categories:
@@ -596,20 +576,12 @@ class SettingsView(ctk.CTkFrame):
         self.view_model.show_descriptions = self.show_descriptions
         self._render_settings()
 
-    def _on_show_advanced_changed(self):
-        self.show_advanced = self.show_advanced_var.get()
-        self.view_model.show_advanced = self.show_advanced
-        self._render_settings()
-
     def _on_reset_clicked(self):
         self.view_model.reset_all()
         self._render_settings()
 
     def _on_setting_changed(self, key: str, new_value):
         self.view_model.update_setting_value(key, new_value)
-
-    def _on_mode_changed(self, mode: str):
-        self.view_model.apply_mode = mode
 
     def _on_save_json_toggled(self):
         self.view_model.save_to_json = self.save_json_var.get()
@@ -643,18 +615,12 @@ class SettingsView(ctk.CTkFrame):
             self.profile_name_label.configure(text=profile.name)
             self.profile_name_entry.delete(0, 'end')
             self.profile_name_entry.insert(0, profile.name)
-            base_count = profile.get_base_settings_count()
-            adv_count = profile.get_advanced_settings_count()
             total_count = len(profile.settings)
         else:
             self.profile_name_label.configure(text="All Settings (Default Values)")
-            base_count = sum(1 for s in settings.values() if s.level.value == "BASE")
-            adv_count = sum(1 for s in settings.values() if s.level.value == "ADVANCED")
             total_count = len(settings)
 
-        self.stats_label.configure(
-            text=f"{base_count} BASE | {adv_count} ADVANCED | {total_count} total"
-        )
+        self.stats_label.configure(text=f"{total_count} settings loaded")
 
         self._render_settings()
 
@@ -672,11 +638,10 @@ class SettingsView(ctk.CTkFrame):
         self.apply_btn.configure(state="normal", text="Apply Settings")
 
         if success:
-            base = self.view_model.applied_base_count
-            adv = self.view_model.applied_advanced_count
-            logger.info("_on_apply_complete: base=%s, advanced=%s", base, adv)
+            count = self.view_model.applied_count
+            logger.info("_on_apply_complete: applied=%s", count)
             self.firefox_warning_label.configure(
-                text=f"Applied {base} BASE + {adv} ADVANCED settings",
+                text=f"Applied {count} settings successfully",
                 text_color="#4CAF50"
             )
             self._schedule_restore_warning()

@@ -188,7 +188,10 @@ class Profile:
             if key in settings_metadata:
                 # Clone metadata setting with saved value
                 base_setting = settings_metadata[key]
-                setting = base_setting.clone_with_value(saved_setting["value"])
+                value = saved_setting["value"]
+                # Convert raw Firefox values to UI labels for dropdowns
+                value = base_setting.firefox_value_to_label(value)
+                setting = base_setting.clone_with_value(value)
                 profile.settings[key] = setting
 
         return profile

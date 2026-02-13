@@ -94,11 +94,10 @@ class TestSettingToFirefoxPref:
 
 class TestRepositoryWriteLevel:
     @patch.object(FirefoxFileRepository, 'is_firefox_running', return_value=False)
-    def test_write_base_creates_prefs_js_with_pref_syntax(self, _mock, temp_profile, repo):
+    def test_write_base_creates_prefs_js_with_user_pref_syntax(self, _mock, temp_profile, repo):
         repo.write_prefs(temp_profile, {"test.key": True}, SettingLevel.BASE)
         content = (temp_profile / "prefs.js").read_text(encoding='utf-8')
-        assert 'pref("test.key", true);' in content
-        assert 'user_pref' not in content
+        assert 'user_pref("test.key", true);' in content
 
     @patch.object(FirefoxFileRepository, 'is_firefox_running', return_value=False)
     def test_write_advanced_creates_user_js_with_user_pref_syntax(self, _mock, temp_profile, repo):
@@ -111,8 +110,8 @@ class TestRepositoryWriteLevel:
         repo.write_prefs(temp_profile, {"new.pref": "hello"}, SettingLevel.BASE, merge=True)
         content = (temp_profile / "prefs.js").read_text(encoding='utf-8')
         # Existing pref should be merged in
-        assert 'pref("existing.pref", true);' in content
-        assert 'pref("new.pref", "hello");' in content
+        assert 'user_pref("existing.pref", true);' in content
+        assert 'user_pref("new.pref", "hello");' in content
 
     @patch.object(FirefoxFileRepository, 'is_firefox_running', return_value=False)
     def test_write_base_creates_prefs_js_when_missing(self, _mock, tmp_path, repo):
@@ -122,7 +121,7 @@ class TestRepositoryWriteLevel:
         repo.write_prefs(tmp_path, {"test": False}, SettingLevel.BASE, merge=True)
         assert (tmp_path / "prefs.js").exists()
         content = (tmp_path / "prefs.js").read_text(encoding='utf-8')
-        assert 'pref("test", false);' in content
+        assert 'user_pref("test", false);' in content
 
 
 # ── Firefox-running check tests ─────────────────────────────────────────
@@ -148,7 +147,7 @@ class TestFirefoxRunningCheck:
 
 class TestApplySettingsUseCase:
     @patch.object(FirefoxFileRepository, 'is_firefox_running', return_value=False)
-    def test_separates_base_and_advanced_into_different_files(self, _mock, temp_profile, use_case):
+    def test_treats_all_settings_as_base_and_clears_user_js(self, _mock, temp_profile, use_case):
         settings = {
             "base.toggle": _make_setting("base.toggle", True, SettingLevel.BASE),
             "adv.toggle": _make_setting("adv.toggle", False, SettingLevel.ADVANCED),
@@ -156,40 +155,37 @@ class TestApplySettingsUseCase:
 
         result = use_case.execute(temp_profile, settings)
 
-        assert result["base_applied"] == 1
-        assert result["advanced_applied"] == 1
+        # Everything is treated as BASE
+        assert result["base_applied"] == 2
+        assert result["advanced_applied"] == 0
 
         prefs_content = (temp_profile / "prefs.js").read_text(encoding='utf-8')
         user_content = (temp_profile / "user.js").read_text(encoding='utf-8')
 
-        # BASE in prefs.js with pref()
-        assert 'pref("base.toggle", true);' in prefs_content
-        # ADVANCED in user.js with user_pref()
-        assert 'user_pref("adv.toggle", false);' in user_content
-        # No cross-contamination
-        assert "adv.toggle" not in prefs_content
-        assert "base.toggle" not in user_content
+        # ALL settings in prefs.js with user_pref()
+        assert 'user_pref("base.toggle", true);' in prefs_content
+        assert 'user_pref("adv.toggle", false);' in prefs_content
+
+        # user.js should be effectively empty (cleared)
+        # It might contain the header, but no content
+        assert "user_pref" not in user_content
 
     @patch.object(FirefoxFileRepository, 'is_firefox_running', return_value=False)
-    def test_apply_only_base(self, _mock, temp_profile, use_case):
-        settings = {
-            "base.s": _make_setting("base.s", True, SettingLevel.BASE),
-            "adv.s": _make_setting("adv.s", True, SettingLevel.ADVANCED),
-        }
-        result = use_case.execute(temp_profile, settings, level=SettingLevel.BASE)
-        assert result["base_applied"] == 1
-        assert result["advanced_applied"] == 0
-        assert not (temp_profile / "user.js").exists()
+    def test_always_clears_user_js(self, _mock, temp_profile, use_case):
+        # Create a pre-existing user.js with locked settings
+        (temp_profile / "user.js").write_text('user_pref("locked.pref", true);', encoding='utf-8')
 
-    @patch.object(FirefoxFileRepository, 'is_firefox_running', return_value=False)
-    def test_apply_only_advanced(self, _mock, temp_profile, use_case):
+        # Apply only a base setting
         settings = {
             "base.s": _make_setting("base.s", True, SettingLevel.BASE),
-            "adv.s": _make_setting("adv.s", True, SettingLevel.ADVANCED),
         }
-        result = use_case.execute(temp_profile, settings, level=SettingLevel.ADVANCED)
-        assert result["base_applied"] == 0
-        assert result["advanced_applied"] == 1
+        
+        use_case.execute(temp_profile, settings)
+
+        # user.js should have been overwritten/cleared
+        user_content = (temp_profile / "user.js").read_text(encoding='utf-8')
+        assert "locked.pref" not in user_content
+        assert "user_pref" not in user_content
 
     @patch.object(FirefoxFileRepository, 'is_firefox_running', return_value=False)
     def test_empty_settings_returns_zero(self, _mock, temp_profile, use_case):
@@ -226,3 +222,126 @@ class TestAtomicWrite:
         parser.write_prefs({"k": 1}, out)
         tmp_files = list(tmp_path.glob("*.tmp"))
         assert len(tmp_files) == 0
+
+
+# ── Sync Protection tests ─────────────────────────────────────────────
+
+class TestSyncProtection:
+    @patch.object(FirefoxFileRepository, 'is_firefox_running', return_value=False)
+    def test_sync_protection_disabled_no_sync_prefs_generated(self, _mock, temp_profile, use_case):
+        """When sync protection is OFF, no services.sync.prefs.sync.* prefs are auto-generated."""
+        settings = {
+            "hardfox.sync_protection.enabled": _make_setting(
+                "hardfox.sync_protection.enabled", False, SettingLevel.BASE
+            ),
+            "privacy.trackingprotection.enabled": _make_setting(
+                "privacy.trackingprotection.enabled", True, SettingLevel.BASE
+            ),
+        }
+        use_case.execute(temp_profile, settings)
+        content = (temp_profile / "prefs.js").read_text(encoding='utf-8')
+        assert 'user_pref("privacy.trackingprotection.enabled", true);' in content
+        assert 'services.sync.prefs.sync' not in content
+
+    @patch.object(FirefoxFileRepository, 'is_firefox_running', return_value=False)
+    def test_sync_protection_enabled_generates_sync_prefs(self, _mock, temp_profile, use_case):
+        """When sync protection is ON, auto-generates services.sync.prefs.sync.<key> = false."""
+        settings = {
+            "hardfox.sync_protection.enabled": _make_setting(
+                "hardfox.sync_protection.enabled", True, SettingLevel.BASE
+            ),
+            "privacy.trackingprotection.enabled": _make_setting(
+                "privacy.trackingprotection.enabled", True, SettingLevel.BASE
+            ),
+            "dom.battery.enabled": _make_setting(
+                "dom.battery.enabled", False, SettingLevel.BASE
+            ),
+        }
+        use_case.execute(temp_profile, settings)
+        content = (temp_profile / "prefs.js").read_text(encoding='utf-8')
+        # Original settings written
+        assert 'user_pref("privacy.trackingprotection.enabled", true);' in content
+        assert 'user_pref("dom.battery.enabled", false);' in content
+        # Sync protection prefs auto-generated
+        assert 'user_pref("services.sync.prefs.sync.privacy.trackingprotection.enabled", false);' in content
+        assert 'user_pref("services.sync.prefs.sync.dom.battery.enabled", false);' in content
+
+    @patch.object(FirefoxFileRepository, 'is_firefox_running', return_value=False)
+    def test_sync_protection_does_not_generate_nested_keys(self, _mock, temp_profile, use_case):
+        """Sync settings (services.sync.*) must NOT get nested sync protection keys."""
+        settings = {
+            "hardfox.sync_protection.enabled": _make_setting(
+                "hardfox.sync_protection.enabled", True, SettingLevel.BASE
+            ),
+            "services.sync.engine.passwords": _make_setting(
+                "services.sync.engine.passwords", False, SettingLevel.BASE
+            ),
+            "privacy.resistFingerprinting": _make_setting(
+                "privacy.resistFingerprinting", False, SettingLevel.BASE
+            ),
+        }
+        use_case.execute(temp_profile, settings)
+        content = (temp_profile / "prefs.js").read_text(encoding='utf-8')
+        # Sync engine setting written directly
+        assert 'user_pref("services.sync.engine.passwords", false);' in content
+        # Regular setting gets sync protection
+        assert 'user_pref("services.sync.prefs.sync.privacy.resistFingerprinting", false);' in content
+        # No nested nonsense like services.sync.prefs.sync.services.sync.*
+        assert 'services.sync.prefs.sync.services.sync' not in content
+
+    @patch.object(FirefoxFileRepository, 'is_firefox_running', return_value=False)
+    def test_explicit_sync_override_preserved(self, _mock, temp_profile, use_case):
+        """User's explicit sync control settings override auto-generated sync protection."""
+        settings = {
+            "hardfox.sync_protection.enabled": _make_setting(
+                "hardfox.sync_protection.enabled", True, SettingLevel.BASE
+            ),
+            # User explicitly wants cookie behavior to sync (True)
+            "services.sync.prefs.sync.network.cookie.cookieBehavior": _make_setting(
+                "services.sync.prefs.sync.network.cookie.cookieBehavior", True, SettingLevel.BASE
+            ),
+            # This is the regular setting that would normally get sync protection
+            "network.cookie.cookieBehavior": _make_setting(
+                "network.cookie.cookieBehavior", 4, SettingLevel.BASE,
+                setting_type=SettingType.SLIDER
+            ),
+        }
+        use_case.execute(temp_profile, settings)
+        content = (temp_profile / "prefs.js").read_text(encoding='utf-8')
+        # User's explicit sync=true is preserved, NOT overwritten to false
+        assert 'user_pref("services.sync.prefs.sync.network.cookie.cookieBehavior", true);' in content
+        # Verify no duplicate false entry
+        assert content.count('services.sync.prefs.sync.network.cookie.cookieBehavior') == 1
+
+    @patch.object(FirefoxFileRepository, 'is_firefox_running', return_value=False)
+    def test_hardfox_internal_flags_never_written(self, _mock, temp_profile, use_case):
+        """Internal hardfox.* flags must never appear in Firefox prefs files."""
+        settings = {
+            "hardfox.sync_protection.enabled": _make_setting(
+                "hardfox.sync_protection.enabled", True, SettingLevel.BASE
+            ),
+            "browser.send_pings": _make_setting(
+                "browser.send_pings", False, SettingLevel.BASE
+            ),
+        }
+        use_case.execute(temp_profile, settings)
+        content = (temp_profile / "prefs.js").read_text(encoding='utf-8')
+        assert 'hardfox.' not in content
+
+    @patch.object(FirefoxFileRepository, 'is_firefox_running', return_value=False)
+    def test_sync_protection_count_includes_generated_prefs(self, _mock, temp_profile, use_case):
+        """Return count should include auto-generated sync protection prefs."""
+        settings = {
+            "hardfox.sync_protection.enabled": _make_setting(
+                "hardfox.sync_protection.enabled", True, SettingLevel.BASE
+            ),
+            "privacy.donottrackheader.enabled": _make_setting(
+                "privacy.donottrackheader.enabled", False, SettingLevel.BASE
+            ),
+            "browser.send_pings": _make_setting(
+                "browser.send_pings", False, SettingLevel.BASE
+            ),
+        }
+        result = use_case.execute(temp_profile, settings)
+        # 2 regular settings + 2 auto-generated sync prefs = 4
+        assert result["base_applied"] == 4

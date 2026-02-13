@@ -93,8 +93,9 @@ class FirefoxFileRepository(IFirefoxRepository):
             # Create backup from the snapshot we just read
             self.backup(profile_path, level)
 
-        # Use correct JS function prefix based on level
-        use_user_pref = (level == SettingLevel.ADVANCED)
+        # FIX [HIGH-002]: Always use user_pref for profile level settings
+        # Both prefs.js (BASE) and user.js (ADVANCED) use user_pref() syntax
+        use_user_pref = True
 
         if merge and existing_prefs:
             # Merge with the snapshot we read earlier (not re-reading file)

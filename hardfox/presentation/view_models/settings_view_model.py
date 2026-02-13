@@ -50,16 +50,14 @@ class SettingsViewModel(BaseViewModel):
             'modification_count': 0,
 
             # --- From ApplyVM (settings-apply portion) ---
-            'apply_mode': 'BOTH',
+            # --- From ApplyVM (settings-apply portion) ---
             'save_to_json': False,
             'json_save_path': '',
             'is_applying': False,
             'apply_success': False,
             'apply_error_message': '',
-            'base_count': 0,
-            'advanced_count': 0,
-            'applied_base_count': 0,
-            'applied_advanced_count': 0,
+            'total_count': 0,
+            'applied_count': 0,
         }
 
     # =================================================================
@@ -110,8 +108,7 @@ class SettingsViewModel(BaseViewModel):
                 current_settings[key] = profile_setting
 
             # Update counts
-            self.set_property('base_count', value.get_base_settings_count())
-            self.set_property('advanced_count', value.get_advanced_settings_count())
+            self.set_property('total_count', len(value.settings))
 
             self._notify('settings', self._properties['settings'])
 
@@ -202,9 +199,11 @@ class SettingsViewModel(BaseViewModel):
             if setting.category == category
         ]
 
+
+
     @property
     def show_advanced(self) -> bool:
-        return self.get_property('show_advanced', False)
+        return self.get_property('show_advanced', True)
 
     @show_advanced.setter
     def show_advanced(self, value: bool):
@@ -229,23 +228,6 @@ class SettingsViewModel(BaseViewModel):
     # =================================================================
     # Apply Settings (from ApplyVM)
     # =================================================================
-
-    @property
-    def apply_mode(self) -> str:
-        return self.get_property('apply_mode', 'BOTH')
-
-    @apply_mode.setter
-    def apply_mode(self, value: str):
-        if value in ['BASE', 'ADVANCED', 'BOTH']:
-            self.set_property('apply_mode', value)
-
-    def get_apply_level(self) -> Optional[SettingLevel]:
-        if self.apply_mode == 'BASE':
-            return SettingLevel.BASE
-        elif self.apply_mode == 'ADVANCED':
-            return SettingLevel.ADVANCED
-        else:
-            return None
 
     @property
     def save_to_json(self) -> bool:
@@ -288,33 +270,30 @@ class SettingsViewModel(BaseViewModel):
         self.set_property('apply_error_message', value)
 
     @property
-    def base_count(self) -> int:
-        return self.get_property('base_count', 0)
+    def total_count(self) -> int:
+        return self.get_property('total_count', 0)
 
     @property
-    def advanced_count(self) -> int:
-        return self.get_property('advanced_count', 0)
+    def applied_count(self) -> int:
+        return self.get_property('applied_count', 0)
 
-    @property
-    def applied_base_count(self) -> int:
-        return self.get_property('applied_base_count', 0)
+    @applied_count.setter
+    def applied_count(self, value: int):
+        self.set_property('applied_count', value)
 
-    @applied_base_count.setter
-    def applied_base_count(self, value: int):
-        self.set_property('applied_base_count', value)
+    def get_apply_level(self) -> SettingLevel:
+        """
+        Get the level at which settings should be applied.
 
-    @property
-    def applied_advanced_count(self) -> int:
-        return self.get_property('applied_advanced_count', 0)
-
-    @applied_advanced_count.setter
-    def applied_advanced_count(self, value: int):
-        self.set_property('applied_advanced_count', value)
+        All settings are now applied at BASE level (prefs.js) to allow
+        user modification.
+        """
+        return SettingLevel.BASE
 
     def set_apply_results(self, results: Dict[str, int]) -> None:
         """Set results from apply use case."""
-        self.applied_base_count = results.get('base_applied', 0)
-        self.applied_advanced_count = results.get('advanced_applied', 0)
+        # We now only care about the total applied (which was 'base_applied' in the use case)
+        self.applied_count = results.get('base_applied', 0)
 
     # =================================================================
     # Computed: generate Profile on-demand from current settings

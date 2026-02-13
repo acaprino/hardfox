@@ -148,6 +148,13 @@ class JsonProfileRepository(IProfileRepository):
         if '..' in name:
             raise ValueError(f"Profile name cannot contain '..': {name}")
 
+        if '\x00' in name:
+            raise ValueError(f"Profile name cannot contain null bytes")
+
+        # Check for absolute paths (reject them to be safe)
+        if Path(name).is_absolute() or name.startswith('/') or name.startswith('\\'):
+             raise ValueError(f"Profile name cannot be an absolute path: {name}")
+
         # Sanitize: remove/replace special characters
         safe_name = (name.lower()
                      .replace(' ', '_')

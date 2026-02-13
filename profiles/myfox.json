@@ -3,7 +3,7 @@
   "settings": {
     "app.normandy.enabled": {
       "value": false,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "app.shield.optoutstudies.enabled": {
       "value": false,
@@ -11,35 +11,43 @@
     },
     "beacon.enabled": {
       "value": false,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "browser.aboutConfig.showWarning": {
       "value": false,
       "level": "BASE"
     },
+    "browser.compactmode.show": {
+      "value": true,
+      "level": "BASE"
+    },
     "browser.cache.disk.capacity": {
       "value": "512 MB",
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "browser.cache.disk.enable": {
       "value": true,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "browser.cache.disk_cache_ssl": {
       "value": false,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "browser.cache.memory.capacity": {
       "value": "512 MB",
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "browser.cache.memory.enable": {
       "value": true,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "browser.cache.offline.enable": {
       "value": true,
-      "level": "ADVANCED"
+      "level": "BASE"
+    },
+    "browser.uidensity": {
+      "value": 1,
+      "level": "BASE"
     },
     "browser.contentblocking.category": {
       "value": "Strict",
@@ -51,11 +59,11 @@
     },
     "browser.display.use_document_colors": {
       "value": true,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "browser.display.use_document_fonts": {
       "value": "Allow Web Fonts",
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "browser.download.useDownloadDir": {
       "value": true,
@@ -63,7 +71,7 @@
     },
     "browser.fixup.alternate.enabled": {
       "value": true,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "browser.formfill.enable": {
       "value": false,
@@ -71,19 +79,19 @@
     },
     "browser.ml.chat.enabled": {
       "value": false,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "browser.ml.chat.sidebar": {
       "value": false,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "browser.ml.enable": {
       "value": false,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "browser.ml.linkPreview.enabled": {
       "value": false,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "browser.newtabpage.activity-stream.feeds.section.highlights": {
       "value": false,
@@ -115,7 +123,7 @@
     },
     "browser.ping-centre.telemetry": {
       "value": false,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "browser.safebrowsing.downloads.enabled": {
       "value": true,
@@ -123,7 +131,7 @@
     },
     "browser.safebrowsing.downloads.remote.enabled": {
       "value": true,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "browser.safebrowsing.malware.enabled": {
       "value": true,
@@ -135,7 +143,7 @@
     },
     "browser.safebrowsing.provider.google4.dataSharing.enabled": {
       "value": false,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "browser.search.suggest.enabled": {
       "value": true,
@@ -143,27 +151,27 @@
     },
     "browser.search.visualSearch.featureGate": {
       "value": true,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "browser.send_pings": {
       "value": false,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "browser.sessionhistory.max_entries": {
       "value": "50 entries",
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "browser.sessionhistory.max_total_viewers": {
       "value": "4 pages",
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "browser.sessionstore.interval": {
       "value": "1 minute",
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "browser.sessionstore.privacy_level": {
       "value": "Skip HTTPS Data",
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "browser.sessionstore.restore_on_demand": {
       "value": true,
@@ -191,11 +199,11 @@
     },
     "browser.tabs.groups.enabled": {
       "value": true,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "browser.tabs.groups.smart.enabled": {
       "value": true,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "browser.translations.enable": {
       "value": false,
@@ -207,7 +215,7 @@
     },
     "browser.urlbar.speculativeConnect.enabled": {
       "value": true,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "browser.urlbar.suggest.bookmark": {
       "value": true,
@@ -235,47 +243,47 @@
     },
     "device.sensors.enabled": {
       "value": true,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "dom.battery.enabled": {
       "value": false,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "dom.disable_beforeunload": {
       "value": false,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "dom.disable_open_during_load": {
       "value": true,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "dom.disable_window_move_resize": {
       "value": true,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "dom.disable_window_open_feature.location": {
       "value": true,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "dom.event.clipboardevents.enabled": {
       "value": false,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "dom.event.contextmenu.enabled": {
       "value": true,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "dom.ipc.processCount": {
       "value": "8 processes",
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "dom.ipc.processCount.webIsolated": {
       "value": "4 processes",
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "dom.push.enabled": {
       "value": true,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "dom.security.https_only_mode": {
       "value": true,
@@ -287,19 +295,19 @@
     },
     "dom.security.sanitizer.enabled": {
       "value": true,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "dom.serviceWorkers.enabled": {
       "value": true,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "dom.webgpu.enabled": {
       "value": true,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "dom.webnotifications.enabled": {
       "value": true,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "extensions.formautofill.addresses.enabled": {
       "value": false,
@@ -319,51 +327,55 @@
     },
     "gfx.webrender.all": {
       "value": true,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "image.avif.enabled": {
       "value": true,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "image.avif.sequence.enabled": {
       "value": true,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "image.jxl.enabled": {
       "value": true,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "javascript.options.wasm": {
       "value": true,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "layers.acceleration.force-enabled": {
       "value": false,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "layers.gpu-process.enabled": {
       "value": true,
-      "level": "ADVANCED"
+      "level": "BASE"
+    },
+    "layout.css.devPixelsPerPx": {
+      "value": "0.9",
+      "level": "BASE"
     },
     "layout.css.grid-template-masonry-value.enabled": {
       "value": true,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "layout.css.has-selector.enabled": {
       "value": true,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "layout.css.scroll-driven-animations.enabled": {
       "value": true,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "layout.frame_rate": {
       "value": "60 FPS",
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "media.autoplay.blocking_policy": {
       "value": "User Choice",
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "media.autoplay.default": {
       "value": "Block",
@@ -379,27 +391,27 @@
     },
     "media.hardware-video-decoding.enabled": {
       "value": true,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "media.navigator.enabled": {
       "value": true,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "media.peerconnection.enabled": {
       "value": true,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "media.peerconnection.ice.default_address_only": {
       "value": true,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "media.peerconnection.ice.no_host": {
       "value": false,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "network.IDN_show_punycode": {
       "value": true,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "network.cookie.cookieBehavior": {
       "value": "Block Cross-Site",
@@ -415,103 +427,103 @@
     },
     "network.cookie.thirdparty.sessionOnly": {
       "value": true,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "network.dns.disableIPv6": {
       "value": false,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "network.dns.disablePrefetch": {
       "value": false,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "network.dns.echconfig.enabled": {
       "value": true,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "network.dnsCacheEntries": {
       "value": "Large (1000)",
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "network.dnsCacheExpiration": {
       "value": "Long (120s)",
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "network.http.http2.enabled": {
       "value": true,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "network.http.http3.enable": {
       "value": true,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "network.http.max-connections": {
       "value": "900 (Default)",
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "network.http.max-persistent-connections-per-proxy": {
       "value": "32",
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "network.http.max-persistent-connections-per-server": {
       "value": "6 connections",
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "network.http.referer.XOriginPolicy": {
       "value": "Always Send",
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "network.http.referer.XOriginTrimmingPolicy": {
       "value": "Full URL",
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "network.http.referer.trimmingPolicy": {
       "value": "Full URL",
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "network.http.sendRefererHeader": {
       "value": "Always Send",
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "network.http.speculative-parallel-limit": {
       "value": "8 connections",
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "network.predictor.enabled": {
       "value": false,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "network.prefetch-next": {
       "value": true,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "network.proxy.socks_remote_dns": {
       "value": false,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "network.trr.disable-ECS": {
       "value": true,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "network.trr.mode": {
       "value": "Max Protection",
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "network.trr.strict_native_fallback": {
       "value": false,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "network.trr.uri": {
       "value": "Quad9 (9.9.9.9)",
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "network.trr.wait-for-portal": {
       "value": true,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "network.webtransport.enabled": {
       "value": true,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "permissions.default.camera": {
       "value": "Ask",
@@ -571,7 +583,7 @@
     },
     "privacy.firstparty.isolate": {
       "value": false,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "privacy.globalprivacycontrol.enabled": {
       "value": true,
@@ -579,7 +591,7 @@
     },
     "privacy.resistFingerprinting": {
       "value": false,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "privacy.sanitize.sanitizeOnShutdown": {
       "value": false,
@@ -595,7 +607,7 @@
     },
     "privacy.trackingprotection.cryptomining.enabled": {
       "value": true,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "privacy.trackingprotection.enabled": {
       "value": true,
@@ -603,7 +615,7 @@
     },
     "privacy.trackingprotection.fingerprinting.enabled": {
       "value": true,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "privacy.trackingprotection.pbmode.enabled": {
       "value": true,
@@ -611,19 +623,19 @@
     },
     "privacy.trackingprotection.socialtracking.enabled": {
       "value": true,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "security.OCSP.enabled": {
       "value": "Enabled",
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "security.OCSP.require": {
       "value": true,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "security.cert_pinning.enforcement_level": {
       "value": "Allow Exceptions",
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "security.insecure_connection_text.enabled": {
       "value": true,
@@ -635,39 +647,39 @@
     },
     "security.mixed_content.block_active_content": {
       "value": true,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "security.mixed_content.block_display_content": {
       "value": true,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "security.pki.sha1_enforcement_level": {
       "value": "Block Public CA",
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "security.ssl.require_safe_negotiation": {
       "value": false,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "security.ssl.treat_unsafe_negotiation_as_broken": {
       "value": false,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "security.tls.version.max": {
       "value": "TLS 1.3",
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "security.tls.version.min": {
       "value": "TLS 1.2 (Recommended)",
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "sidebar.revamp": {
       "value": true,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "sidebar.verticalTabs": {
       "value": true,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "signon.autofillForms": {
       "value": false,
@@ -679,19 +691,19 @@
     },
     "toolkit.coverage.opt-out": {
       "value": false,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "toolkit.legacyUserProfileCustomizations.stylesheets": {
       "value": false,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "toolkit.telemetry.archive.enabled": {
       "value": true,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "toolkit.telemetry.bhrPing.enabled": {
       "value": true,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "toolkit.telemetry.enabled": {
       "value": false,
@@ -699,43 +711,55 @@
     },
     "toolkit.telemetry.firstShutdownPing.enabled": {
       "value": true,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "toolkit.telemetry.newProfilePing.enabled": {
       "value": true,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "toolkit.telemetry.shutdownPingSender.enabled": {
       "value": true,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "toolkit.telemetry.unified": {
       "value": true,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "toolkit.telemetry.updatePing.enabled": {
       "value": true,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "webgl.disabled": {
       "value": false,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "webgl.force-enabled": {
       "value": false,
-      "level": "ADVANCED"
+      "level": "BASE"
+    },
+    "hardfox.sync_protection.enabled": {
+      "value": true,
+      "level": "BASE"
     },
     "services.sync.prefs.sync.privacy.sanitize.sanitizeOnShutdown": {
       "value": false,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "services.sync.prefs.sync.network.cookie.cookieBehavior": {
       "value": false,
-      "level": "ADVANCED"
+      "level": "BASE"
     },
     "services.sync.prefs.sync.privacy.resistFingerprinting": {
       "value": false,
-      "level": "ADVANCED"
+      "level": "BASE"
+    },
+    "services.sync.engine.prefs": {
+      "value": true,
+      "level": "BASE"
+    },
+    "services.sync.engine.passwords": {
+      "value": false,
+      "level": "BASE"
     }
   },
   "metadata": {
