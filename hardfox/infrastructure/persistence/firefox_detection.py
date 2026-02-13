@@ -8,12 +8,18 @@ Used by FirefoxExtensionRepository and PortableConversionRepository.
 
 import logging
 import os
-import platform
 import subprocess
+import sys
 from pathlib import Path
 from typing import Optional
 
 logger = logging.getLogger(__name__)
+
+# Use sys.platform instead of platform.system() to avoid hangs
+# on Python 3.13 + Windows 11 (platform module deadlocks in threads).
+_IS_WINDOWS = sys.platform == "win32"
+_IS_LINUX = sys.platform.startswith("linux")
+_IS_MACOS = sys.platform == "darwin"
 
 
 def is_firefox_running() -> bool:
@@ -23,10 +29,8 @@ def is_firefox_running() -> bool:
     Returns:
         True if Firefox is running, False otherwise
     """
-    system = platform.system()
-
     try:
-        if system == "Windows":
+        if _IS_WINDOWS:
             # Use tasklist to check for firefox.exe
             result = subprocess.run(
                 ["tasklist", "/FI", "IMAGENAME eq firefox.exe", "/NH"],
@@ -41,28 +45,18 @@ def is_firefox_running() -> bool:
             logger.debug(f"Firefox running check (Windows): {is_running}")
             return is_running
 
-        elif system == "Linux":
+        elif _IS_LINUX or _IS_MACOS:
             result = subprocess.run(
                 ["pgrep", "-x", "firefox"],
                 capture_output=True,
                 timeout=5
             )
             is_running = result.returncode == 0
-            logger.debug(f"Firefox running check (Linux): {is_running}")
-            return is_running
-
-        elif system == "Darwin":
-            result = subprocess.run(
-                ["pgrep", "-x", "firefox"],
-                capture_output=True,
-                timeout=5
-            )
-            is_running = result.returncode == 0
-            logger.debug(f"Firefox running check (macOS): {is_running}")
+            logger.debug(f"Firefox running check: {is_running}")
             return is_running
 
         else:
-            logger.warning(f"Cannot check Firefox process on platform: {system}")
+            logger.warning("Cannot check Firefox process on this platform")
             return False
 
     except subprocess.TimeoutExpired:
@@ -89,44 +83,39 @@ def get_firefox_installation_dir(profile_path: Path = None) -> Optional[Path]:
     Returns:
         Path to Firefox installation directory, or None if not found
     """
-    system = platform.system()
-
     # Determine binary name by platform
-    if system == "Windows":
+    if _IS_WINDOWS:
         binary_name = "firefox.exe"
         portable_binary = "FirefoxPortable.exe"
-    elif system == "Linux":
-        binary_name = "firefox"
-        portable_binary = None
-    elif system == "Darwin":
+    elif _IS_LINUX or _IS_MACOS:
         binary_name = "firefox"
         portable_binary = None
     else:
-        logger.warning(f"Unsupported platform: {system}")
+        logger.warning("Unsupported platform")
         return None
 
     # Check if profile is inside a Firefox Portable installation
-    if system == "Windows" and profile_path and portable_binary:
+    if _IS_WINDOWS and profile_path and portable_binary:
         portable_dir = detect_firefox_portable(profile_path, portable_binary, binary_name)
         if portable_dir:
             logger.info(f"Found Firefox Portable installation at: {portable_dir}")
             return portable_dir
 
     # Common Firefox installation paths by platform
-    if system == "Windows":
+    if _IS_WINDOWS:
         common_paths = [
             Path("C:/Program Files/Mozilla Firefox"),
             Path("C:/Program Files (x86)/Mozilla Firefox"),
             Path(os.path.expandvars("%LOCALAPPDATA%/Mozilla Firefox")),
         ]
-    elif system == "Linux":
+    elif _IS_LINUX:
         common_paths = [
             Path("/usr/lib/firefox"),
             Path("/usr/lib64/firefox"),
             Path("/opt/firefox"),
             Path("/snap/firefox/current/usr/lib/firefox"),
         ]
-    elif system == "Darwin":
+    elif _IS_MACOS:
         common_paths = [
             Path("/Applications/Firefox.app/Contents/MacOS"),
         ]
@@ -138,7 +127,7 @@ def get_firefox_installation_dir(profile_path: Path = None) -> Optional[Path]:
             return path
 
     # On Windows, try registry lookup as fallback
-    if system == "Windows":
+    if _IS_WINDOWS:
         registry_path = _lookup_firefox_registry()
         if registry_path:
             return registry_path

@@ -8,10 +8,22 @@ Firefox profile path is global in the header.
 """
 
 import sys
+import types
 import logging
 import argparse
 from pathlib import Path
 import json
+
+# Workaround: darkdetect 0.8.0 calls platform.release() at import time,
+# which hangs on some Windows 11 + Python 3.13 configurations.
+# Since we always use dark mode, stub it out before customtkinter imports it.
+_dd = types.ModuleType('darkdetect')
+_dd.theme = lambda: 'Dark'
+_dd.isDark = lambda: True
+_dd.isLight = lambda: False
+_dd.listener = lambda callback: None
+sys.modules['darkdetect'] = _dd
+
 import customtkinter as ctk
 from tkinter import filedialog
 
