@@ -322,30 +322,33 @@ class FirefoxExtensionRepository(IExtensionRepository):
                     # user-filters + uBO builtins + external Hagezi lists
                     selected_lists = ["user-filters"] + list(builtin_lists) + list(custom_lists)
                     url_lists = [u for u in custom_lists if u.startswith("http")]
-                    
-                    config[ext_id] = {
-                        # Secondary: toOverwrite (Chromium, newer Firefox) - Less restrictive if supported
-                        "toOverwrite": {
-                            "filterLists": selected_lists
-                        }
-                    }
-                    
-                    # Primary: adminSettings (Firefox-reliable, JSON string) - LOCKS SETTINGS IN UI
-                    # Only apply if policy enforcement is enabled (default=True)
+
                     if policy_enforced:
-                        config[ext_id]["adminSettings"] = json.dumps({
-                            "selectedFilterLists": selected_lists,
-                            "userSettings": {
-                                "importedLists": url_lists,
-                                "externalLists": "\n".join(url_lists),
-                            }
-                        })
+                        # Both toOverwrite + adminSettings: locks settings in UI
+                        config[ext_id] = {
+                            "toOverwrite": {
+                                "filterLists": selected_lists
+                            },
+                            "adminSettings": json.dumps({
+                                "selectedFilterLists": selected_lists,
+                                "userSettings": {
+                                    "importedLists": url_lists,
+                                    "externalLists": "\n".join(url_lists),
+                                }
+                            })
+                        }
                         logger.info(
                             f"Configured uBlock Origin (LOCKED) with {len(selected_lists)} filter lists"
                         )
                     else:
+                        # toAdd only: sets initial defaults without overwriting user changes
+                        config[ext_id] = {
+                            "toAdd": {
+                                "filterLists": selected_lists
+                            }
+                        }
                         logger.info(
-                            f"Configured uBlock Origin (UNLOCKED) with {len(selected_lists)} filter lists - adminSettings skipped"
+                            f"Configured uBlock Origin (UNLOCKED) with {len(selected_lists)} filter lists - user can modify freely"
                         )
 
         return config
