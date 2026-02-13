@@ -288,7 +288,8 @@ class HardfoxGUI(ctk.CTk):
             on_update=self._on_update_portable_firefox,
             on_cancel_update=self._on_cancel_portable_update,
             on_create_portable=self._on_create_portable_from_download,
-            on_cancel_create=self._on_cancel_create_portable
+            on_cancel_create=self._on_cancel_create_portable,
+            on_cleanup_policies=self._on_cleanup_policies
         )
         self.utilities_view.pack(fill="both", expand=True)
 
@@ -502,6 +503,13 @@ class HardfoxGUI(ctk.CTk):
 
     def _on_cancel_create_portable(self):
         self.utilities_controller.cancel_create_portable()
+
+    def _on_cleanup_policies(self):
+        try:
+            self.utilities_controller.handle_cleanup_policies()
+        except Exception as e:
+            logger.error(f"Failed to cleanup policies: {e}", exc_info=True)
+            self._show_error("Cleanup Failed", str(e))
 
     # =================================================================
     # Dialogs

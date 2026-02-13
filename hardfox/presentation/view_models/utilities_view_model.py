@@ -74,6 +74,8 @@ class UtilitiesViewModel(BaseViewModel):
             'create_progress': 0.0,
             'create_status': '',
             'create_result': None,
+            # Cleanup Enterprise Policies
+            'cleanup_policies_result': None,
         }
 
     # Firefox install directory
@@ -287,3 +289,15 @@ class UtilitiesViewModel(BaseViewModel):
         # Always notify (same pattern as conversion_result)
         self._properties['create_result'] = value
         self._notify('create_result', value)
+
+    # --- Cleanup Enterprise Policies properties ---
+
+    @property
+    def cleanup_policies_result(self) -> Optional[Dict]:
+        return self.get_property('cleanup_policies_result', None)
+
+    @cleanup_policies_result.setter
+    def cleanup_policies_result(self, value: Optional[Dict]):
+        # Always notify (same pattern as conversion_result)
+        self._properties['cleanup_policies_result'] = value
+        self._notify('cleanup_policies_result', value)

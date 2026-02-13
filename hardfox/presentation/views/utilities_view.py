@@ -34,7 +34,8 @@ class UtilitiesView(ctk.CTkFrame):
         on_update: Optional[Callable] = None,
         on_cancel_update: Optional[Callable] = None,
         on_create_portable: Optional[Callable] = None,
-        on_cancel_create: Optional[Callable] = None
+        on_cancel_create: Optional[Callable] = None,
+        on_cleanup_policies: Optional[Callable] = None
     ):
         super().__init__(parent)
         self.view_model = view_model
@@ -46,6 +47,7 @@ class UtilitiesView(ctk.CTkFrame):
         self.on_cancel_update = on_cancel_update
         self.on_create_portable = on_create_portable
         self.on_cancel_create = on_cancel_create
+        self.on_cleanup_policies = on_cleanup_policies
 
         # Configure grid
         self.grid_columnconfigure(0, weight=1)
@@ -81,6 +83,9 @@ class UtilitiesView(ctk.CTkFrame):
         self.view_model.subscribe('create_status', self._on_create_status_changed)
         self.view_model.subscribe('create_result', self._on_create_result_changed)
 
+        # Subscribe to ViewModel changes (Cleanup Policies)
+        self.view_model.subscribe('cleanup_policies_result', self._on_cleanup_result_changed)
+
     def destroy(self):
         """Clean up ViewModel subscriptions."""
         self.view_model.unsubscribe('firefox_install_dir', self._on_firefox_dir_changed)
@@ -105,6 +110,8 @@ class UtilitiesView(ctk.CTkFrame):
         self.view_model.unsubscribe('create_progress', self._on_create_progress_changed)
         self.view_model.unsubscribe('create_status', self._on_create_status_changed)
         self.view_model.unsubscribe('create_result', self._on_create_result_changed)
+
+        self.view_model.unsubscribe('cleanup_policies_result', self._on_cleanup_result_changed)
         super().destroy()
 
     def _build_header(self):
@@ -130,6 +137,9 @@ class UtilitiesView(ctk.CTkFrame):
 
         # Card 3: Create Portable Firefox from Download
         self._build_create_card(content, row=2)
+
+        # Card 4: Cleanup Enterprise Policies
+        self._build_cleanup_policies_card(content, row=3)
 
     # ===================================================================
     # Card 1: Convert to Portable Firefox
@@ -998,5 +1008,100 @@ class UtilitiesView(ctk.CTkFrame):
             error_msg = result.get('error', 'Unknown error')
             self.create_result_label.configure(
                 text=f"\u2717 Creation failed: {error_msg}",
+                text_color=Theme.get_color('error')
+            )
+
+    # ===================================================================
+    # Card 4: Cleanup Enterprise Policies
+    # ===================================================================
+
+    def _build_cleanup_policies_card(self, parent, row):
+        """Build the Cleanup Enterprise Policies card."""
+        card = ctk.CTkFrame(parent, corner_radius=8)
+        card.grid(row=row, column=0, sticky="ew", padx=10, pady=10)
+        card.grid_columnconfigure(0, weight=1)
+
+        # Card title
+        title = ctk.CTkLabel(
+            card,
+            text="Cleanup Enterprise Policies",
+            font=ctk.CTkFont(size=16, weight="bold")
+        )
+        title.grid(row=0, column=0, sticky="w", padx=20, pady=(15, 5))
+
+        desc = ctk.CTkLabel(
+            card,
+            text="Remove policies.json and its backups from the Firefox distribution directory. "
+                 "These files were used by older Hardfox versions to manage extensions via Enterprise Policies. "
+                 "Since Hardfox now uses profile sideloading, these files are no longer needed.",
+            font=ctk.CTkFont(size=12),
+            text_color=Theme.get_color('text_tertiary'),
+            wraplength=700,
+            justify="left"
+        )
+        desc.grid(row=1, column=0, sticky="w", padx=20, pady=(0, 15))
+
+        # Button
+        self.cleanup_btn = ctk.CTkButton(
+            card,
+            text="Remove Policy Files",
+            command=self._on_cleanup_policies_clicked,
+            fg_color=Theme.get_color('error'),
+            hover_color="#CC3333",
+            font=ctk.CTkFont(size=14, weight="bold"),
+            height=40
+        )
+        self.cleanup_btn.grid(row=2, column=0, sticky="w", padx=20, pady=(0, 5))
+
+        # Result label (hidden initially)
+        self.cleanup_result_label = ctk.CTkLabel(
+            card,
+            text="",
+            font=ctk.CTkFont(size=12),
+            wraplength=700,
+            justify="left"
+        )
+        self.cleanup_result_label.grid(row=3, column=0, sticky="w", padx=20, pady=(5, 15))
+        self.cleanup_result_label.grid_remove()
+
+    # ===================================================================
+    # Cleanup Enterprise Policies - UI Event Handlers
+    # ===================================================================
+
+    def _on_cleanup_policies_clicked(self):
+        """Handle Remove Policy Files button click."""
+        if self.on_cleanup_policies:
+            self.on_cleanup_policies()
+
+    # ===================================================================
+    # Cleanup Enterprise Policies - ViewModel Subscription Handlers
+    # ===================================================================
+
+    def _on_cleanup_result_changed(self, result: dict):
+        """Handle cleanup policies result."""
+        if result is None:
+            return
+
+        self.cleanup_result_label.grid()
+
+        if result.get('success'):
+            files_removed = result.get('files_removed', 0)
+            message = result.get('message', '')
+            if files_removed == 0 and message:
+                self.cleanup_result_label.configure(
+                    text=f"\u2713 {message}",
+                    text_color=Theme.get_color('success')
+                )
+            else:
+                removed_list = result.get('removed', [])
+                files_text = ", ".join(removed_list) if removed_list else "none"
+                self.cleanup_result_label.configure(
+                    text=f"\u2713 Removed {files_removed} file(s): {files_text}",
+                    text_color=Theme.get_color('success')
+                )
+        else:
+            error_msg = result.get('error', 'Unknown error')
+            self.cleanup_result_label.configure(
+                text=f"\u2717 {error_msg}",
                 text_color=Theme.get_color('error')
             )

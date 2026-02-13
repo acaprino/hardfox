@@ -554,3 +554,88 @@ class UtilitiesController:
                 self.view_model.create_result = result
 
         self._run_on_ui(update)
+
+    # ---------------------------------------------------------------
+    # Cleanup Enterprise Policies
+    # ---------------------------------------------------------------
+
+    def handle_cleanup_policies(self) -> None:
+        """
+        Remove enterprise policy files (policies.json and backups) from
+        the Firefox distribution directory.
+
+        This is a synchronous operation (fast file deletion) — no background thread needed.
+        """
+        from hardfox.infrastructure.persistence.firefox_detection import get_firefox_installation_dir
+
+        profile_path = self.view_model.profile_path
+        if not profile_path:
+            self.view_model.cleanup_policies_result = {
+                "success": False,
+                "error": "No Firefox profile selected. Select a profile first."
+            }
+            return
+
+        firefox_dir = get_firefox_installation_dir(Path(profile_path))
+        if not firefox_dir:
+            self.view_model.cleanup_policies_result = {
+                "success": False,
+                "error": "Could not locate Firefox installation directory."
+            }
+            return
+
+        dist_dir = firefox_dir / "distribution"
+        if not dist_dir.exists():
+            self.view_model.cleanup_policies_result = {
+                "success": True,
+                "files_removed": 0,
+                "message": "No distribution directory found — nothing to clean up."
+            }
+            return
+
+        removed = []
+        errors = []
+
+        # Remove policies.json
+        policies_file = dist_dir / "policies.json"
+        if policies_file.exists():
+            try:
+                policies_file.unlink()
+                removed.append("policies.json")
+                logger.info(f"Removed: {policies_file}")
+            except Exception as e:
+                errors.append(f"policies.json: {e}")
+                logger.error(f"Failed to remove {policies_file}: {e}")
+
+        # Remove all backup files
+        for backup in sorted(dist_dir.glob("policies.json.backup.*")):
+            try:
+                backup.unlink()
+                removed.append(backup.name)
+                logger.info(f"Removed: {backup}")
+            except Exception as e:
+                errors.append(f"{backup.name}: {e}")
+                logger.error(f"Failed to remove {backup}: {e}")
+
+        # Remove distribution dir if empty
+        try:
+            if dist_dir.exists() and not any(dist_dir.iterdir()):
+                dist_dir.rmdir()
+                removed.append("distribution/")
+                logger.info(f"Removed empty directory: {dist_dir}")
+        except Exception as e:
+            logger.warning(f"Could not remove distribution dir: {e}")
+
+        if errors:
+            self.view_model.cleanup_policies_result = {
+                "success": False,
+                "files_removed": len(removed),
+                "removed": removed,
+                "error": f"Some files could not be removed: {'; '.join(errors)}"
+            }
+        else:
+            self.view_model.cleanup_policies_result = {
+                "success": True,
+                "files_removed": len(removed),
+                "removed": removed,
+            }
