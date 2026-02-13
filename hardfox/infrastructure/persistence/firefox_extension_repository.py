@@ -88,7 +88,7 @@ class FirefoxExtensionRepository(IExtensionRepository):
                     continue
 
                 extension_settings[ext_id] = {
-                    "installation_mode": "normal_installed",
+                    "installation_mode": "allowed",
                     "install_url": install_url
                 }
                 results[ext_id] = InstallationStatus.PENDING
